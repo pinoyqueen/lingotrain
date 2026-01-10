@@ -3,13 +3,11 @@ import { Calendar, Home, Inbox, Search, Settings } from 'lucide-vue-next'
 import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
+import SidebarHeader from './ui/sidebar/SidebarHeader.vue';
 
 // Menu items.
 const items = [
@@ -19,17 +17,17 @@ const items = [
     icon: Home,
   },
   {
-    title: 'Inbox',
+    title: 'Meine Vokabeln',
     url: '#',
     icon: Inbox,
   },
   {
-    title: 'Calendar',
+    title: 'Community',
     url: '#',
     icon: Calendar,
   },
   {
-    title: 'Search',
+    title: 'Profil',
     url: '#',
     icon: Search,
   },
@@ -42,23 +40,26 @@ const items = [
 </script>
 
 <template>
-  <Sidebar>
-    <SidebarContent>
-      <SidebarGroup>
-        <SidebarGroupLabel>Application</SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            <SidebarMenuItem v-for="item in items" :key="item.title">
-              <SidebarMenuButton as-child>
-                <a :href="item.url">
-                  <component :is="item.icon" />
-                  <span>{{ item.title }}</span>
-                </a>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
-    </SidebarContent>
+  <Sidebar class="my-sidebar">
+    <SidebarHeader>
+      <img src="../assets/logo.png" alt="Logo" />
+    </SidebarHeader>
+    <SidebarMenu>
+      <SidebarMenuItem v-for="item in items" :key="item.title">
+        <SidebarMenuButton as-child>
+          <a :href="item.url">
+            <component :is="item.icon" />
+            <span>{{ item.title }}</span>
+          </a>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
   </Sidebar>
 </template>
+
+<style scoped>
+.my-sidebar {
+  background-color: #ab8abc;
+  color: white;
+}
+</style>
