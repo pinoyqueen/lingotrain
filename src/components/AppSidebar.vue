@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { Calendar, Home, Inbox, Search, Settings } from 'lucide-vue-next'
+import {Home, Settings} from 'lucide-vue-next'
+import ProfileIcon from '@/assets/icons/ProfileIcon.vue'
+import MeineVokabelnIcon from '@/assets/icons/MeineVokabelnIcon.vue';
+import CommnityIcon from '@/assets/icons/CommnityIcon.vue';
+
 import {
   Sidebar,
   SidebarContent,
@@ -13,34 +17,34 @@ import SidebarHeader from './ui/sidebar/SidebarHeader.vue';
 const items = [
   {
     title: 'Home',
-    url: '#',
+    url: '/',
     icon: Home,
   },
   {
     title: 'Meine Vokabeln',
-    url: '#',
-    icon: Inbox,
+    url: '/meinevokabeln',
+    icon: MeineVokabelnIcon
   },
   {
     title: 'Community',
-    url: '#',
-    icon: Calendar,
+    url: '/community',
+    icon: CommnityIcon,
   },
   {
     title: 'Profil',
-    url: '#',
-    icon: Search,
+    url: '/profil',
+    icon: ProfileIcon,
   },
   {
     title: 'Settings',
     url: '#',
     icon: Settings,
-  },
+  }
 ]
 </script>
 
 <template>
-  <Sidebar class="my-sidebar">
+  <Sidebar>
     <SidebarHeader>
       <img src="../assets/logo.png" alt="Logo" />
     </SidebarHeader>
@@ -58,8 +62,4 @@ const items = [
 </template>
 
 <style scoped>
-.my-sidebar {
-  background-color: #ab8abc;
-  color: white;
-}
 </style>

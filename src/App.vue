@@ -1,14 +1,9 @@
 <script setup lang="ts">
-import AppSidebar from '@/components/AppSidebar.vue'
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import Layout from '@/components/MainLayout.vue'
 </script>
 
 <template>
-  <SidebarProvider>
-    <AppSidebar />
-    <main>
-      <SidebarTrigger />
-      <slot />
-    </main>
-  </SidebarProvider>
+  <Layout>
+    <router-view />
+  </Layout>
 </template>
