@@ -5,8 +5,8 @@ import { SidebarProvider } from '@/components/ui/sidebar'
 
 <template>
   <SidebarProvider>
-    <AppSidebar />
-    <main>
+    <AppSidebar/>
+    <main class="min-w-3/4">
       <slot />
     </main>
   </SidebarProvider>
