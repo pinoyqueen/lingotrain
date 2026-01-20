@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import HomeView from '@/views/home/Home.vue'
 import ProfileView from '@/views/profil/Profil.vue'
-import MeineVokabelnView from '@/views/meinevokabeln/MeineVokabeln.vue'
+import LernsetListeView from '@/views/meinevokabeln/LernsetListe.vue'
 import CommunityView from '@/views/community/Community.vue'
 
 const routes = [
@@ -19,7 +19,7 @@ const routes = [
   {
     path: '/meinevokabeln',
     name: 'meinevokabeln',
-    component: MeineVokabelnView,
+    component: LernsetListeView,
   },
   {
     path: '/community',

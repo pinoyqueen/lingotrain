@@ -116,6 +116,11 @@ export async function editLernset(
   ownerId: string,
   l: Lernset
 ) {
+  
+  if (!l.id) {
+    throw new Error('Lernset ID fehlt!')
+  }
+
   const ref = doc(db, 'Set', l.id)
 
   await updateDoc(ref, {

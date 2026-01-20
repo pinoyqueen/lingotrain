@@ -1,5 +1,5 @@
 export interface Lernset {
-  id: string
+  id?: string
   name: string
   beschreibung: string
   isPublic: boolean

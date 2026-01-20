@@ -1,6 +1,6 @@
 // src/stores/lernsetStore.ts
 import { defineStore } from 'pinia'
-import { findAllLernsets } from '@/services/LernsetService'
+import { createLernset, editLernset, findAllLernsets } from '@/services/LernsetService'
 import type { Lernset } from '@/models/Lernset'
 
 export const useLernsetStore = defineStore('lernset', {
@@ -14,6 +14,19 @@ export const useLernsetStore = defineStore('lernset', {
       this.loading = true
       this.sets = await findAllLernsets(kontoId)
       this.loading = false
+    },
+    async addSet(set: Lernset) {
+      this.loading = true
+      // Neue Set in DB speichern
+      await createLernset(set)
+      // Liste neu laden
+      this.sets = await findAllLernsets(set.ownerId)
+      this.loading = false
+    }, 
+    async editSet(set: Lernset) {
+      await editLernset(set.ownerId, set)
+      // Liste neu laden
+      this.sets = await findAllLernsets(set.ownerId)
     }
   }
 })
