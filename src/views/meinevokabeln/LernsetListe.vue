@@ -173,7 +173,7 @@ function editLernset(item: Lernset) : void {
       <Button variant="outline" @click="showDialog = false">
         Abbrechen
       </Button>
-      <Button variant="outline" class="bg-[var(--blue)]" @click="saveLernset(neueItem, selectedSet)" :disabled="!form.name">
+      <Button @click="saveLernset(neueItem, selectedSet)" :disabled="!form.name">
         Speichern
       </Button>
     </div>
