@@ -15,6 +15,7 @@ export const useLernsetStore = defineStore('lernset', {
       this.sets = await findAllLernsets(kontoId)
       this.loading = false
     },
+
     async addSet(set: Lernset) {
       this.loading = true
       // Neue Set in DB speichern
@@ -23,7 +24,9 @@ export const useLernsetStore = defineStore('lernset', {
       this.sets = await findAllLernsets(set.ownerId)
       this.loading = false
     }, 
+
     async editSet(set: Lernset) {
+      if (!set.id) throw new Error('ID fehlt zum Bearbeiten!')
       await editLernset(set.ownerId, set)
       // Liste neu laden
       this.sets = await findAllLernsets(set.ownerId)

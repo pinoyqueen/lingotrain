@@ -57,11 +57,18 @@ const saveLernset = async (isNeu: boolean, set: Lernset) => {
       zielspracheId: '',
     })
   } else {
+    // Bestehendes Lernset bearbeiten
     // TODO: nur wenn set.ownerid == aktuellesKonto dann bearbeiten
     if (!set) {
       throw new Error('Lernset fehlt!')
     }
-    await lernsetStore.editSet(set)
+    await lernsetStore.editSet({
+      ...set, 
+      name: form.value.name,
+      beschreibung: form.value.beschreibung,
+      isPublic: form.value.isPublic,
+    })
+
   }
 
   // Formular zurücksetzen
@@ -78,7 +85,8 @@ const saveLernset = async (isNeu: boolean, set: Lernset) => {
 }
 
 function editLernset(item: Lernset) : void {
-  selectedSet = item
+  // bestehende Daten (inkl. id)
+  selectedSet = { ...item }
   neueItem.value = false
   // Formular mit vorhandenen Daten ausfüllen
   form.value = {
