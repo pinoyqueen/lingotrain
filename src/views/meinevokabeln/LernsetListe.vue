@@ -108,11 +108,11 @@ function editLernset(item: Lernset) : void {
         Lernen
         <BookAIcon/>
       </Button> -->
-      <Button variant="outline" class="bg-[var(--blue)] w-32 h-16" @click="showBearbeiten = !showBearbeiten">
+      <Button variant="outline" class="bg-[var(--button-primary)] w-32 h-16" @click="showBearbeiten = !showBearbeiten">
         {{ showBearbeiten ? 'Fertig' : 'Bearbeiten' }}
         <component :is="showBearbeiten ? CheckIcon : PencilIcon" />
       </Button>
-      <Button variant="outline" class="bg-[var(--blue)] size-16"  @click="showDialog = true">
+      <Button variant="outline" class="bg-[var(--button-primary)] size-16"  @click="showDialog = true">
         <CirclePlusIcon />
       </Button>
     </ButtonGroup>
