@@ -49,8 +49,9 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  /* --primary: oklch(0.205 0 0); */
+  --primary: #ab8abc;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -78,7 +79,8 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   /* Farbe für Button */
-  --blue: #badbf5;
+  --button-primary: #badbf5;
+  --button-secondary: #ab8abc;
 
   --red: #b2575d
 }
@@ -120,6 +122,7 @@
 
   /* Farbe für Button */
   --button-primary: #badbf5;
+  --button-secondary: #ab8abc;
 }
 
 @layer base {
