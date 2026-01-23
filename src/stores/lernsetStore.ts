@@ -1,21 +1,29 @@
-// src/stores/lernsetStore.ts
 import { defineStore } from 'pinia'
-import { createLernset, editLernset, findAllLernsets } from '@/services/LernsetService'
+import { createLernset, editLernset, findAllLernsets, deleteLernset } from '@/repositories/LernsetRepository'
 import type { Lernset } from '@/models/Lernset'
 
 export const useLernsetStore = defineStore('lernset', {
   state: () => ({
     sets: [] as Lernset[],
-    loading: false
+    loading: false,
+    fehler: "" as String
   }),
 
   actions: {
+    // Lädt alle Lernsets des aktuellen Benutzers
     async loadMySets(kontoId: string) {
       this.loading = true
-      this.sets = await findAllLernsets(kontoId)
-      this.loading = false
+      this.fehler = "";
+      try {
+        this.sets = await findAllLernsets(kontoId)
+      } catch (e: any) {
+        this.fehler = "Fehler beim Laden der Lernsets: " + e.message
+      } finally {
+        this.loading = false
+      }
     },
 
+    // Neues Lernset hinzufügen
     async addSet(set: Lernset) {
       this.loading = true
       // Neue Set in DB speichern
@@ -25,11 +33,22 @@ export const useLernsetStore = defineStore('lernset', {
       this.loading = false
     }, 
 
+    // bestehendes Lernset bearbeiten
     async editSet(set: Lernset) {
       if (!set.id) throw new Error('ID fehlt zum Bearbeiten!')
       await editLernset(set.ownerId, set)
       // Liste neu laden
       this.sets = await findAllLernsets(set.ownerId)
+    },
+
+    // Vokabel löschen
+    async deleteLernset(l: Lernset) {
+      if(!l.id) throw new Error("ID fehlt zum Löschen!")
+      this.loading = true
+      await deleteLernset(l.id, l.ownerId)
+      // lokal sofort entfernen ohne Reload
+      this.sets = this.sets.filter(item => item.id !== l.id)
+      this.loading = false
     }
   }
 })

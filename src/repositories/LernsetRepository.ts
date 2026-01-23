@@ -1,4 +1,3 @@
-// src/services/LernsetService.ts
 import { db } from './firebase'
 import {
   collection,
@@ -12,8 +11,10 @@ import {
   updateDoc
 } from 'firebase/firestore'
 import type { Lernset } from '@/models/Lernset'
+import { deleteAllVokabelnByLernsetId } from "@/repositories/VokabelnRepository";
 
-const setCollection = collection(db, 'Set')
+const COLLECTION_NAME = 'Set'
+const setCollection = collection(db, COLLECTION_NAME)
 
 /* ======================
    CREATE
@@ -29,13 +30,13 @@ export async function createLernset(l: Lernset) {
 }
 
 /* ======================
-   DELETE (inkl. Owner-Check)
+   DELETE (inkl. Owner-Check und alle dazugehörigen Vokabeln löschen)
 ====================== */
 export async function deleteLernset(
   lernsetId: string,
   kontoId: string
 ) {
-  const ref = doc(db, 'Set', lernsetId)
+  const ref = doc(db, COLLECTION_NAME, lernsetId)
   const snap = await getDoc(ref)
 
   if (!snap.exists()) {
@@ -45,6 +46,9 @@ export async function deleteLernset(
   if (snap.data().ownerId !== kontoId) {
     throw new Error('Lernset gehört nicht dem Benutzer!')
   }
+
+  // Alle Vokabeln zu diesem Lernset löschen
+  await deleteAllVokabelnByLernsetId(lernsetId);
 
   await deleteDoc(ref)
 }
@@ -70,7 +74,7 @@ export async function findAllLernsets(
 export async function findLernsetById(
   lernsetId: string
 ): Promise<Lernset | null> {
-  const snap = await getDoc(doc(db, 'Set', lernsetId))
+  const snap = await getDoc(doc(db, COLLECTION_NAME, lernsetId))
 
   if (!snap.exists()) return null
 
@@ -121,7 +125,7 @@ export async function editLernset(
     throw new Error('Lernset ID fehlt!')
   }
 
-  const ref = doc(db, 'Set', l.id)
+  const ref = doc(db, COLLECTION_NAME, l.id)
 
   await updateDoc(ref, {
     name: l.name,

@@ -4,7 +4,7 @@ import './style.css'
 import router from './router'
 import App from './App.vue'
 import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from '@/services/firebase'
+import { auth } from '@/repositories/firebase'
 import { signInAnonymously } from 'firebase/auth'
 
 const app = createApp(App)

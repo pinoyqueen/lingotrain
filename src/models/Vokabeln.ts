@@ -1,5 +1,5 @@
 export interface Vokabeln {
-  id: string
+  id?: string
   vokabel: string
   uebersetzung: string
   beschreibung: string

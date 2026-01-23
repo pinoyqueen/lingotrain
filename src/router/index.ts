@@ -5,6 +5,7 @@ import HomeView from '@/views/home/Home.vue'
 import ProfileView from '@/views/profil/Profil.vue'
 import LernsetListeView from '@/views/meinevokabeln/LernsetListe.vue'
 import CommunityView from '@/views/community/Community.vue'
+import VokabelnListeView from '@/views/meinevokabeln/VokabelnListe.vue'
 
 const routes = [
   {
@@ -27,6 +28,12 @@ const routes = [
     path: '/meinevokabeln',
     name: 'meinevokabeln',
     component: LernsetListeView,
+  },
+  {
+    path: '/meinevokabeln/:id/:slug',
+    name: 'lernset',
+    component: VokabelnListeView,
+    props: true,
   },
   {
     path: '/community',
