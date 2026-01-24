@@ -15,17 +15,19 @@ import {
   ItemDescription,
   ItemTitle,
 } from '@/components/ui/item'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useVokabelnStore } from '@/stores/vokabelnStore'
 import type { Vokabeln } from '@/models/Vokabeln'
 
 // TODO: mit aktuellesKontoID erstezen
 // const kontoId = 'IpPbkgnEfSMKhQq8mA6tB3dxaLe2';
 // Store/ViewModel holen
-const vokabelnStore = useVokabelnStore();
-const route = useRoute();
+const vokabelnStore = useVokabelnStore()
+const route = useRoute()
+const router = useRouter()
 // Lernset-Id
 const lernsetId = String(route.params.id)
+const slug = String(route.params.slug)
 
 // entspricht onViewCreated() im Fragment
 onMounted(() => {
@@ -39,6 +41,7 @@ const showDialog = ref(false)
 const showBearbeiten = ref(false)
 // gibt an, ob die anzuzeigende Dialog zum Einfügen oder zum Bearbeiten ist
 const neueItem = ref(true)
+const showMenu = ref(false)
 
 // Aktuell bearbeitete Vokabel (null = neue Vokabel)
 const selectedItem = ref<Vokabeln | null>(null)
@@ -61,6 +64,21 @@ function openNewDialog() {
   resetForm()
   selectedItem.value = null
   showDialog.value = true
+}
+
+function goTo(modus: string) {
+  showMenu.value = false
+  console.log('Ausgewählt:', modus)
+  
+  // Navigation abhängig vom Modus
+  router.push({
+    name: 'lernen',
+    params: {
+      id: lernsetId,
+      slug: slug,
+      modus: modus
+    }
+  })
 }
 
 function resetForm() {
@@ -126,9 +144,13 @@ async function saveVokabel() {
 
   <template v-else>
     <ButtonGroup class="fixed top-0 right-0 mt-3 mr-3">
-      <Button variant="outline" class="bg-[var(--button-primary)] w-32 h-16">
+      <Button
+        variant="outline"
+        class="bg-[var(--button-primary)] w-32 h-16 flex items-center justify-center"
+        @click="showMenu = !showMenu"
+      >
         Lernen
-        <BookAIcon/>
+        <BookAIcon class="ml-2"/>
       </Button>
       <Button variant="outline" class="bg-[var(--button-primary)] w-32 h-16" @click="showBearbeiten = !showBearbeiten">
         {{ btnTitle }}
@@ -158,6 +180,36 @@ async function saveVokabel() {
       </Item>
     </div>
 
+
+    <!-- Dropdown-Menü -->
+      <div
+        v-if="showMenu"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      >
+        <div class="bg-white rounded-xl w-[400px] p-6 space-y-4">
+          <h2 class="text-xl font-bold"> Wie möchtest du üben? </h2>
+
+          <Button
+            variant="outline" class="w-full bg-[var(--button-primary)]"
+            @click="goTo('spielmodus')"
+          >
+            Lernen mit Spiele
+          </Button>
+          <Button
+            variant="outline" class="w-full bg-[var(--button-primary)]"
+            @click="goTo('kartenmodus')"
+          >
+            Üben mit Karteikarten
+          </Button>
+
+          <div class="flex justify-end gap-2">
+            <Button variant="outline" @click="showMenu = false">
+              Abbrechen
+            </Button>
+        </div>
+        </div>
+      </div>
+
     <!-- MODAL -->
     <div
       v-if="showDialog"
@@ -181,6 +233,7 @@ async function saveVokabel() {
           class="w-full border rounded p-2"
         />
 
+        <!-- Wort oder Satz-->
         <div class="flex items-center gap-4">
           <label class="flex items-center gap-2">
             <input type="radio" v-model="form.isWort" :value="true" />

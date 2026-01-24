@@ -103,7 +103,6 @@ async function saveLernset() {
     })
   } else {
     // Bestehendes Set bearbeiten
-    // TODO: nur wenn set.ownerid == aktuellesKonto dann bearbeiten
     await lernsetStore.editSet({
       ...selectedSet.value,
       name: form.name,
@@ -154,6 +153,7 @@ async function saveLernset() {
             <button @click="editLernset(item)" class="text-black">
               <PencilIcon />
             </button>
+            
             <button @click="deleteLernset(item)" class="text-red-600">
               <TrashIcon />
             </button>

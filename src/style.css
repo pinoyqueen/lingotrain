@@ -82,7 +82,8 @@
   --button-primary: #badbf5;
   --button-secondary: #ab8abc;
 
-  --red: #b2575d
+  --red: #b2575d;
+  --green: #4ca08b;
 }
 
 .dark {
