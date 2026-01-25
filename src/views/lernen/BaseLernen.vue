@@ -17,14 +17,14 @@ const activeComponent = computed(() => {
   return null
 })
 
-const progress = ref(40) 
+const progress = ref(0) 
 
 </script>
 
 <template>
     <Card class="w-full m-8 shadow-xl p-6">
         <Progress :model-value="progress" class="w-full" />
-        <component v-if="activeComponent" :is="activeComponent" :lernsetId="lernsetId" :slug="slug" />
+        <component v-if="activeComponent" :is="activeComponent" :lernsetId="lernsetId" :slug="slug" v-model:progress="progress"/>
         <p v-else>Unbekannter Modus: {{ modus }}</p>
     </Card>
 </template>

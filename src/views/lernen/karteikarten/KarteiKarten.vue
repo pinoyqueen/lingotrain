@@ -1,10 +1,219 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-const myVar = ref(0);
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import type { Vokabeln } from '@/models/Vokabeln'
+import { useVokabelnStore } from '@/stores/vokabelnStore'
+import { ArrowLeftIcon, ArrowRightIcon, RefreshCcwIcon, RotateCcwIcon, ShuffleIcon } from 'lucide-vue-next'
+import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+
+const vokabelnStore = useVokabelnStore()
+const route = useRoute()
+
+const lernsetId = String(route.params.id)
+
+const isFlipped = ref(false)
+const shuffleActive = ref(false)
+const vokabelVorne = ref(true)
+
+const curr = ref<Vokabeln>()    // Aktuelle Vokabel
+const originalList = ref<Vokabeln[]>([])    // originale Liste (für Shuffle verwendet)
+const currIndex = ref(0)    // Index der aktuellen Vokabel
+const totalCards = ref(0)   // Anzahl gesamten Vokabeln (für Progressbar verwendet)
+
+const flipCard = () => {
+  isFlipped.value = !isFlipped.value
+}
+
+const emit = defineEmits<{
+  (e: 'update:progress', value: number): void
+}>()
+
+// entspricht onViewCreated() im Fragment
+onMounted(async () => {
+    await vokabelnStore.loadByLernsetId(lernsetId)
+    originalList.value = [...vokabelnStore.liste] // Original sichern
+    totalCards.value = vokabelnStore.liste.length
+    updateCard()
+});
+
+function updateCard() {
+    curr.value = vokabelnStore.liste[currIndex.value]
+    isFlipped.value = false // Karte zurückdrehen
+    // Fortschritt berechnen
+    const p = Math.round(((currIndex.value + 1) / totalCards.value) * 100)
+    emit('update:progress', p)
+  
+}
+
+function nextCard() {
+  if (currIndex.value < vokabelnStore.liste.length - 1) {
+    currIndex.value++
+    updateCard()
+  }
+}
+
+function prevCard() {
+  if (currIndex.value > 0) {
+    currIndex.value--
+    updateCard()
+  }
+}
+
+function restart() {
+    currIndex.value = 0
+    updateCard()
+}
+
+function toggleShuffle() {
+    shuffleActive.value = !shuffleActive.value
+    if (shuffleActive.value) {
+    // Shuffle aktiv -> mische die Liste
+    vokabelnStore.liste = [...originalList.value].sort(() => Math.random() - 0.5)
+    } else {
+    // Shuffle deaktiviert -> Originalreihenfolge wiederherstellen
+    vokabelnStore.liste = [...originalList.value]
+    }
+    currIndex.value = 0
+    updateCard()
+}
+
+function toggleDirection() {
+    vokabelVorne.value = !vokabelVorne.value
+    isFlipped.value = false // immer auf Vorderseite zurück
+}
+
 </script>
 
 <template>
-    <Card class="w-full shadow-xl p-6">
-        <h2>Karteikarten</h2>
-    </Card>
+  <!-- ROOT  -->
+  <div class="flex flex-col">
+    
+    <!-- Card Area -->
+    <div class="flex-1 flex items-center justify-center">
+      <div
+        class="relative w-[90vw] max-w-md h-[65vh] cursor-pointer perspective"
+        @click="flipCard"
+      >
+        <!-- Card -->
+        <div
+          class="w-full h-full transition-transform duration-500 transform-style-preserve-3d"
+          :class="{ 'rotate-y-180': isFlipped }"
+        >
+          <!-- Vorderseite -->
+          <Card class="absolute inset-0 shadow-xl p-6 backface-hidden flex items-center justify-center" v-show="!isFlipped">
+            <h2 class="text-xl font-semibold"> {{ vokabelVorne ? curr?.vokabel : curr?.uebersetzung}} </h2>
+            <p> {{ curr?.beschreibung }} </p>
+          </Card>
+
+          <!-- Rückseite -->
+          <Card class="absolute inset-0 shadow-xl p-6 backface-hidden rotate-y-180 flex items-center justify-center" v-show="isFlipped">
+            <h2 class="text-xl font-semibold"> {{ vokabelVorne ? curr?.uebersetzung : curr?.vokabel}} </h2>
+          </Card>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex justify-center gap-9 mt-5">
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger>
+                    <button class="disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent cursor-pointer" 
+                        @click="prevCard" 
+                        :disabled="currIndex === 0">
+                        <ArrowLeftIcon /> 
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Zurück</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger>
+                    <button @click="toggleShuffle"
+                        :class="shuffleActive ? 'bg-gray-200 text-blue-600' : 'bg-white text-black'"
+                        class="p-2 rounded-full transition hover:bg-gray-100"
+>
+                        <ShuffleIcon /> 
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>{{ shuffleActive ? "Shuffle aus" : "Shuffle ein" }}</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+        
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger>
+                    <button @click="toggleDirection"> 
+                        <RefreshCcwIcon /> 
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>{{ vokabelVorne ? "Übersetzung zuerst" : "Vokabel zuerst" }}</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger>
+                    <button class="disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent cursor-pointer"  
+                        @click="restart" 
+                        :disabled="currIndex === 0"> 
+                        <RotateCcwIcon /> 
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Von vorne anfangen</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger>
+                    <button class="disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent cursor-pointer"  
+                        @click="nextCard" 
+                        :disabled="currIndex === vokabelnStore.liste.length - 1"> 
+                        <ArrowRightIcon /> 
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Weiter</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+      
+      
+    </div>
+  </div>
 </template>
+
+<style scoped>
+    .perspective {
+    perspective: 1000px;
+    }
+
+    .transform-style-preserve-3d {
+    transform-style: preserve-3d;
+    }
+
+    .backface-hidden {
+    backface-visibility: hidden;
+    }
+
+    .rotate-y-180 {
+    transform: rotateY(180deg);
+    }
+</style>
