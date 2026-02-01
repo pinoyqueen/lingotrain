@@ -1,10 +1,14 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { FormField, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+
+
+const router = useRouter()
 
 const email = ref('')
 const password = ref('')
@@ -21,10 +25,6 @@ const onLogin = async () => {
   loading.value = true
   // login-Store-Call hier
   loading.value = false
-}
-
-const onRegister = () => {
-  // navigate to register
 }
 </script>
 
@@ -83,7 +83,7 @@ const onRegister = () => {
     </Button>
 
     <!-- Registrieren-Link -->
-    <p class="mt-4 text-primary cursor-pointer hover:text-primary/60" @click="onRegister">
+    <p class="mt-4 text-primary cursor-pointer hover:text-primary/60"  @click="router.push({ name: 'register' })">
       Noch kein Konto? Registrieren
     </p>
   </div>
