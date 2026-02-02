@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { reactive, ref, watch } from "vue";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { createKonto, findKontoByUsername } from "@/repositories/KontoRepository"
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { createKonto, findKontoById, findKontoByUsername } from "@/repositories/KontoRepository"
 import type { Konto } from "@/models/Konto";
 
 export const useAuthStore = defineStore("auth", () => {
@@ -47,6 +47,7 @@ export const useAuthStore = defineStore("auth", () => {
 
   const aktuellesKonto = ref<Konto | null>(null);
   const registerSubmitted = ref(false);
+  const loginSubmitted = ref(false);
 
   function resetRegister() {
     Object.assign(registerForm, {
@@ -66,10 +67,17 @@ export const useAuthStore = defineStore("auth", () => {
     registerSubmitted.value = false;
   }
 
-  function resetLoginErrors() {
+  function resetLogin() {
+    Object.assign(loginForm, {
+      email: "",
+      passwort: ""
+    });
+
     Object.keys(loginErrors).forEach(
       k => (loginErrors[k as keyof typeof loginErrors] = null)
-    )
+    );
+
+    loginSubmitted.value = true;
   }
 
   function validateRequiredInputs(value: string, msg: string) {
@@ -113,9 +121,18 @@ export const useAuthStore = defineStore("auth", () => {
     return !Object.values(registerErrors).some(e => e);
   }
 
+  function validateLogin(): boolean {
+
+    loginErrors.email = validateRequiredInputs(loginForm.email, "Email fehlt");
+    loginErrors.passwort = validateRequiredInputs(loginForm.passwort, "Passwort fehlt");
+
+    return !loginErrors.email && !loginErrors.passwort;
+  }
+
   async function register(): Promise<boolean> {
     registerSubmitted.value = true;
 
+    registerErrors.global = null;
     if(!validateRegister()) return false;
 
     try {
@@ -164,9 +181,32 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
+  async function login(): Promise<boolean> {
+    loginSubmitted.value = true;
+
+    loginErrors.global = null;
+    if (!validateLogin()) return false;
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, loginForm.email, loginForm.passwort);
+      aktuellesKonto.value = await findKontoById(userCredential.user.uid);
+      resetLogin();
+      return true;
+
+    } catch (err: any) {
+      loginErrors.global = "Die Email oder das Passwort ist falsch";
+      return false;
+    }
+  }
+
   watch(registerForm, () => {
     if (!registerSubmitted.value) return;
     validateRegister();
+  }, { deep: true });
+
+  watch(loginForm, () => {
+    if (!loginSubmitted.value) return;
+    validateLogin();
   }, { deep: true });
 
   return {
@@ -175,6 +215,7 @@ export const useAuthStore = defineStore("auth", () => {
     loginErrors,
     registerErrors,
     aktuellesKonto,
-    register
+    register,
+    login
   };
 });

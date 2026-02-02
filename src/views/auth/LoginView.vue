@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { FormField, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
+import { useAuthStore } from '@/stores/authStore'
+
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -9,82 +10,72 @@ import { Checkbox } from '@/components/ui/checkbox'
 
 
 const router = useRouter()
+const auth = useAuthStore()
 
-const email = ref('')
-const password = ref('')
 const stayLoggedIn = ref(false)
-const emailError = ref<string | null>(null)
-const passwordError = ref<string | null>(null)
-const globalError = ref<string | null>(null)
-const loading = ref(false)
+
+function inputClass(error: string | null) {
+  return [
+    'border rounded-md px-3 py-2 w-full',
+
+    error 
+      ? 'border-2 border-[var(--warning)] focus-visible:border-[var(--primary)] focus-visible:ring-[var(--primary)]/60'
+      : 'border-gray-300 focus-visible:border-[var(--primary)] focus-visible:ring-[var(--primary)]/60'
+  ]
+}
 
 const onLogin = async () => {
-  emailError.value = null
-  passwordError.value = null
-  globalError.value = null
-  loading.value = true
-  // login-Store-Call hier
-  loading.value = false
+  const success = await auth.login()
+  if (success) router.push({ name: 'home' })
 }
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col justify-center items-center px-6 w-full max-w-md">
+  <div class="min-h-screen flex flex-col justify-center items-center px-6 py-12 w-full max-w-md">
+    
     <!-- Logo -->
     <img src="@/assets/logo.png" alt="App Logo" class="w-35 h-35 mb-6" />
 
-    <!-- Email -->
-    <div class="w-full mt-4">
-        <FormField name="email">
-            <FormLabel for="email" class="block text-sm font-medium text-gray-700 mb-1.5 px-3">
-                E-Mail-Adresse
-            </FormLabel>
-            <FormControl asChild>
-                <Input 
-                    type="email" 
-                    v-model="email" 
-                    placeholder="E-Mail-Adresse" 
-                    class="focus-visible:border-[var(--primary)] focus-visible:ring-[var(--primary)]/60"
-                />
-            </FormControl>
-            <FormMessage v-if="emailError" class="text-red-600 text-sm mt-1">{{ emailError }}</FormMessage>
-        </FormField>
-    </div>
+    <form class="w-full space-y-4" @submit.prevent="onLogin">
 
-    <div class="w-full mt-4">
-        <FormField name="password">
-            <FormLabel for="password" class="block text-sm font-medium text-gray-700 mb-1.5 px-3">
-                Passwort
-            </FormLabel>
-            <FormControl asChild>
-                <Input 
-                    type="password" 
-                    v-model="password" 
-                    placeholder="Passwort" 
-                    class="focus-visible:border-[var(--primary)] focus-visible:ring-[var(--primary)]/60"
-                />
-            </FormControl>
-            <FormMessage v-if="passwordError" class="text-red-600 text-sm mt-1">{{ passwordError }}</FormMessage>
-        </FormField>
-    </div>
+        <!-- Email -->
+        <div class="space-y-1">
+            <Label for="email" class="mb-1.5 px-1">E-Mail-Adresse</Label>
+            <Input 
+                type="text" 
+                v-model="auth.loginForm.email" 
+                placeholder="E-Mail-Adresse" 
+                :class="inputClass(auth.loginErrors.email)"
+            />
+            <p v-if="auth.loginErrors.email" class="text-[var(--warning)] text-sm px-1">{{ auth.loginErrors.email }}</p>
+      </div>
 
-    <!-- Globale Fehlermeldung -->
-    <p v-if="globalError" class="text-red-600 text-sm mt-2 text-center">{{ globalError }}</p>
+        <!-- Passwort -->
+        <div class="space-y-1">
+            <Label class="mb-1.5 px-1">Passwort</Label>
+            <Input v-model="auth.loginForm.passwort" type="password" placeholder="Passwort" :class="inputClass(auth.loginErrors.passwort)" />
+            <p v-if="auth.loginErrors.passwort" class="text-[var(--warning)] text-sm px-1">{{ auth.loginErrors.passwort }}</p>
+        </div>
 
-    <!-- Angemeldet bleiben -->
-    <div class="flex items-center justify-start gap-3 mt-6 w-full">
-      <Checkbox id="angemeldetBleiben" v-model="stayLoggedIn" />
-      <Label for="angemeldetBleiben">Angemeldet bleiben</Label>
-    </div>
-    
-    <!-- Login-Button -->
-    <Button variant="secondary" class="w-full mt-6" @click="onLogin" :loading="loading">
-      Login
-    </Button>
+        <!-- Global Error -->
+        <p v-if="auth.loginErrors.global" class="text-[var(--warning)] text-sm text-center">{{ auth.loginErrors.global }}</p>
 
-    <!-- Registrieren-Link -->
-    <p class="mt-4 text-primary cursor-pointer hover:text-primary/60"  @click="router.push({ name: 'register' })">
-      Noch kein Konto? Registrieren
-    </p>
+        <!-- Angemeldet bleiben -->
+        <div class="flex items-center justify-start gap-3 mt-6 w-full">
+            <Checkbox id="angemeldetBleiben" v-model="stayLoggedIn" />
+            <Label for="angemeldetBleiben">Angemeldet bleiben</Label>
+        </div>
+
+        <!-- Login-Button -->
+        <Button variant="secondary" class="w-full mt-6" @click="onLogin">
+            Login
+        </Button>
+
+        <!-- Registrieren-Link -->
+        <p class="mt-4 text-primary cursor-pointer hover:text-primary/60"  @click="router.push({ name: 'register' })">
+        Noch kein Konto? Registrieren
+        </p>
+
+    </form>
   </div>
 </template>

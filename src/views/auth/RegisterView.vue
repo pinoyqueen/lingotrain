@@ -93,7 +93,7 @@ async function onRegister() {
       <!-- Email -->
       <div class="space-y-1">
         <Label class="mb-1.5 px-1">E-Mail-Adresse</Label>
-        <Input v-model="auth.registerForm.email" type="email" placeholder="E-Mail-Adresse" :class="inputClass(auth.registerErrors.email)" />
+        <Input v-model="auth.registerForm.email" type="text" placeholder="E-Mail-Adresse" :class="inputClass(auth.registerErrors.email)" />
         <p v-if="auth.registerErrors.email" class="text-[var(--warning)] text-sm px-1">{{ auth.registerErrors.email }}</p>
       </div>
 
