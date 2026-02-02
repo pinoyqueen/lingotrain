@@ -72,8 +72,8 @@ const onLogin = async () => {
         </Button>
 
         <!-- Registrieren-Link -->
-        <p class="mt-4 text-primary cursor-pointer hover:text-primary/60"  @click="router.push({ name: 'register' })">
-        Noch kein Konto? Registrieren
+        <p class="mt-4 text-primary cursor-pointer hover:opacity-70 text-center"  @click="router.push({ name: 'register' })">
+            Noch kein Konto? Registrieren
         </p>
 
     </form>
