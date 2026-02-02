@@ -133,24 +133,32 @@ export const useAuthStore = defineStore("auth", () => {
 
   async function register(): Promise<boolean> {
     registerSubmitted.value = true;
-
     registerErrors.global = null;
-    if(!validateRegister()) return false;
+
+    if (!validateRegister()) return false;
 
     try {
-      // Prüfen, ob Username verfügbar
-      const exists = await findKontoByUsername(registerForm.username);
-      if (exists) {
-        registerErrors.username = "Benutzername existiert bereits";
-        return false;
-      }
-
-      // Firebase Auth erstellen
-      const userCredential = await createUserWithEmailAndPassword(auth, registerForm.email, registerForm.passwort);
+      // Firebase Auth User erstellen
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        registerForm.email,
+        registerForm.passwort
+      );
       const user = userCredential.user;
       if (!user) throw new Error("Firebase User null");
 
-      // Konto in DB erstellen
+      console.log("Firebase User erstellt:", user.uid);
+
+      // Firestore-Aufruf kann jetzt erfolgen, Auth ist gesetzt
+      const exists = await findKontoByUsername(registerForm.username);
+      if (exists) {
+        registerErrors.username = "Benutzername existiert bereits";
+        // Rollback: Firebase Auth User löschen
+        if (auth.currentUser) await auth.currentUser.delete();
+        return false;
+      }
+
+      // Konto-Objekt erstellen
       const konto: Konto = {
         id: user.uid,
         benutzername: registerForm.username,
@@ -167,7 +175,10 @@ export const useAuthStore = defineStore("auth", () => {
         abzeichen: []
       };
 
+      // Firestore schreiben
       await createKonto(konto);
+
+      // Store aktualisieren & Formular zurücksetzen
       aktuellesKonto.value = konto;
       resetRegister();
       return true;
@@ -175,9 +186,14 @@ export const useAuthStore = defineStore("auth", () => {
     } catch (err: any) {
       if (err.code === "auth/email-already-in-use") {
         registerErrors.email = "Email existiert bereits";
+      } else if (err.code === "permission-denied") {
+        registerErrors.global = "Keine Berechtigung, Konto anzulegen. Prüfe Firestore-Regeln.";
       } else {
         registerErrors.global = err.message ?? "Unbekannter Fehler";
       }
+
+      // Rollback: Firebase User löschen
+      if (auth.currentUser) await auth.currentUser.delete();
 
       return false;
     }

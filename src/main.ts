@@ -18,24 +18,18 @@ const authStore = useAuthStore()
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    if (!authStore.aktuellesKonto) {
-      try {
-        const konto = await findKontoById(user.uid)
-        authStore.$patch({ aktuellesKonto: konto ?? null, authReady: true })
-      } catch (err) {
-        console.error(err)
-        authStore.$patch({ aktuellesKonto: null, authReady: true })
-      }
-    } else {
-      authStore.authReady = true
+    try {
+      const konto = await findKontoById(user.uid);
+      authStore.$patch({ aktuellesKonto: konto ?? null, authReady: true });
+    } catch (err) {
+      console.error(err);
+      authStore.$patch({ aktuellesKonto: null, authReady: true });
     }
   } else {
-    authStore.$patch({ aktuellesKonto: null, authReady: true })
+    // Kein Benutzer angemeldet → Store zurücksetzen
+    authStore.$patch({ aktuellesKonto: null, authReady: true });
   }
-})
-
-
-
+});
 
 // -------------------------------
 // Router Guard
