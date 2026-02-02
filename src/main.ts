@@ -1,34 +1,73 @@
-import { createApp } from 'vue'
+import { createApp, watch } from 'vue'
 import { createPinia } from 'pinia'
 import './style.css'
 import router from './router'
 import App from './App.vue'
-import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from '@/repositories/firebase'
-import { signInAnonymously } from 'firebase/auth'
+import { getAuth, onAuthStateChanged } from 'firebase/auth'
+import { useAuthStore } from './stores/authStore'
+import { findKontoById } from './repositories/KontoRepository'
 
 const app = createApp(App)
 const pinia = createPinia()
-
 app.use(pinia)
 app.use(router)
+app.mount('#app') // sofort mounten
 
-// NUR ZUM TESTEN: automatisch anonym anmelden 
-// TODO: Anonym anmelden in Firebase Authentication ausschalten
+const auth = getAuth()
+const authStore = useAuthStore()
+
 onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    try {
-      await signInAnonymously(auth)
-      console.log('Anonym angemeldet:', auth.currentUser?.uid)
-    } catch (e) {
-      console.error('Anonymous Login fehlgeschlagen', e)
+  if (user) {
+    if (!authStore.aktuellesKonto) {
+      try {
+        const konto = await findKontoById(user.uid)
+        authStore.$patch({ aktuellesKonto: konto ?? null, authReady: true })
+      } catch (err) {
+        console.error(err)
+        authStore.$patch({ aktuellesKonto: null, authReady: true })
+      }
+    } else {
+      authStore.authReady = true
     }
   } else {
-    console.log('Bereits angemeldet:', user.uid)
+    authStore.$patch({ aktuellesKonto: null, authReady: true })
   }
 })
 
-app.mount('#app')
 
 
 
+// -------------------------------
+// Router Guard
+// -------------------------------
+router.beforeEach((to, _from, next) => {
+  const authStore = useAuthStore()
+  const publicPages = ['login', 'register']
+
+  // Wenn Auth noch nicht geladen → kurz warten
+  if (!authStore.authReady) {
+    const unwatch = watch(
+      () => authStore.authReady,
+      (ready) => {
+        if (ready) {
+          unwatch()
+          next(to.fullPath)
+        }
+      }
+    )
+    return
+  }
+
+  // Auth-Check
+  const authRequired = !publicPages.includes(to.name as string)
+
+  if (authRequired && !authStore.aktuellesKonto) {
+    return next({ name: 'login' }) // nicht eingeloggt → Login
+  }
+
+  if ((to.name === 'login' || to.name === 'register') && authStore.aktuellesKonto) {
+    return next({ name: 'home' }) // eingeloggt → Home
+  }
+
+  next()
+})

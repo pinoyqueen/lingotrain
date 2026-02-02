@@ -54,6 +54,11 @@ const routes = [
     name: 'community',
     component: CommunityView,
   },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: CommunityView, //TODO: ANPASSEN
+  },
 ]
 
 const router = createRouter({

@@ -17,47 +17,53 @@ import SidebarHeader from './ui/sidebar/SidebarHeader.vue';
 const items = [
   {
     title: 'Home',
-    url: '/',
+    name: 'home',
     icon: Home,
   },
   {
     title: 'Meine Vokabeln',
-    url: '/meinevokabeln',
+    name: 'meinevokabeln',
     icon: MeineVokabelnIcon
   },
   {
     title: 'Community',
-    url: '/community',
+    name: 'community',
     icon: CommnityIcon,
   },
   {
     title: 'Profil',
-    url: '/profil',
+    name: 'profil',
     icon: ProfileIcon,
   },
   {
     title: 'Settings',
-    url: '#',
+    name: 'settings',
     icon: Settings,
   }
 ]
 </script>
 
 <template>
-  <Sidebar>
+  <Sidebar class="w-64 bg-gray-50 border-r">
     <SidebarHeader>
-      <img src="../assets/logo.png" alt="Logo" />
+      <img src="../assets/logo.png" alt="Logo" class="w-24 h-24" />
     </SidebarHeader>
-    <SidebarMenu>
-      <SidebarMenuItem v-for="item in items" :key="item.title">
-        <SidebarMenuButton as-child>
-          <a :href="item.url">
-            <component :is="item.icon" />
-            <span>{{ item.title }}</span>
-          </a>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    </SidebarMenu>
+
+    <SidebarContent class="flex flex-col gap-1 mt-4">
+      <SidebarMenu>
+        <SidebarMenuItem v-for="item in items" :key="item.title">
+          <SidebarMenuButton as-child>
+            <router-link
+              :to="{ name: item.name }"
+              class="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-gray-100"
+            >
+              <component :is="item.icon" class="w-5 h-5" />
+              <span>{{ item.title }}</span>
+            </router-link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </SidebarContent>
   </Sidebar>
 </template>
 
