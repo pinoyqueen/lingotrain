@@ -25,7 +25,7 @@ function inputClass(error: string | null) {
 }
 
 const onLogin = async () => {
-  const success = await auth.login()
+  const success = await auth.login(stayLoggedIn.value)
   if (success) router.push({ name: 'home' })
 }
 </script>

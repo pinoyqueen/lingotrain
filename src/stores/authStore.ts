@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { reactive, ref, watch } from "vue";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence } from "firebase/auth";
 import { createKonto, findKontoById, findKontoByUsername } from "@/repositories/KontoRepository"
 import type { Konto } from "@/models/Konto";
 
@@ -46,6 +46,8 @@ export const useAuthStore = defineStore("auth", () => {
   });
 
   const aktuellesKonto = ref<Konto | null>(null);
+  const authReady = ref(false); // Flag, ob Firebase Auth geladen ist
+
   const registerSubmitted = ref(false);
   const loginSubmitted = ref(false);
 
@@ -181,13 +183,15 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
-  async function login(): Promise<boolean> {
+  async function login(stayLoggedIn: boolean): Promise<boolean> {
     loginSubmitted.value = true;
 
     loginErrors.global = null;
     if (!validateLogin()) return false;
 
     try {
+      await setPersistence(auth, stayLoggedIn ? browserLocalPersistence : browserSessionPersistence);
+
       const userCredential = await signInWithEmailAndPassword(auth, loginForm.email, loginForm.passwort);
       aktuellesKonto.value = await findKontoById(userCredential.user.uid);
       resetLogin();
@@ -215,6 +219,7 @@ export const useAuthStore = defineStore("auth", () => {
     loginErrors,
     registerErrors,
     aktuellesKonto,
+    authReady,
     register,
     login
   };
