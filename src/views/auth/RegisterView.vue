@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { useKontoStore } from '@/stores/kontoStore'
+import { useAuthStore } from '@/stores/authStore'
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -8,13 +8,12 @@ import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem
 } from '@/components/ui/select'
 
 const router = useRouter()
-const kontoStore = useKontoStore()
+const auth = useAuthStore()
 
 const sprachen = [
   { id: 1, name: 'Französisch', flag: 'https://firebasestorage.googleapis.com/v0/b/lingotrain-6ce70.firebasestorage.app/o/flaggen%2FFlag_of_France.png?alt=media&token=b6845f8d-8723-41d7-b7fd-6c4be8488d1a' },
@@ -32,9 +31,8 @@ function inputClass(error: string | null) {
   ]
 }
 
-
 async function onRegister() {
-  const success = await kontoStore.register()
+  const success = await auth.register()
   if (success) router.push({ name: 'home' })
 }
 </script>
@@ -50,16 +48,16 @@ async function onRegister() {
       <!-- Sprache -->
       <div class="space-y-1">
         <Label class="mb-1.5 px-1">Lernsprache</Label>
-        <Select v-model="kontoStore.sprache">
-          <SelectTrigger class="w-full" :class="inputClass(kontoStore.errorSprache)">
+        <Select v-model="auth.registerForm.sprache">
+          <SelectTrigger class="w-full" :class="inputClass(auth.registerErrors.sprache)">
             <!-- Zeige aktuelle Auswahl mit zugehöriger Flagge -->
             <div class="flex items-center gap-5">
                 <img
-                    v-if="kontoStore.sprache && sprachen.find(s => s.name === kontoStore.sprache)"
-                    :src="sprachen.find(s => s.name === kontoStore.sprache)?.flag"
+                    v-if="auth.registerForm.sprache && sprachen.find(s => s.name === auth.registerForm.sprache)"
+                    :src="sprachen.find(s => s.name === auth.registerForm.sprache)?.flag"
                     class="h-5 w-auto"
                 />
-                <span>{{ kontoStore.sprache || 'Sprache auswählen' }}</span>
+                <span>{{ auth.registerForm.sprache || 'Sprache auswählen' }}</span>
             </div>
           </SelectTrigger>
           <SelectContent>
@@ -71,53 +69,57 @@ async function onRegister() {
             </SelectItem>
           </SelectContent>
         </Select>
-        <p v-if="kontoStore.errorSprache" class="text-[var(--warning)] text-sm px-1">{{ kontoStore.errorSprache }}</p>
+        <p v-if="auth.registerErrors.sprache" class="text-[var(--warning)] text-sm px-1">{{ auth.registerErrors.sprache }}</p>
       </div>
 
       <!-- Vorname -->
       <div class="space-y-1">
         <Label class="mb-1.5 px-1">Vorname</Label>
-        <Input v-model="kontoStore.vorname" placeholder="Vorname" :class="inputClass(kontoStore.errorVorname)" />
-        <p v-if="kontoStore.errorVorname" class="text-[var(--warning)] text-sm px-1">{{ kontoStore.errorVorname }}</p>
+        <Input 
+          v-model="auth.registerForm.vorname" 
+          placeholder="Vorname" 
+          :class="inputClass(auth.registerErrors.vorname)" 
+        />
+        <p v-if="auth.registerErrors.vorname" class="text-[var(--warning)] text-sm px-1">{{ auth.registerErrors.vorname }}</p>
       </div>
 
       <!-- Nachname -->
       <div class="space-y-1">
         <Label class="mb-1.5 px-1">Nachname</Label>
-        <Input v-model="kontoStore.nachname" placeholder="Nachname" :class="inputClass(kontoStore.errorNachname)" />
-        <p v-if="kontoStore.errorNachname" class="text-[var(--warning)] text-sm px-1">{{ kontoStore.errorNachname }}</p>
+        <Input v-model="auth.registerForm.nachname" placeholder="Nachname" :class="inputClass(auth.registerErrors.nachname)" />
+        <p v-if="auth.registerErrors.nachname" class="text-[var(--warning)] text-sm px-1">{{ auth.registerErrors.nachname }}</p>
       </div>
 
       <!-- Email -->
       <div class="space-y-1">
-        <Label class="mb-1.5 px-1">E-Mail</Label>
-        <Input v-model="kontoStore.email" type="email" placeholder="E-Mail" :class="inputClass(kontoStore.errorEmail)" />
-        <p v-if="kontoStore.errorEmail" class="text-[var(--warning)] text-sm px-1">{{ kontoStore.errorEmail }}</p>
+        <Label class="mb-1.5 px-1">E-Mail-Adresse</Label>
+        <Input v-model="auth.registerForm.email" type="email" placeholder="E-Mail-Adresse" :class="inputClass(auth.registerErrors.email)" />
+        <p v-if="auth.registerErrors.email" class="text-[var(--warning)] text-sm px-1">{{ auth.registerErrors.email }}</p>
       </div>
 
       <!-- Username -->
       <div class="space-y-1">
         <Label class="mb-1.5 px-1">Benutzername</Label>
-        <Input v-model="kontoStore.username" placeholder="Benutzername" :class="inputClass(kontoStore.errorUsername)" />
-        <p v-if="kontoStore.errorUsername" class="text-[var(--warning)] text-sm px-1">{{ kontoStore.errorUsername }}</p>
+        <Input v-model="auth.registerForm.username" placeholder="Benutzername" :class="inputClass(auth.registerErrors.username)" />
+        <p v-if="auth.registerErrors.username" class="text-[var(--warning)] text-sm px-1">{{ auth.registerErrors.username }}</p>
       </div>
 
       <!-- Passwort -->
       <div class="space-y-1">
         <Label class="mb-1.5 px-1">Passwort</Label>
-        <Input v-model="kontoStore.passwort" type="password" placeholder="Passwort" :class="inputClass(kontoStore.errorPasswort)" />
-        <p v-if="kontoStore.errorPasswort" class="text-[var(--warning)] text-sm px-1">{{ kontoStore.errorPasswort }}</p>
+        <Input v-model="auth.registerForm.passwort" type="password" placeholder="Passwort" :class="inputClass(auth.registerErrors.passwort)" />
+        <p v-if="auth.registerErrors.passwort" class="text-[var(--warning)] text-sm px-1">{{ auth.registerErrors.passwort }}</p>
       </div>
 
       <!-- Passwort bestätigen -->
       <div class="space-y-1">
         <Label class="mb-1.5 px-1">Passwort bestätigen</Label>
-        <Input v-model="kontoStore.passwortConfirm" type="password" placeholder="Passwort bestätigen" :class="inputClass(kontoStore.errorPasswortConfirm)" />
-        <p v-if="kontoStore.errorPasswortConfirm" class="text-[var(--warning)] text-sm px-1">{{ kontoStore.errorPasswortConfirm }}</p>
+        <Input v-model="auth.registerForm.passwortConfirm" type="password" placeholder="Passwort bestätigen" :class="inputClass(auth.registerErrors.passwortConfirm)" />
+        <p v-if="auth.registerErrors.passwortConfirm" class="text-[var(--warning)] text-sm px-1">{{ auth.registerErrors.passwortConfirm }}</p>
       </div>
 
       <!-- Global Error -->
-      <p v-if="kontoStore.errorGlobal" class="text-[var(--warning)] text-sm text-center">{{ kontoStore.errorGlobal }}</p>
+      <p v-if="auth.registerErrors.global" class="text-[var(--warning)] text-sm text-center">{{ auth.registerErrors.global }}</p>
 
       <!-- Submit -->
       <Button variant="secondary" type="submit" class="w-full mt-4">Registrieren</Button>
