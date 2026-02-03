@@ -15,12 +15,24 @@ import {
 const router = useRouter()
 const auth = useAuthStore()
 
+/**
+ * @todo: ersetzen durch DB!
+ */
 const sprachen = [
   { id: 1, name: 'Französisch', flag: 'https://firebasestorage.googleapis.com/v0/b/lingotrain-6ce70.firebasestorage.app/o/flaggen%2FFlag_of_France.png?alt=media&token=b6845f8d-8723-41d7-b7fd-6c4be8488d1a' },
   { id: 2, name: 'Englisch', flag: 'https://firebasestorage.googleapis.com/v0/b/lingotrain-6ce70.firebasestorage.app/o/flaggen%2FFlag_of_the_United_Kingdom.png?alt=media&token=e63be653-1e4a-4e17-82fb-c63754ec8793' },
   { id: 3, name: 'Spanisch', flag: 'https://firebasestorage.googleapis.com/v0/b/lingotrain-6ce70.firebasestorage.app/o/flaggen%2FFlag_of_Spain.png?alt=media&token=c39b4a69-976a-41e1-bd43-b67b78e3ad95' }
 ]
 
+/**
+ * Erstellt dynamische CSS-Klassen für Eingabefelder.
+ * 
+ * Setzt den Rahmen auf die primäre Farbe, wenn das Eingabefeld in den Fokus kommt.
+ * Bei Fehlern wird der Rahmen stattdessen in einer Warn-Farbe markiert.
+ * 
+ * @param error Fehlermeldung des jeweiligen Feldes
+ * @return Liste der Klassen für das Eingabefeld
+ */
 function inputClass(error: string | null) {
   return [
     'border rounded-md px-3 py-2 w-full',
@@ -31,6 +43,11 @@ function inputClass(error: string | null) {
   ]
 }
 
+/**
+ * Führt den Registrierungs-Vorgang aus.
+ * 
+ * Bei erfolgreicher Registrierung wird zur Startseite weitergeleitet.
+ */
 async function onRegister() {
   const success = await auth.register()
   if (success) router.push({ name: 'home' })

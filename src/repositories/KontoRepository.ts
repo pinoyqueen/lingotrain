@@ -14,12 +14,17 @@ const KONTO_COLLECTION = "Konto";
 const kontoCollection = collection(db, KONTO_COLLECTION);
 
 /**
- * Konto erstellen
+ * Anlegen eines neues Konto-Document in der Collection der DB.
+ * Die ID wird dabei übergeben und nicht neu gesetzt 
+ * (damit es mit der User-ID des schon angelegten Nutzers verbunden ist).
+ *
+ * @param {Konto} konto das neu zu erstellende Konto
+ * @return {Promise<string>} die ID des erstellten Kontos
  */
 export async function createKonto(konto: Konto): Promise<string> {
   const docRef = doc(kontoCollection, konto.id);
   
-  // Default-Werte setzen, falls undefined
+  // Default-Werte setzen, falls noch nicht definiert
   const data = {
     benutzername: konto.benutzername,
     vorname: konto.vorname,
@@ -40,7 +45,10 @@ export async function createKonto(konto: Konto): Promise<string> {
 }
 
 /**
- * Konto per ID suchen
+ * Gibt das Konto mit der gewünschten ID aus der Collection in Firestore zurück.
+ *
+ * @param {string} id die ID des zu suchenden Kontos
+ * @return {Promise<Konto | null>} das gefundene Konto mit der ID; null wenn kein Konto gefunden
  */
 export async function findKontoById(id: string): Promise<Konto | null> {
   const snap = await getDoc(doc(db, KONTO_COLLECTION, id));
@@ -53,7 +61,10 @@ export async function findKontoById(id: string): Promise<Konto | null> {
 }
 
 /**
- * Konto per Benutzername suchen
+ * Gibt das Konto mit dem gewünschten Username aus der Collection in Firestore zurück.
+ *
+ * @param {string} username der Benutzername des zu suchenden Kontos
+ * @return {Promise<Konto | null>} das gefundene Konto; null wenn kein Konto gefunden
  */
 export async function findKontoByUsername(username: string): Promise<Konto | null> {
   const q = query(kontoCollection, where("benutzername", "==", username));
@@ -61,7 +72,8 @@ export async function findKontoByUsername(username: string): Promise<Konto | nul
 
   if (snapshot.empty) return null;
 
-  const docSnap = snapshot.docs[0];
+  // Das erste Konto mit dem Usernamen nehmen (es dürfte nur eins geben)
+	const docSnap = snapshot.docs[0];
   if (!docSnap) return null;       
 
   return {

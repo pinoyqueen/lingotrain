@@ -4,12 +4,22 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, se
 import { createKonto, findKontoById, findKontoByUsername } from "@/repositories/KontoRepository"
 import type { Konto } from "@/models/Konto";
 
+/**
+ * Authentifizierungs-Store.
+ * 
+ * Verwaltet Login, Registrierung, Formularzustände, Fehler und das aktuelle
+ * Konto.
+ * Es wird Firebase Auth für die Authentifizierung genutzt. Als DB wird
+ * Firestore über das {@link KontoRepository} genutzt.
+ */
 export const useAuthStore = defineStore("auth", () => {
   const auth = getAuth();
 
-  /*
-   *  Formulare
-   */
+  // -----------------------
+  // Formulare
+  // -----------------------
+
+  /** Registrierungsformular */
   const registerForm = reactive({
     vorname: "",
     nachname: "", 
@@ -20,14 +30,17 @@ export const useAuthStore = defineStore("auth", () => {
     sprache: ""
   });
 
+  /** Loginformular */
   const loginForm = reactive({
     email: "",
     passwort: "",
   });
 
-  /*
-   *  Fehler
-   */
+  // -----------------------
+  // Fehlerzustände
+  // -----------------------
+
+  /** Fehler für die Registrierung */
   const registerErrors = reactive({
     vorname: null as string | null,
     nachname: null as string | null, 
@@ -39,19 +52,35 @@ export const useAuthStore = defineStore("auth", () => {
     global: null as string | null
   });
 
+  /** Fehler für das Login */
   const loginErrors = reactive({
     email: null as string | null,
     passwort: null as string | null,
     global: null as string | null
   });
 
-  const aktuellesKonto = ref<Konto | null>(null);
-  const authReady = ref(false); // Flag, ob Firebase Auth geladen ist
+  // -----------------------
+  // Aktuelles Konto & Flags
+  // -----------------------
 
+  /** Aktuell eingeloggte Konto */
+  const aktuellesKonto = ref<Konto | null>(null);
+
+  /** Flag, ob Firebase Auth geladen ist */
+  const authReady = ref(false); 
+
+  /** Flag für Register-Submit */
   const registerSubmitted = ref(false);
+
+  /** Flag für Login-Submit */
   const loginSubmitted = ref(false);
 
-  function resetRegister() {
+  // -----------------------
+  // Formular-Reset-Funktionen
+  // -----------------------
+
+  /** Setzt das Registrierungsformular und die Fehler zurück. */
+  function resetRegister(): void{
     Object.assign(registerForm, {
       vorname: "",
       nachname: "",
@@ -69,7 +98,8 @@ export const useAuthStore = defineStore("auth", () => {
     registerSubmitted.value = false;
   }
 
-  function resetLogin() {
+  /** Setzt das Loginformular und die Fehler zurück. */
+  function resetLogin(): void {
     Object.assign(loginForm, {
       email: "",
       passwort: ""
@@ -82,14 +112,31 @@ export const useAuthStore = defineStore("auth", () => {
     loginSubmitted.value = true;
   }
 
-  function validateRequiredInputs(value: string, msg: string) {
+  // -----------------------
+  // Validierung
+  // -----------------------
+
+  /** 
+   * Prüft, ob ein Pflichtfeld ausgefüllt ist. 
+   * 
+   * @param {string} value Wert des Feldes
+   * @param {string} msg Fehlermeldung, falls das Feld leer ist
+   * @returns {string} Fehlernachricht oder leer, wenn valid
+   */
+  function validateRequiredInputs(value: string, msg: string): string {
     if(!value.trim())
       return msg;
 
     return "";
   }
 
-  function validateEmail(email: string) {
+  /** 
+   * Prüft, ob eine Email vorhanden ist und im richtigen Format vorliegt.
+   * 
+   * @param {string} email - Email-Adresse
+   * @returns {string} Fehlernachricht oder leer, wenn valid 
+   */
+  function validateEmail(email: string): string {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if(!email) return "Email fehlt";
@@ -98,13 +145,24 @@ export const useAuthStore = defineStore("auth", () => {
     return "";
   }
 
-  function validatePassword(password: string) {
+  /** 
+   * Prüft, ob ein Passwort vorhanden ist und in der richtigen Länge vorliegt. 
+   * 
+   * @param {string} password - Passwort
+   * @returns {string} Fehlernachricht oder leer, wenn valid
+   */
+  function validatePassword(password: string): string {
     if(!password) return "Passwort fehlt";
     if(password.length < 6) return "Passwort benötigt mind. 6 Zeichen";
 
     return "";
   }
 
+  /** 
+   * Validiert das Registrierungsformular. 
+   * 
+   * @returns {boolean} true, wenn alle Felder gültig sind; sonst false
+   */
   function validateRegister(): boolean {
 
     registerErrors.sprache = validateRequiredInputs(registerForm.sprache, "Bitte eine Sprache auswählen");
@@ -123,6 +181,11 @@ export const useAuthStore = defineStore("auth", () => {
     return !Object.values(registerErrors).some(e => e);
   }
 
+  /** 
+   * Validiert das Loginformular. 
+   * 
+   * @returns {boolean} true, wenn alle Felder gültig sind; sonst false
+   */
   function validateLogin(): boolean {
 
     loginErrors.email = validateRequiredInputs(loginForm.email, "Email fehlt");
@@ -131,6 +194,21 @@ export const useAuthStore = defineStore("auth", () => {
     return !loginErrors.email && !loginErrors.passwort;
   }
 
+  // -----------------------
+  // Registrierung und Login
+  // -----------------------
+
+  /** 
+   * Registriert einen neuen Benutzer.
+   * 
+   * Die Registrierung findet zuerst in Firebase Auth statt. 
+   * Anschließend wird auch das Konto in Firestore angelegt, falls der Username
+   * noch nicht vergeben ist.
+   * Wenn der Username schon vergeben ist, wird auch das Anlegen in Firebase
+   * Auth rückgängig gemacht.
+   * 
+   * @returns {Promise<boolean>} true, wenn Registrierung erfolgreich, sonst false
+   */
   async function register(): Promise<boolean> {
     registerSubmitted.value = true;
     registerErrors.global = null;
@@ -144,15 +222,15 @@ export const useAuthStore = defineStore("auth", () => {
         registerForm.email,
         registerForm.passwort
       );
+
       const user = userCredential.user;
       if (!user) throw new Error("Firebase User null");
 
-      console.log("Firebase User erstellt:", user.uid);
-
-      // Firestore-Aufruf kann jetzt erfolgen, Auth ist gesetzt
+      // Prüfen, ob der Username schon vergeben ist, wenn ja, dann Firebase Auth User wieder löschen
       const exists = await findKontoByUsername(registerForm.username);
       if (exists) {
         registerErrors.username = "Benutzername existiert bereits";
+
         // Rollback: Firebase Auth User löschen
         if (auth.currentUser) await auth.currentUser.delete();
         return false;
@@ -175,7 +253,7 @@ export const useAuthStore = defineStore("auth", () => {
         abzeichen: []
       };
 
-      // Firestore schreiben
+      // Konto in DB erstellen
       await createKonto(konto);
 
       // Store aktualisieren & Formular zurücksetzen
@@ -186,8 +264,6 @@ export const useAuthStore = defineStore("auth", () => {
     } catch (err: any) {
       if (err.code === "auth/email-already-in-use") {
         registerErrors.email = "Email existiert bereits";
-      } else if (err.code === "permission-denied") {
-        registerErrors.global = "Keine Berechtigung, Konto anzulegen. Prüfe Firestore-Regeln.";
       } else {
         registerErrors.global = err.message ?? "Unbekannter Fehler";
       }
@@ -199,6 +275,17 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
+  /** 
+   * Loggt einen Benutzer ein.
+   * 
+   * Das Einloggen findet über Firebase Auth statt. Anschließend wird der
+   * zugehörige Nutzer aus der DB geladen und als aktuellesKonto gesetzt.
+   * Sollte der Nutzer nach dem Login auch beim Schließen der Webseite angemeldet
+   * bleiben wollen, so wird auch diese Option über Firebase gesetzt.
+   * 
+   * @param {boolean} stayLoggedIn - true für dauerhaften Login; ansonsten false
+   * @returns {Promise<boolean>} true, wenn Registrierung erfolgreich, sonst false
+   */
   async function login(stayLoggedIn: boolean): Promise<boolean> {
     loginSubmitted.value = true;
 
@@ -206,10 +293,15 @@ export const useAuthStore = defineStore("auth", () => {
     if (!validateLogin()) return false;
 
     try {
+      // Nutzer speichern, damit er dauerhaft eingeloggt bleibt, falls er das möchte
       await setPersistence(auth, stayLoggedIn ? browserLocalPersistence : browserSessionPersistence);
 
+      // Nutzer in Firebase Auth einloggen
       const userCredential = await signInWithEmailAndPassword(auth, loginForm.email, loginForm.passwort);
+      
+      // Konto des Nutzers aus der DB laden
       aktuellesKonto.value = await findKontoById(userCredential.user.uid);
+      
       resetLogin();
       return true;
 
@@ -218,6 +310,10 @@ export const useAuthStore = defineStore("auth", () => {
       return false;
     }
   }
+
+  // -----------------------
+  // Watches
+  // -----------------------
 
   watch(registerForm, () => {
     if (!registerSubmitted.value) return;

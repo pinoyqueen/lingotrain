@@ -8,12 +8,21 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 
-
 const router = useRouter()
 const auth = useAuthStore()
 
+/** Gibt an, ob der Nutzer angemeldet bleiben möchte */
 const stayLoggedIn = ref(false)
 
+/**
+ * Erstellt dynamische CSS-Klassen für Eingabefelder.
+ * 
+ * Setzt den Rahmen auf die primäre Farbe, wenn das Eingabefeld in den Fokus kommt.
+ * Bei Fehlern wird der Rahmen stattdessen in einer Warn-Farbe markiert.
+ * 
+ * @param error Fehlermeldung des jeweiligen Feldes
+ * @return Liste der Klassen für das Eingabefeld
+ */
 function inputClass(error: string | null) {
   return [
     'border rounded-md px-3 py-2 w-full',
@@ -24,6 +33,11 @@ function inputClass(error: string | null) {
   ]
 }
 
+/**
+ * Führt den Login-Vorgang aus.
+ * 
+ * Bei erfolgreicher Anmeldung wird zur Startseite weitergeleitet.
+ */
 const onLogin = async () => {
   const success = await auth.login(stayLoggedIn.value)
   if (success) router.push({ name: 'home' })
