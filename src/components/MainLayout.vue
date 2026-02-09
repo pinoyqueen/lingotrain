@@ -6,7 +6,7 @@ import { SidebarProvider } from '@/components/ui/sidebar'
 <template>
   <SidebarProvider>
     <AppSidebar/>
-    <main class="min-w-3/4">
+    <main class="flex-1 w-full overflow-x-hidden">
       <slot />
     </main>
   </SidebarProvider>

@@ -139,7 +139,7 @@ async function onRegister() {
       <p v-if="auth.registerErrors.global" class="text-[var(--warning)] text-sm text-center">{{ auth.registerErrors.global }}</p>
 
       <!-- Submit -->
-      <Button variant="secondary" type="submit" class="w-full mt-4">Registrieren</Button>
+      <Button variant="primary" type="submit" class="w-full mt-4">Registrieren</Button>
     </form>
 
     <!-- Login Link -->

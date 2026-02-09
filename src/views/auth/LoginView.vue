@@ -81,7 +81,7 @@ const onLogin = async () => {
         </div>
 
         <!-- Login-Button -->
-        <Button variant="secondary" class="w-full mt-6" @click="onLogin">
+        <Button variant="primary" class="w-full mt-6" @click="onLogin">
             Login
         </Button>
 
