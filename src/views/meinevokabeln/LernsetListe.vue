@@ -151,7 +151,7 @@ async function saveLernset() {
         </Button>
       </ButtonGroup>
 
-      <div class="inline-block m-8 min-w-full mt-20 p-50px">
+      <div class="mt-20 p-4 max-h-[calc(100vh-120px)] overflow-y-auto">
         <Item variant="outline" as-child v-for="item in lernsetStore.sets" :key="item.id" class="mt-4">
           <div class="flex justify-between items-center w-full">
             <!-- Klickbarer Bereich -->

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {Home, Settings} from 'lucide-vue-next'
+import { useRoute } from 'vue-router';
 import ProfileIcon from '@/assets/icons/ProfileIcon.vue'
 import MeineVokabelnIcon from '@/assets/icons/MeineVokabelnIcon.vue';
 import CommnityIcon from '@/assets/icons/CommnityIcon.vue';
@@ -10,8 +11,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger
 } from '@/components/ui/sidebar'
 import SidebarHeader from './ui/sidebar/SidebarHeader.vue';
+import SidebarProvider from './ui/sidebar/SidebarProvider.vue';
+
+const route = useRoute()
 
 // Menu items.
 const items = [
@@ -44,7 +49,7 @@ const items = [
 </script>
 
 <template>
-  <Sidebar class="w-64 bg-gray-50 border-r">
+  <Sidebar class="w-64 bg-gray-50 border-r" collapsible="icon">
     <SidebarHeader>
       <img src="../assets/logo.png" alt="Logo" class="w-24 h-24" />
     </SidebarHeader>
@@ -55,7 +60,10 @@ const items = [
           <SidebarMenuButton as-child>
             <router-link
               :to="{ name: item.name }"
-              class="flex items-center gap-2 w-full px-3 py-2 rounded hover:bg-gray-100"
+              class="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-100"
+              :class="{
+                  'bg-gray-200 font-semibold text-black': route.name === item.name
+                }"
             >
               <component :is="item.icon" class="w-5 h-5" />
               <span>{{ item.title }}</span>
@@ -65,6 +73,7 @@ const items = [
       </SidebarMenu>
     </SidebarContent>
   </Sidebar>
+  <SidebarTrigger />
 </template>
 
 <style scoped>

@@ -5,9 +5,16 @@ import { SidebarProvider } from '@/components/ui/sidebar'
 
 <template>
   <SidebarProvider>
-    <AppSidebar/>
-    <main class="flex-1 w-full overflow-x-hidden">
-      <slot />
-    </main>
+    <div class="flex h-screen w-full overflow-hidden">
+
+      <!-- Sidebar -->
+      <AppSidebar />
+
+      <!-- Main Content -->
+      <main class="flex-1 w-full overflow-x-hidden">
+        <slot />
+      </main>
+
+    </div>
   </SidebarProvider>
 </template>
