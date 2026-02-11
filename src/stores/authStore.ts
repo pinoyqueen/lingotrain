@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { reactive, ref, watch } from "vue";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence } from "firebase/auth";
 import { createKonto, findKontoById, findKontoByUsername } from "@/repositories/KontoRepository"
+import { findAllSprachen } from "@/repositories/SprachenRepository";
 import type { Konto } from "@/models/Konto";
 
 /**
@@ -312,6 +313,30 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   // -----------------------
+  // Sprachen 
+  // -----------------------
+
+  const verfuegbareSprachen = ref<any[]>([]);
+  const sprachenLoading = ref(false);
+
+  /** 
+   * Lädt alle verfügbaren Sprachen aus der DB 
+   */
+  async function loadVerfuegbareSprachen() {
+
+    if (verfuegbareSprachen.value.length > 0) return;
+
+    sprachenLoading.value = true;
+    try {
+      verfuegbareSprachen.value = await findAllSprachen();
+    } catch (error) {
+      console.error("Fehler beim Laden der Sprachen:", error);
+    } finally {
+      sprachenLoading.value = false;
+    }
+  }
+
+  // -----------------------
   // Watches
   // -----------------------
 
@@ -332,6 +357,9 @@ export const useAuthStore = defineStore("auth", () => {
     registerErrors,
     aktuellesKonto,
     authReady,
+    verfuegbareSprachen,
+    sprachenLoading,
+    loadVerfuegbareSprachen,
     register,
     login
   };

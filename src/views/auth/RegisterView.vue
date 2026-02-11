@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -14,15 +15,6 @@ import {
 
 const router = useRouter()
 const auth = useAuthStore()
-
-/**
- * @todo: ersetzen durch DB!
- */
-const sprachen = [
-  { id: 1, name: 'Französisch', flag: 'https://firebasestorage.googleapis.com/v0/b/lingotrain-6ce70.firebasestorage.app/o/flaggen%2FFlag_of_France.png?alt=media&token=b6845f8d-8723-41d7-b7fd-6c4be8488d1a' },
-  { id: 2, name: 'Englisch', flag: 'https://firebasestorage.googleapis.com/v0/b/lingotrain-6ce70.firebasestorage.app/o/flaggen%2FFlag_of_the_United_Kingdom.png?alt=media&token=e63be653-1e4a-4e17-82fb-c63754ec8793' },
-  { id: 3, name: 'Spanisch', flag: 'https://firebasestorage.googleapis.com/v0/b/lingotrain-6ce70.firebasestorage.app/o/flaggen%2FFlag_of_Spain.png?alt=media&token=c39b4a69-976a-41e1-bd43-b67b78e3ad95' }
-]
 
 /**
  * Erstellt dynamische CSS-Klassen für Eingabefelder.
@@ -43,6 +35,20 @@ function inputClass(error: string | null) {
   ]
 }
 
+// Beim Laden der Seite Sprachen aus der DB holen
+onMounted(async () => {
+  await auth.loadVerfuegbareSprachen()
+})
+
+/** 
+ * Hilfsfunktion, zum Umwandeln der ID der ausgewählten Sprache in das
+ * gesamte Sprachen-Objekt, um auch auf den Namen und die Flagge zugreifen
+ * zu können (für die Darstellung).
+ */
+const getSelectedSprache = () => {
+  return auth.verfuegbareSprachen.find(s => s.id === auth.registerForm.sprache);
+}
+
 /**
  * Führt den Registrierungs-Vorgang aus.
  * 
@@ -56,7 +62,6 @@ async function onRegister() {
 
 <template>
   <div class="min-h-screen flex flex-col justify-center items-center px-6 py-12 w-full max-w-xl">
-
     <!-- Logo -->
     <img src="@/assets/logo.png" alt="Logo" class="w-35 h-35 mb-6" />
 
@@ -67,26 +72,29 @@ async function onRegister() {
         <Label class="mb-1.5 px-1">Lernsprache</Label>
         <Select v-model="auth.registerForm.sprache">
           <SelectTrigger class="w-full" :class="inputClass(auth.registerErrors.sprache)">
-            <!-- Zeige aktuelle Auswahl mit zugehöriger Flagge -->
             <div class="flex items-center gap-5">
-                <img
-                    v-if="auth.registerForm.sprache && sprachen.find(s => s.name === auth.registerForm.sprache)"
-                    :src="sprachen.find(s => s.name === auth.registerForm.sprache)?.flag"
+                <template v-if="auth.registerForm.sprache && getSelectedSprache()">
+                  <img
+                    :src="getSelectedSprache()?.flagge"
                     class="h-5 w-auto"
-                />
-                <span>{{ auth.registerForm.sprache || 'Sprache auswählen' }}</span>
+                  />
+                  <span>{{ getSelectedSprache().sprache }}</span>
+                </template>
+                <span v-else>Sprache auswählen</span>
             </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem v-for="s in sprachen" :key="s.id" :value="s.name">
+            <SelectItem v-for="s in auth.verfuegbareSprachen" :key="s.id" :value="s.id">
               <div class="flex items-center gap-5">
-                <img :src="s.flag" class="h-5 w-auto" />
-                {{ s.name }}
+                <img :src="s.flagge || s.flag" class="h-5 w-auto" />
+                {{ s.sprache || s.name }}
               </div>
             </SelectItem>
           </SelectContent>
         </Select>
-        <p v-if="auth.registerErrors.sprache" class="text-[var(--warning)] text-sm px-1">{{ auth.registerErrors.sprache }}</p>
+        <p v-if="auth.registerErrors.sprache" class="text-[var(--warning)] text-sm px-1">
+          {{ auth.registerErrors.sprache }}
+        </p>
       </div>
 
       <!-- Vorname -->
