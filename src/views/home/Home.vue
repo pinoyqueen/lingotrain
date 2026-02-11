@@ -93,12 +93,15 @@ function navigateToLernset(id: string, name: string) {
           Schnellstart Lernsets
         </h2>
         
-        <div v-if="homeStore.shortcuts.length > 0" class="flex flex-col gap-4 flex-grow">
+        <div 
+          v-if="homeStore.shortcuts.length > 0" 
+          class="flex flex-col gap-4 flex-grow"
+        >
           <Button 
             v-for="set in homeStore.shortcuts" 
             :key="set.id"
             variant="secondary"
-            class="flex-1 text-xl font-bold justify-start px-8 border-2 shadow-sm min-h-[100px]"
+            class="flex-grow max-h-[200px] min-h-[100px] text-xl font-bold justify-center px-8 border-2 shadow-sm whitespace-normal text-center"
             @click="navigateToLernset(set.id, set.name)"
           >
             {{ set.name }}
