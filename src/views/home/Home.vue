@@ -6,13 +6,13 @@ import { Flame, Trophy } from 'lucide-vue-next'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
-// import {
-//   Select,
-//   SelectTrigger,
-//   SelectContent,
-//   SelectItem,
-//   SelectValue
-// } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem
+} from '@/components/ui/select'
 
 import { useHomeStore } from '@/stores/homeStore'
 
@@ -33,11 +33,43 @@ function navigateToLernset(id: string, name: string) {
 </script>
 
 <template>
-  <div class="flex-1 min-h-screen p-6 lg:p-10 bg-background flex flex-col gap-8">  
-    <header>
-      <h1 class="text-3xl text-primary font-bold tracking-tight">
+  <div class="flex-1 h-[calc(100vh-60px)] px-6 pb-6 lg:px-10 bg-background flex flex-col gap-8 overflow-y-auto">   
+    <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <h1 class="text-4xl text-primary font-bold tracking-tight leading-tight">
         Hallo, {{ homeStore.name }}!
       </h1>
+
+      <div class="space-y-1 w-full sm:w-[240px]">
+        <Label class="mb-1.5 px-1 text-xs font-bold text-muted-foreground uppercase">Lernsprache</Label>
+        
+        <Select 
+          :model-value="homeStore.authStore.aktuellesKonto?.aktuelleSpracheId" 
+          @update:model-value="(val) => homeStore.updateSprache(String(val))"
+        >
+          <SelectTrigger class="w-full bg-background border-2 shadow-sm">
+            <div class="flex items-center gap-4">
+                <template v-if="homeStore.aktuelleSprache">
+                  <img :src="homeStore.aktuelleSprache.flagge" class="h-4 w-auto" />
+                  <span class="font-medium">{{ homeStore.aktuelleSprache.sprache }}</span>
+                </template>
+                <span v-else>Wähle eine Sprache</span>
+            </div>
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem 
+              v-for="s in homeStore.ausgewaehlteSprachen" 
+              :key="s.id" 
+              :value="s.id"
+            >
+              <div class="flex items-center gap-3">
+                <img :src="s.flagge" class="h-4 w-auto" />
+                <span>{{ s.sprache }}</span>
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
     </header>
 
     <div class="w-full bg-secondary border border-secondary rounded-xl p-6 shadow-sm">

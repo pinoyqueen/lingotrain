@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { useAuthStore } from './authStore'
+import { editAktuelleSprache } from '@/repositories/KontoRepository'
 import { findAllLernsets } from '@/repositories/LernsetRepository'
 import { getSprachenByIds, getSpracheById } from '@/repositories/SprachenRepository'
 
@@ -73,7 +74,7 @@ export const useHomeStore = defineStore('home', {
         // Ab hier meckert TS nicht mehr, weil konto.id nicht undefined sein kann
         const [sets, sprachen, aktuelle] = await Promise.all([
           findAllLernsets(konto.id),
-          getSprachenByIds(konto.sprachenIds || []), 
+          getSprachenByIds(konto.sprachenIds), 
           getSpracheById(konto.aktuelleSpracheId)
         ]);
 
@@ -82,6 +83,40 @@ export const useHomeStore = defineStore('home', {
         this.aktuelleSprache = aktuelle;
       } catch (e: any) {
         this.error = "Fehler beim Laden";
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async updateSprache(neueSpracheId: string | null) {
+      const konto = this.authStore.aktuellesKonto;
+      if (!konto || !konto.id || neueSpracheId === null) return;
+
+      // Speicher den alten Wert für den Notfall (Rollback)
+      const alteSpracheId = konto.aktuelleSpracheId;
+
+      try {
+        // SCHRITT 1: Sofortiges UI Update (Optimistisch)
+        konto.aktuelleSpracheId = neueSpracheId;
+        const gefunden = this.ausgewaehlteSprachen.find(s => String(s.id) === String(neueSpracheId));
+        if (gefunden) {
+          this.aktuelleSprache = { ...gefunden };
+        }
+
+        // SCHRITT 2: Datenbank im Hintergrund (await sorgt dafür, dass wir auf Fehler prüfen können)
+        this.loading = true;
+        await editAktuelleSprache(konto.id, neueSpracheId);
+
+        // SCHRITT 3: Lernsets laden (hängt von der neuen Sprache ab)
+        this.alleLernsets = await findAllLernsets(konto.id);
+
+      } catch (e) {
+        console.error("DB Update fehlgeschlagen:", e);
+        this.error = "Sprachwechsel konnte nicht gespeichert werden.";
+        
+        // ROLLBACK: Wenn DB fehlschlägt, setz die UI zurück
+        konto.aktuelleSpracheId = alteSpracheId;
+        this.aktuelleSprache = this.ausgewaehlteSprachen.find(s => String(s.id) === String(alteSpracheId));
       } finally {
         this.loading = false;
       }

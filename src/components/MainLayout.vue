@@ -10,8 +10,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
       <AppSidebar />
 
       <main class="flex-1 w-full overflow-y-auto overflow-x-hidden relative bg-background">
-        
-        <div class="absolute top-4 left-4 z-50">
+        <div class="px-4 pt-4 lg:px-9 lg:pt-4 pb-0">
           <SidebarTrigger />
         </div>
 

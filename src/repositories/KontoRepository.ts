@@ -1,6 +1,7 @@
 import { 
   doc, 
   setDoc, 
+  updateDoc,
   collection, 
   query, 
   where, 
@@ -80,5 +81,19 @@ export async function findKontoByUsername(username: string): Promise<Konto | nul
     id: docSnap.id,
     ...(docSnap.data() as Omit<Konto, 'id'>)
   };
+}
+
+export async function editAktuelleSprache(id: string, aktuelleSpracheId: string): Promise<void> {
+  try {
+    const docRef = doc(kontoCollection, id);
+
+    await updateDoc(docRef, {
+      aktuelleSpracheId: aktuelleSpracheId
+    });
+    
+  } catch (error) {
+    console.error("Fehler beim Aktualisieren der Sprache im Repository:", error);
+    throw error; 
+  }
 }
 
