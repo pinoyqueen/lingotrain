@@ -10,11 +10,9 @@ import {
   SidebarContent,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarTrigger
+  SidebarMenuItem
 } from '@/components/ui/sidebar'
 import SidebarHeader from './ui/sidebar/SidebarHeader.vue';
-import SidebarProvider from './ui/sidebar/SidebarProvider.vue';
 
 const route = useRoute()
 
@@ -73,7 +71,6 @@ const items = [
       </SidebarMenu>
     </SidebarContent>
   </Sidebar>
-  <SidebarTrigger />
 </template>
 
 <style scoped>

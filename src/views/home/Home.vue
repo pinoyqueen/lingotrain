@@ -66,10 +66,10 @@ function navigateToLernset(id: string, name: string) {
       
       <div class="lg:col-span-2">
         <Card class="h-full border-2 shadow-sm bg-primary-variant">
-          <CardContent class="p-10 flex flex-col justify-between h-full space-y-8">
-            <div class="flex flex-col items-center py-12 bg-white rounded-2xl">
-              <span class="text-7xl font-black text-slate-800">{{ homeStore.punkte }}</span>
-              <span class="text-sm font-bold text-slate-500 uppercase tracking-widest mt-2">
+          <CardContent class="py-4 flex flex-col h-full space-y-8">
+            <div class="flex-grow flex flex-col items-center justify-center py-12 bg-white rounded-2xl">
+              <span class="text-7xl font-black text-surface-foreground/90">{{ homeStore.punkte }}</span>
+              <span class="text-sm font-bold text-surface-foreground/50 uppercase tracking-widest mt-2">
                 Gesamtpunkte
               </span>
             </div>
@@ -80,7 +80,7 @@ function navigateToLernset(id: string, name: string) {
                   <span class="text-sm font-bold text-primary-foreground">Fortschritt</span>
                   <span class="text-xs text-primary-foreground">Bis zum nächsten Level</span>
                 </div>
-                <span class="font-bold text-primary-foreground">Noch {{ homeStore.punkteBisNaechstesLevel }} Punkte</span>
+                <span class="font-bold text-primary-foreground">Noch {{ homeStore.punkteBisNaechstesLevel }} XP</span>
               </div>
               <Progress :model-value="homeStore.progress" class="h-4 bg-primary-foreground/30" style="--primary: white;" />
             </div>
