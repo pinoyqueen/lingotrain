@@ -63,19 +63,27 @@ export const useHomeStore = defineStore('home', {
     async loadHomeValues() {
       const konto = this.authStore.aktuellesKonto;
 
-      // Hier prüfen wir auf ALLES, was wir für die API-Calls brauchen
-      if (!konto || !konto.id || !konto.aktuelleSpracheId) {
+      if (!konto || !konto.id) {
         this.error = "Benutzerdaten unvollständig!";
         return;
       }
 
       this.loading = true;
       try {
-        // Ab hier meckert TS nicht mehr, weil konto.id nicht undefined sein kann
+        
+        // Wir bereiten die Promises vor
+        const lernsetsPromise = findAllLernsets(konto.id);
+        const sprachenPromise = getSprachenByIds(konto.sprachenIds);
+        
+        // Nur laden, wenn die ID nicht null/leer ist, sonst sofort null zurückgeben
+        const aktuellePromise = konto.aktuelleSpracheId 
+          ? getSpracheById(konto.aktuelleSpracheId) 
+          : Promise.resolve(null);
+
         const [sets, sprachen, aktuelle] = await Promise.all([
-          findAllLernsets(konto.id),
-          getSprachenByIds(konto.sprachenIds), 
-          getSpracheById(konto.aktuelleSpracheId)
+          lernsetsPromise,
+          sprachenPromise,
+          aktuellePromise
         ]);
 
         this.alleLernsets = sets;

@@ -87,7 +87,7 @@ async function onRegister() {
             <SelectItem v-for="s in auth.verfuegbareSprachen" :key="s.id" :value="s.id">
               <div class="flex items-center gap-5">
                 <img :src="s.flagge || s.flag" class="h-5 w-auto" />
-                {{ s.sprache || s.name }}
+                {{ s.sprache }}
               </div>
             </SelectItem>
           </SelectContent>

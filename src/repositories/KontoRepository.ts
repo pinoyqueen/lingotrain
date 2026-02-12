@@ -6,7 +6,9 @@ import {
   query, 
   where, 
   getDocs, 
-  getDoc 
+  getDoc, 
+  arrayUnion,
+  arrayRemove
 } from "firebase/firestore";
 import { db } from "./firebase"; 
 import type { Konto } from "@/models/Konto";
@@ -83,6 +85,23 @@ export async function findKontoByUsername(username: string): Promise<Konto | nul
   };
 }
 
+export async function updateKonto(konto: Konto) {
+  try {
+    const docRef = doc(kontoCollection, konto.id);
+
+    await updateDoc(docRef, {
+      vorname: konto.vorname,
+      nachname: konto.nachname,
+      benutzername: konto.benutzername,
+      profilbild_id: konto.profilbild_id
+    });
+
+  } catch (error) {
+    console.error("Fehler beim Aktualisieren des Kontos im Repository:", error);
+    throw error; 
+  }
+}
+
 export async function editAktuelleSprache(id: string, aktuelleSpracheId: string): Promise<void> {
   try {
     const docRef = doc(kontoCollection, id);
@@ -97,3 +116,32 @@ export async function editAktuelleSprache(id: string, aktuelleSpracheId: string)
   }
 }
 
+export async function addSprache(id: string, spracheId: string) {
+  try {
+    const docRef = doc(kontoCollection, id);
+
+    await updateDoc(docRef, {
+      sprachenIds: arrayUnion(spracheId),
+      aktuelleSpracheId: spracheId
+    });
+    
+  } catch (error) {
+    console.error("Fehler beim Hinzufügen der Sprache im Repository:", error);
+    throw error; 
+  }
+}
+
+export async function removeSprache(id: string, spracheId: string, neueAktiveSpracheId: string | null) {
+  try {
+    const docRef = doc(kontoCollection, id);
+
+    await updateDoc(docRef, {
+      sprachenIds: arrayRemove(spracheId),
+      aktuelleSpracheId: neueAktiveSpracheId
+    });
+    
+  } catch (error) {
+    console.error("Fehler beim Entfernen der Sprache im Repository:", error);
+    throw error; 
+  }
+}

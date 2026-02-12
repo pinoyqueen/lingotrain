@@ -49,6 +49,7 @@ function navigateToLernset(id: string, name: string) {
         
         <Select 
           :model-value="homeStore.authStore.aktuellesKonto?.aktuelleSpracheId" 
+          :disabled="!homeStore.aktuelleSprache || homeStore.ausgewaehlteSprachen.length === 0"
           @update:model-value="(val) => homeStore.updateSprache(String(val))"
         >
           <SelectTrigger class="w-full bg-background border-2 shadow-sm">
