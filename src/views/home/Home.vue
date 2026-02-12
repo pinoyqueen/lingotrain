@@ -24,10 +24,15 @@ onMounted(async () => {
 })
 
 function navigateToLernset(id: string, name: string) {
+  
+  const slug = name.toLowerCase().replace(/\s+/g, '-');
+  
   router.push({ 
-    name: 'vokabelnliste', 
-    params: { lernsetId: id },
-    query: { name: name } 
+    name: 'lernset', 
+    params: { 
+      id: id,
+      slug: slug
+    }
   })
 }
 </script>
