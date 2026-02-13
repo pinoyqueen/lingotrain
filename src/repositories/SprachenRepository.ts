@@ -1,5 +1,4 @@
 import { 
-  getFirestore, 
   collection, 
   getDocs, 
   doc, 
@@ -8,17 +7,19 @@ import {
   where,
   documentId 
 } from "firebase/firestore";
+import { db } from "./firebase";
 import type { Sprachen } from "@/models/Sprachen";
 
 const COLLECTION_NAME = "Sprachen";
+const sprachenCollection = collection(db, COLLECTION_NAME);
 
 /**
  * Gibt alle Sprachen aus der Collection in Firestore zurück.
+ * 
+ * @return {Promise<Sprachen>} die gefundenen Sprachen
  */
 export async function findAllSprachen(): Promise<Sprachen[]> {
-  const db = getFirestore();
-  const sprachenCol = collection(db, COLLECTION_NAME);
-  const snapshot = await getDocs(sprachenCol);
+  const snapshot = await getDocs(sprachenCollection);
   
   return snapshot.docs.map(snap => ({
     id: snap.id,
@@ -28,35 +29,30 @@ export async function findAllSprachen(): Promise<Sprachen[]> {
 
 /**
  * Gibt eine Sprache anhand ihrer ID zurück.
+ * 
+ * @param {string} id die ID der Sprache, die gesucht werden soll
+ * @return {Promise<Sprachen | null>} die gefundene Sprache oder null
  */
 export async function getSpracheById(id: string): Promise<Sprachen | null> {
-  const db = getFirestore();
-  const docRef = doc(db, COLLECTION_NAME, id);
-  const snap = await getDoc(docRef);
+  const snap = await getDoc(doc(sprachenCollection, id));
+  if(!snap.exists()) return null;
   
-  if (snap.exists()) {
-    return {
-      id: snap.id,
-      ...(snap.data() as Omit<Sprachen, 'id'>)
-    } as Sprachen;
-  }
-  
-  return null;
+  return {
+    id: snap.id,
+    ...(snap.data() as Omit<Sprachen, 'id'>)
+  } as Sprachen;
 }
 
 /**
  * Gibt eine Liste von Sprachen basierend auf einer Liste von IDs zurück.
+ * 
+ * @param {string[]} ids die IDs der zu suchenden Sprachen
+ * @return {Promise<Sprachen[]>} die gefundenen Sprachen
  */
 export async function getSprachenByIds(ids: string[]): Promise<Sprachen[]> {
   if (!ids || ids.length === 0) return [];
-
-  const db = getFirestore();
-  const sprachenCol = collection(db, COLLECTION_NAME);
   
-  // Firestore "in" Query ist effizienter als einzelne findById Aufrufe
-  // Achtung: "in" unterstützt maximal 10 IDs pro Abfrage. 
-  // Für mehr IDs müsste man die Liste splitten (Chunking).
-  const q = query(sprachenCol, where(documentId(), "in", ids));
+  const q = query(sprachenCollection, where(documentId(), "in", ids));
   const snapshot = await getDocs(q);
   
   return snapshot.docs.map(snap => ({

@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Flame, Trophy } from 'lucide-vue-next'
+import { useHomeStore } from '@/stores/homeStore'
 
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -14,15 +15,24 @@ import {
   SelectItem
 } from '@/components/ui/select'
 
-import { useHomeStore } from '@/stores/homeStore'
-
 const router = useRouter()
 const homeStore = useHomeStore()
 
+// Beim Laden der Seite alle nötigen Werte aus der DB laden
 onMounted(async () => {
   await homeStore.loadHomeValues()
 })
 
+/**
+ * Navigation zu einem bestimmten Lernset.
+ * 
+ * Diese Funktion navigiert zu einem bestimmten Lernset, d.h.
+ * beim Klick auf einen der Lernset-Buttons dient der Button
+ * als Shortcut und es wird direkt zum Lernset weitergeleitet.
+ * 
+ * @param id die ID des Lernsets
+ * @param name der Name des Lernsets
+ */
 function navigateToLernset(id: string, name: string) {
   
   const slug = name.toLowerCase().replace(/\s+/g, '-');
@@ -40,10 +50,13 @@ function navigateToLernset(id: string, name: string) {
 <template>
   <div class="flex-1 h-[calc(100vh-60px)] px-6 pb-6 lg:px-10 bg-background flex flex-col gap-8 overflow-y-auto">   
     <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      
+      <!-- Ausgabe der Begrüßung mit dem Namen -->
       <h1 class="text-4xl text-primary font-bold tracking-tight leading-tight">
         Hallo, {{ homeStore.name }}!
       </h1>
 
+      <!-- Auswahl der aktuellen Sprache aus allen Sprachen, die der Nutzer seinem Konto hinzugefügt hat -->
       <div class="space-y-1 w-full sm:w-[240px]">
         <Label class="mb-1.5 px-1 text-xs font-bold text-muted-foreground uppercase">Lernsprache</Label>
         
@@ -76,8 +89,10 @@ function navigateToLernset(id: string, name: string) {
           </SelectContent>
         </Select>
       </div>
+
     </header>
 
+    <!-- Ausgabe des aktuellen Levels und der Lernserie -->
     <div class="w-full bg-secondary border border-secondary rounded-xl p-6 shadow-sm">
       <div class="flex items-center justify-around">
         <div class="flex flex-col items-center gap-1">
@@ -100,8 +115,10 @@ function navigateToLernset(id: string, name: string) {
       </div>
     </div>
 
+    <!-- Grid, damit Card links und Buttons rechts daneben angezeigt werden; bei kleineren Bildschirmen Buttons unterhalb von Card -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch flex-grow">
       
+      <!-- Card mit dem aktuellen Punktestand und einem Fortschrittsbalken -->
       <div class="lg:col-span-2">
         <Card class="h-full border-2 shadow-sm bg-primary-variant">
           <CardContent class="py-4 flex flex-col h-full space-y-8">
@@ -126,6 +143,7 @@ function navigateToLernset(id: string, name: string) {
         </Card>
       </div>
 
+      <!-- Buttons für Lernset-Shortcuts -->
       <aside class="flex flex-col gap-4 h-full">
         <h2 class="text-sm font-bold text-surface-foreground/70 uppercase tracking-wider px-1">
           Schnellstart Lernsets

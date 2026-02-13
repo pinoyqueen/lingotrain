@@ -34,7 +34,7 @@ export interface Konto {
   /** Aktueller Punktestand des Nutzers */
   punkte: number;        
   
-  /** ID der aktuell ausgewählten Lernsprache */
+  /** ID der aktuell ausgewählten Lernsprache (wenn null, dann ist keine ausgewählt) */
   aktuelleSpracheId: string | null;
 
   /** IDs aller vom User belegten Sprachen */

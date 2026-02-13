@@ -16,6 +16,11 @@ import {
 const router = useRouter()
 const auth = useAuthStore()
 
+// Beim Laden der Seite Sprachen aus der DB holen
+onMounted(async () => {
+  await auth.loadVerfuegbareSprachen()
+})
+
 /**
  * Erstellt dynamische CSS-Klassen für Eingabefelder.
  * 
@@ -34,11 +39,6 @@ function inputClass(error: string | null) {
       : 'border-gray-300 focus-visible:border-[var(--primary)] focus-visible:ring-[var(--primary)]/60'
   ]
 }
-
-// Beim Laden der Seite Sprachen aus der DB holen
-onMounted(async () => {
-  await auth.loadVerfuegbareSprachen()
-})
 
 /** 
  * Hilfsfunktion, zum Umwandeln der ID der ausgewählten Sprache in das

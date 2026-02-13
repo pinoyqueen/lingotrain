@@ -112,7 +112,7 @@ export const useAuthStore = defineStore("auth", () => {
       k => (loginErrors[k as keyof typeof loginErrors] = null)
     );
 
-    loginSubmitted.value = true;
+    loginSubmitted.value = false;
   }
 
   // -----------------------
@@ -124,41 +124,41 @@ export const useAuthStore = defineStore("auth", () => {
    * 
    * @param {string} value Wert des Feldes
    * @param {string} msg Fehlermeldung, falls das Feld leer ist
-   * @returns {string} Fehlernachricht oder leer, wenn valid
+   * @returns {string | null} Fehlernachricht oder leer, wenn valid
    */
-  function validateRequiredInputs(value: string, msg: string): string {
+  function validateRequiredInputs(value: string, msg: string): string | null {
     if(!value.trim())
       return msg;
 
-    return "";
+    return null;
   }
 
   /** 
    * Prüft, ob eine Email vorhanden ist und im richtigen Format vorliegt.
    * 
    * @param {string} email - Email-Adresse
-   * @returns {string} Fehlernachricht oder leer, wenn valid 
+   * @returns {string | null} Fehlernachricht oder leer, wenn valid 
    */
-  function validateEmail(email: string): string {
+  function validateEmail(email: string): string | null {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if(!email) return "Email fehlt";
     if(!regex.test(email)) return "Ungültige Email";
 
-    return "";
+    return null;
   }
 
   /** 
    * Prüft, ob ein Passwort vorhanden ist und in der richtigen Länge vorliegt. 
    * 
    * @param {string} password - Passwort
-   * @returns {string} Fehlernachricht oder leer, wenn valid
+   * @returns {string | null} Fehlernachricht oder leer, wenn valid
    */
-  function validatePassword(password: string): string {
+  function validatePassword(password: string): string | null {
     if(!password) return "Passwort fehlt";
     if(password.length < 6) return "Passwort benötigt mind. 6 Zeichen";
 
-    return "";
+    return null;
   }
 
   /** 
@@ -179,7 +179,7 @@ export const useAuthStore = defineStore("auth", () => {
     registerErrors.passwortConfirm = 
       registerForm.passwort !== registerForm.passwortConfirm
         ? "Stimmt nicht überein"
-        : "";
+        : null;
 
     return !Object.values(registerErrors).some(e => e);
   }
@@ -314,6 +314,12 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
+  /**
+   * Loggt einen Benutzer aus.
+   * 
+   * Das Ausloggen findet über Firebase Auth statt. Anschließend wird das aktuelle Konto
+   * resettet und der Nutzer automatisch zum Login navigiert.
+   */
   async function logout() {
     try {
       await signOut(auth);
@@ -333,7 +339,9 @@ export const useAuthStore = defineStore("auth", () => {
   const sprachenLoading = ref(false);
 
   /** 
-   * Lädt alle verfügbaren Sprachen aus der DB 
+   * Lädt alle verfügbaren Sprachen aus der DB.
+   * 
+   * Hier werden alle Sprachen aus der DB geladen, die der Nutzer auswählen kann.
    */
   async function loadVerfuegbareSprachen() {
 
@@ -349,44 +357,62 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
-  // -----------------------
-  // Sprachen-Management (User-Profil)
-  // -----------------------
-
-  /** Fügt eine Sprache zum Konto hinzu */
+  /** 
+   * Fügt eine Sprache zum Konto hinzu.
+   * 
+   * Hier wird eine neue Sprache zum Konto des aktuell eingeloggten Nutzers
+   * hinzugefügt. Dies wird lokal aber auch in der DB aktualisiert.
+   * Außerdem wird die aktuelle Sprache, die der Nutzer zum Lernen ausgewählt hat,
+   * auf die neu hinzugefügte Sprache gesetzt.
+   * 
+   * @param {string} spracheId die ID der Sprache, die hinzugefügt werden soll
+   */
   async function addSpracheZuKonto(spracheId: string) {
     if (!aktuellesKonto.value || !aktuellesKonto.value.id) return;
 
+    // Aktualisieren der Sprache in der DB
     await addSprache(aktuellesKonto.value.id, spracheId);
 
+    // Auch lokal die Sprache aktualisieren
     if (!aktuellesKonto.value.sprachenIds.includes(spracheId)) {
       aktuellesKonto.value.sprachenIds.push(spracheId);
       aktuellesKonto.value.aktuelleSpracheId = spracheId;
     }
   }
 
-  /** Entfernt eine Sprache aus dem Konto */
+  /** 
+   * Entfernt eine Sprache aus dem Konto.
+   * 
+   * Hier wird eine Sprache aus dem Konto des aktuell eingeloggten Nutzers
+   * entfernt. Dies wird lokal aber auch in der DB aktualisiert.
+   * 
+   * Sollte die zu entfernende Sprache auch die aktuelle Sprache sein, dann 
+   * wird die aktuelle Sprache auf die erste im Array der ausgewählten Sprachen
+   * gesetzt. Ist keine vorhanden, wird {@code null} gesetzt.
+   * 
+   * @param {string} spracheId die ID der Sprache, die entfernt werden soll
+   */
   async function removeSpracheVonKonto(spracheId: string) {
     if (!aktuellesKonto.value || !aktuellesKonto.value.id) return;
 
     const neueListe = aktuellesKonto.value.sprachenIds.filter(id => id !== spracheId);
-    
     let neueAktiveId : string | null;
 
+    // wenn die zu entfernende Sprache die aktuelle ist, wird die aktuelle Sprache neu gesetzt
     if (aktuellesKonto.value.aktuelleSpracheId === spracheId) {
-      // Hier fangen wir das 'undefined' ab, das beim Zugriff auf [0] entstehen könnte
       neueAktiveId = neueListe[0] ?? null; 
     } else {
-      neueAktiveId = aktuellesKonto.value.aktuelleSpracheId ?? null;
+      neueAktiveId = aktuellesKonto.value.aktuelleSpracheId;
     }
 
     try {
-      // 3. Datenbank-Update
+      // Aktualisieren der DB
       await removeSprache(aktuellesKonto.value.id, spracheId, neueAktiveId);
 
-      // 4. Lokaler State-Update (Damit die UI sofort reagiert)
+      // Lokal aktualisieren
       aktuellesKonto.value.sprachenIds = neueListe;
       aktuellesKonto.value.aktuelleSpracheId = neueAktiveId;
+
     } catch (error) {
       console.error("Fehler beim Löschen im Store:", error);
     }
@@ -396,25 +422,27 @@ export const useAuthStore = defineStore("auth", () => {
   // Aktualisierungen der Daten 
   // -----------------------
 
-  /** Aktualisiert ein beliebiges Feld im Konto-Dokument */
-  async function updateKontoField(data: Partial<Konto>) {
+  /** 
+   * Aktualisiert ausgewählte Felder des aktuellen Konto-Dokuments.
+   * 
+   * Es wird zunächst ein lokales Update durchgeführt und anschließend
+   * die Änderungen ebenfalls in der Datenbank übernommen.
+   * 
+   * @param {Partial<Konto>} data - Die zu aktualisierenden Felder
+   */
+  async function updateKontoData(data: Partial<Konto>) {
     if (!aktuellesKonto.value?.id) return;
 
     try {
-      // 1. Lokales UI-Update (Reaktiv)
+      // Lokales UI-Update
       Object.assign(aktuellesKonto.value, data);
 
-      // 2. Datenbank-Update über dein Repository
-      await updateKonto(aktuellesKonto.value); 
+      // Aktualisieren der DB
+      await updateKonto(aktuellesKonto.value.id, data); 
+
     } catch (error) {
       console.error("Fehler beim Aktualisieren des Kontos:", error);
-      // Hier könnte man einen Rollback machen, falls der Server-Call fehlschlägt
     }
-  }
-
-  /** Speziell für das Profilbild */
-  async function updateProfilbild(bildId: string) {
-    await updateKontoField({ profilbild_id: bildId });
   }
 
   // -----------------------
@@ -444,8 +472,7 @@ export const useAuthStore = defineStore("auth", () => {
     register,
     login,
     logout,
-    updateKontoField,
-    updateProfilbild,
+    updateKontoData,
     addSpracheZuKonto,
     removeSpracheVonKonto
   };

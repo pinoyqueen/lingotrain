@@ -18,11 +18,12 @@ const kontoCollection = collection(db, KONTO_COLLECTION);
 
 /**
  * Anlegen eines neues Konto-Document in der Collection der DB.
- * Die ID wird dabei übergeben und nicht neu gesetzt 
- * (damit es mit der User-ID des schon angelegten Nutzers verbunden ist).
- *
+ * 
+ * Die Dokument-ID entspricht der bereits existierenden Firebase-Auth-User-ID,
+ * um Auth-User und das Konto-Document eindeutig zu verknüpfen.
+ * 
  * @param {Konto} konto das neu zu erstellende Konto
- * @return {Promise<string>} die ID des erstellten Kontos
+ * @return {Promise<string>} die ID des erstellten Kontos (Dokument-ID)
  */
 export async function createKonto(konto: Konto): Promise<string> {
   const docRef = doc(kontoCollection, konto.id);
@@ -54,7 +55,7 @@ export async function createKonto(konto: Konto): Promise<string> {
  * @return {Promise<Konto | null>} das gefundene Konto mit der ID; null wenn kein Konto gefunden
  */
 export async function findKontoById(id: string): Promise<Konto | null> {
-  const snap = await getDoc(doc(db, KONTO_COLLECTION, id));
+  const snap = await getDoc(doc(kontoCollection, id));
   if (!snap.exists()) return null;
 
   return {
@@ -65,7 +66,7 @@ export async function findKontoById(id: string): Promise<Konto | null> {
 
 /**
  * Gibt das Konto mit dem gewünschten Username aus der Collection in Firestore zurück.
- *
+ * 
  * @param {string} username der Benutzername des zu suchenden Kontos
  * @return {Promise<Konto | null>} das gefundene Konto; null wenn kein Konto gefunden
  */
@@ -85,16 +86,23 @@ export async function findKontoByUsername(username: string): Promise<Konto | nul
   };
 }
 
-export async function updateKonto(konto: Konto) {
+/**
+ * Aktualisiert ausgewählte Profildaten eines Kontos.
+ *
+ * Es werden ausschließlich folgende Felder aktualisiert:
+ * - vorname
+ * - nachname
+ * - benutzername
+ * - profilbild_id
+ * 
+ * @param {string} id die ID des zu aktualisierenden Kontos
+ * @param {Partial<Konto>} data die aktualisierten Daten
+ * @returns {Promise<void>}
+ */
+export async function updateKonto(id: string, data: Partial<Konto>): Promise<void> {
   try {
-    const docRef = doc(kontoCollection, konto.id);
-
-    await updateDoc(docRef, {
-      vorname: konto.vorname,
-      nachname: konto.nachname,
-      benutzername: konto.benutzername,
-      profilbild_id: konto.profilbild_id
-    });
+    const docRef = doc(kontoCollection, id);
+    await updateDoc(docRef, data);
 
   } catch (error) {
     console.error("Fehler beim Aktualisieren des Kontos im Repository:", error);
@@ -102,6 +110,13 @@ export async function updateKonto(konto: Konto) {
   }
 }
 
+/**
+ * Aktualisiert die aktuell ausgewählte Sprache des Kontos in der Datenbank.
+ * 
+ * @param {string} id die ID des Kontos, bei dem die Sprache aktualisiert werden soll
+ * @param {string} aktuelleSpracheId die ID der neu zu setzenden, aktuellen Sprache
+ * @return {Promise<void>} 
+ */
 export async function editAktuelleSprache(id: string, aktuelleSpracheId: string): Promise<void> {
   try {
     const docRef = doc(kontoCollection, id);
@@ -116,7 +131,17 @@ export async function editAktuelleSprache(id: string, aktuelleSpracheId: string)
   }
 }
 
-export async function addSprache(id: string, spracheId: string) {
+/**
+ * Fügt einem Konto eine neue Sprache hinzu.
+ *
+ * Die Sprache wird per arrayUnion zur Liste hinzugefügt
+ * Gleichzeitig wird sie als aktuelle Sprache gesetzt
+ *
+ * @param {string} id - Konto-ID
+ * @param {string} spracheId - ID der hinzuzufügenden Sprache
+ * @returns {Promise<void>}
+ */
+export async function addSprache(id: string, spracheId: string): Promise<void> {
   try {
     const docRef = doc(kontoCollection, id);
 
@@ -131,7 +156,19 @@ export async function addSprache(id: string, spracheId: string) {
   }
 }
 
-export async function removeSprache(id: string, spracheId: string, neueAktiveSpracheId: string | null) {
+/**
+ * Entfernt eine Sprache aus dem Konto.
+ *
+ * Die Sprache wird per arrayRemove aus dem Array entfernt
+ * Die aktuell aktive Sprache wird entsprechend angepasst
+ *
+ * @param {string} id - Konto-ID
+ * @param {string} spracheId - Zu entfernende Sprache
+ * @param {string | null} neueAktiveSpracheId - Neue aktive Sprache oder null
+ * @returns {Promise<void>}
+ */
+
+export async function removeSprache(id: string, spracheId: string, neueAktiveSpracheId: string | null): Promise<void> {
   try {
     const docRef = doc(kontoCollection, id);
 
