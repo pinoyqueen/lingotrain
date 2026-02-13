@@ -132,14 +132,14 @@ export const useKontoStore = defineStore('konto', {
             if (!this.aktuellesKonto?.id) return;
 
             try {
-            // Lokales UI-Update
-            Object.assign(this.aktuellesKonto, data);
+                // Lokales UI-Update
+                Object.assign(this.aktuellesKonto, data);
 
-            // Aktualisieren der DB
-            await updateKonto(this.aktuellesKonto.id, data); 
+                // Aktualisieren der DB
+                await updateKonto(this.aktuellesKonto.id, data); 
 
             } catch (error) {
-            console.error("Fehler beim Aktualisieren des Kontos:", error);
+                console.error("Fehler beim Aktualisieren des Kontos:", error);
             }
         },
 

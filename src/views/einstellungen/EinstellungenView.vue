@@ -5,13 +5,15 @@ import { useAuthStore } from '@/stores/authStore'
 import { ChevronRight, Plus, Trash2, LogOut } from 'lucide-vue-next'
 
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { useSprachenStore } from '@/stores/sprachenStore'
 import { useKontoStore } from '@/stores/kontoStore'
+import { useProfilbilderStore } from '@/stores/profilbilderStore'
 
 const authStore = useAuthStore()
 const sprachenStore = useSprachenStore()
 const kontoStore = useKontoStore()
+const profilbilderStore = useProfilbilderStore()
 const router = useRouter()
 
 /** Ist der Dialog zum Auswählen eines Profilbilds geöffnet? */
@@ -20,9 +22,10 @@ const showImagePicker = ref(false)
 /** Ist der Dialog zum Auswählen einer Sprache geöffnet? */
 const showLanguagePicker = ref(false)
 
-// Beim Laden der Seite alle verfügbaren Sprachen laden
+// Beim Laden der Seite alle verfügbaren Sprachen und Profilbilder laden
 onMounted(async () => {
   await sprachenStore.loadVerfuegbareSprachen();
+  await profilbilderStore.loadVerfuegbareProfilbilder();
 })
 
 /**
@@ -34,6 +37,17 @@ const sprachenObjekte = computed(() => {
   
   return ids.map(id => sprachenStore.verfuegbareSprachen.find(s => s.id === id))
             .filter(Boolean);
+})
+
+const aktuellesProfilbild = computed(() => {
+  const id = kontoStore.aktuellesKonto?.profilbild_id
+  const bilder = profilbilderStore.verfuegbareProfilbilder
+  
+  // Wenn noch keine Bilder geladen sind oder keine ID da ist
+  if (!id || bilder.length === 0) return '/placeholder-user.png'
+  
+  const gefunden = bilder.find(p => p.id === id)
+  return gefunden?.bildlink || '/placeholder-user.png'
 })
 
 /**
@@ -70,9 +84,26 @@ const addLanguage = async (id: string) => {
  * @returns Array von Sprachobjekten, die verfügbar sind, um sie dem Konto hinzuzufügen
  */
 const verfuegbareSprachenZumHinzufuegen = computed(() => {
-  const bereitsGewählteIds = kontoStore.aktuellesKonto?.sprachenIds || [];
-  return sprachenStore.verfuegbareSprachen.filter(s => !bereitsGewählteIds.includes(s.id));
+  const bereitsGewaehlteIds = kontoStore.aktuellesKonto?.sprachenIds || [];
+  return sprachenStore.verfuegbareSprachen.filter(s => !bereitsGewaehlteIds.includes(s.id));
 })
+
+/**
+ * Wechseln des Profilbildes eines Kontos.
+ * 
+ * Hier wird die Methode des {@link kontoStore} aufgerufen, um ein Profilbild zu ändern und
+ * auf das neu ausgewählte zu setzen. Außerdem wird der Dialog wieder geschlossen, indem die
+ * verfügbaren Profilbilder angezeigt wurden.
+ * 
+ * @param id die ID des neu ausgewählten Profilbildes
+ */
+const changeProfilbild = async (id: string) => {
+  await kontoStore.updateKontoData({
+    profilbild_id: id
+  });
+
+  showImagePicker.value = false;
+}
 </script>
 
 <template>
@@ -82,7 +113,8 @@ const verfuegbareSprachenZumHinzufuegen = computed(() => {
     <div class="flex flex-col items-center gap-4">
       <div class="relative group">
         <img 
-          :src="kontoStore.aktuellesKonto?.profilbild_id" 
+          v-if="aktuellesProfilbild"
+          :src="aktuellesProfilbild" 
           class="w-32 h-32 rounded-full object-cover border-4 border-primary/10"
         />
       </div>
@@ -137,11 +169,12 @@ const verfuegbareSprachenZumHinzufuegen = computed(() => {
     <!-- Dialog zum Auswählen einer neuen Sprache, der sich beim Hinzufügen einer neuen Sprache öffnet -->
     <Dialog v-model:open="showLanguagePicker">
       <DialogContent class="sm:max-w-md max-h-[80vh] flex flex-col">
-          <DialogHeader>
+        <DialogHeader>
           <DialogTitle>Neue Sprache lernen</DialogTitle>
-          </DialogHeader>
+          <DialogDescription>Wähle eine neue Sprache aus der Liste.</DialogDescription>
+        </DialogHeader>
           
-          <div class="overflow-y-auto py-4 space-y-2">
+        <div class="overflow-y-auto py-4 space-y-2">
           <div 
               v-for="sprache in verfuegbareSprachenZumHinzufuegen" 
               :key="sprache.id"
@@ -158,7 +191,34 @@ const verfuegbareSprachenZumHinzufuegen = computed(() => {
           <p v-if="verfuegbareSprachenZumHinzufuegen.length === 0" class="text-center text-muted-foreground py-8">
               Du lernst bereits alle verfügbaren Sprachen!
           </p>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Dialog zum Auswählen einer neuen Sprache, der sich beim Hinzufügen einer neuen Sprache öffnet -->
+    <Dialog v-model:open="showImagePicker">
+      <DialogContent class="sm:max-w-md max-h-[80vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Profilbild auswählen</DialogTitle>
+          <DialogDescription>Wähle ein neues Profilbild aus der Liste.</DialogDescription>
+        </DialogHeader>
+          
+        <div class="overflow-y-auto py-4">
+          <div class="grid grid-cols-3 sm:grid-cols-4 gap-4">
+            <div 
+              v-for="profilbild in profilbilderStore.verfuegbareProfilbilder" 
+              :key="profilbild.id"
+              @click="changeProfilbild(profilbild.id)"
+              class="cursor-pointer group"
+            >
+              <img 
+                :src="profilbild.bildlink"
+                class="w-full aspect-square object-cover rounded-xl border-2 border-transparent group-hover:border-primary transition"
+              />
+            </div>
+
           </div>
+        </div>
       </DialogContent>
     </Dialog>
   </div>
