@@ -1,8 +1,10 @@
 import { defineStore } from "pinia";
 import { reactive, ref, watch } from "vue";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence } from "firebase/auth";
-import { createKonto, findKontoById, findKontoByUsername } from "@/repositories/KontoRepository"
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence, signOut } from "firebase/auth";
+import { addSprache, createKonto, findKontoById, findKontoByUsername, removeSprache, updateKonto } from "@/repositories/KontoRepository"
+import { findAllSprachen } from "@/repositories/SprachenRepository";
 import type { Konto } from "@/models/Konto";
+import router from "@/router";
 
 /**
  * Authentifizierungs-Store.
@@ -27,7 +29,8 @@ export const useAuthStore = defineStore("auth", () => {
     username: "",
     passwort: "",
     passwortConfirm: "",
-    sprache: ""
+    sprache: "",
+    profilbild_id: ""
   });
 
   /** Loginformular */
@@ -311,6 +314,109 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
+  async function logout() {
+    try {
+      await signOut(auth);
+      aktuellesKonto.value = null;
+      router.push({ name: 'login' });
+
+    } catch (error) {
+      console.error("Logout fehlgeschlagen", error);
+    }
+  }
+
+  // -----------------------
+  // Sprachen 
+  // -----------------------
+
+  const verfuegbareSprachen = ref<any[]>([]);
+  const sprachenLoading = ref(false);
+
+  /** 
+   * Lädt alle verfügbaren Sprachen aus der DB 
+   */
+  async function loadVerfuegbareSprachen() {
+
+    if (verfuegbareSprachen.value.length > 0) return;
+
+    sprachenLoading.value = true;
+    try {
+      verfuegbareSprachen.value = await findAllSprachen();
+    } catch (error) {
+      console.error("Fehler beim Laden der Sprachen:", error);
+    } finally {
+      sprachenLoading.value = false;
+    }
+  }
+
+  // -----------------------
+  // Sprachen-Management (User-Profil)
+  // -----------------------
+
+  /** Fügt eine Sprache zum Konto hinzu */
+  async function addSpracheZuKonto(spracheId: string) {
+    if (!aktuellesKonto.value || !aktuellesKonto.value.id) return;
+
+    await addSprache(aktuellesKonto.value.id, spracheId);
+
+    if (!aktuellesKonto.value.sprachenIds.includes(spracheId)) {
+      aktuellesKonto.value.sprachenIds.push(spracheId);
+      aktuellesKonto.value.aktuelleSpracheId = spracheId;
+    }
+  }
+
+  /** Entfernt eine Sprache aus dem Konto */
+  async function removeSpracheVonKonto(spracheId: string) {
+    if (!aktuellesKonto.value || !aktuellesKonto.value.id) return;
+
+    const neueListe = aktuellesKonto.value.sprachenIds.filter(id => id !== spracheId);
+    
+    let neueAktiveId : string | null;
+
+    if (aktuellesKonto.value.aktuelleSpracheId === spracheId) {
+      // Hier fangen wir das 'undefined' ab, das beim Zugriff auf [0] entstehen könnte
+      neueAktiveId = neueListe[0] ?? null; 
+    } else {
+      neueAktiveId = aktuellesKonto.value.aktuelleSpracheId ?? null;
+    }
+
+    try {
+      // 3. Datenbank-Update
+      await removeSprache(aktuellesKonto.value.id, spracheId, neueAktiveId);
+
+      // 4. Lokaler State-Update (Damit die UI sofort reagiert)
+      aktuellesKonto.value.sprachenIds = neueListe;
+      aktuellesKonto.value.aktuelleSpracheId = neueAktiveId;
+    } catch (error) {
+      console.error("Fehler beim Löschen im Store:", error);
+    }
+  }
+
+  // -----------------------
+  // Aktualisierungen der Daten 
+  // -----------------------
+
+  /** Aktualisiert ein beliebiges Feld im Konto-Dokument */
+  async function updateKontoField(data: Partial<Konto>) {
+    if (!aktuellesKonto.value?.id) return;
+
+    try {
+      // 1. Lokales UI-Update (Reaktiv)
+      Object.assign(aktuellesKonto.value, data);
+
+      // 2. Datenbank-Update über dein Repository
+      await updateKonto(aktuellesKonto.value); 
+    } catch (error) {
+      console.error("Fehler beim Aktualisieren des Kontos:", error);
+      // Hier könnte man einen Rollback machen, falls der Server-Call fehlschlägt
+    }
+  }
+
+  /** Speziell für das Profilbild */
+  async function updateProfilbild(bildId: string) {
+    await updateKontoField({ profilbild_id: bildId });
+  }
+
   // -----------------------
   // Watches
   // -----------------------
@@ -332,7 +438,15 @@ export const useAuthStore = defineStore("auth", () => {
     registerErrors,
     aktuellesKonto,
     authReady,
+    verfuegbareSprachen,
+    sprachenLoading,
+    loadVerfuegbareSprachen,
     register,
-    login
+    login,
+    logout,
+    updateKontoField,
+    updateProfilbild,
+    addSpracheZuKonto,
+    removeSpracheVonKonto
   };
 });

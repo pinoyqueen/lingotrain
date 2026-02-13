@@ -1,102 +1,133 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { useAuthStore } from './authStore'
+import { editAktuelleSprache } from '@/repositories/KontoRepository'
+import { findAllLernsets } from '@/repositories/LernsetRepository'
+import { getSprachenByIds, getSpracheById } from '@/repositories/SprachenRepository'
 
-// Importiere deine Services (entsprechend deiner Web-Struktur)
-// import { kontoService } from '@/services/kontoService'
-// import { sprachenService } from '@/services/sprachenService'
+// Konstante wie in Java
+const PUNKTE_PRO_LEVEL = 1000;
 
-export const useHomeStore = defineStore('home', () => {
-  // --- State (entspricht MutableLiveData) ---
-  const name = ref('')
-  const punkte = ref(0)
-  const flammen = ref(0)
-  const alleLernsets = ref<any[]>([])
-  const aktuelleSpracheId = ref<string | null>(null)
-  const ausgewaehlteSprachen = ref<any[]>([])
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+export const useHomeStore = defineStore('home', {
+  state: () => ({
+    alleLernsets: [] as any[],
+    ausgewaehlteSprachen: [] as any[],
+    aktuelleSprache: null as any | null,
+    loading: false,
+    error: "" as string
+  }),
 
-  // --- Getters (entspricht Transformations.map) ---
-  
-  // Berechnet das Level basierend auf Punkten (Logik aus LevelCalculator)
-  const level = computed(() => {
-    return Math.floor(punkte.value / 1000) + 1 // Beispiel-Logik
-  })
+  getters: {
+    authStore: () => useAuthStore(),
+    
+    punkte(): number {
+      return this.authStore.aktuellesKonto?.punkte || 0;
+    },
 
-  // Fortschritt im aktuellen Level in Prozent
-  const progress = computed(() => {
-    return (punkte.value % 1000) / 10 // Beispiel: 1000 XP pro Level
-  })
+    // --- Entspricht LevelCalculator.java ---
 
-  const punkteBisNaechstesLevel = computed(() => {
-    return 1000 - (punkte.value % 1000)
-  })
+    level(): number {
+      // calculateLevel: (punkte / 1000) + 1
+      return Math.floor(this.punkte / PUNKTE_PRO_LEVEL) + 1;
+    },
 
-  // Die ersten 3 Lernsets als Shortcuts
-  const shortcuts = computed(() => {
-    return alleLernsets.value.slice(0, 3)
-  })
+    punkteImAktuellenLevel(): number {
+      // punkte % 1000
+      return this.punkte % PUNKTE_PRO_LEVEL;
+    },
 
-  // Das Objekt der aktuellen Sprache finden
-  const aktuelleSprache = computed(() => {
-    return ausgewaehlteSprachen.value.find(s => s.id === aktuelleSpracheId.value) || null
-  })
+    progress(): number {
+      // progressImAktuellenLevel: (punkteImLevel * 100) / 1000
+      return (this.punkteImAktuellenLevel * 100) / PUNKTE_PRO_LEVEL;
+    },
 
-  // --- Actions (entspricht den Methoden im ViewModel) ---
+    punkteBisNaechstesLevel(): number {
+      // punkteBisNaechstesLevel: 1000 - punkteImLevel
+      return PUNKTE_PRO_LEVEL - this.punkteImAktuellenLevel;
+    },
 
-  async function loadHomeValues() {
-    loading.value = true
-    try {
-      // Hier würdest du deinen API-Call/Firebase-Service aufrufen
-      // const konto = await kontoService.getAktuellesKonto()
-      
-      // Mock-Daten zur Veranschaulichung:
-      name.value = "Max Mustermann"
-      punkte.value = 2450
-      flammen.value = 7
-      aktuelleSpracheId.value = "1"
-      
-      await Promise.all([
-        loadLernsets(),
-        loadSprachen()
-      ])
-    } catch (e: any) {
-      error.value = "Fehler beim Laden der Daten"
-    } finally {
-      loading.value = false
+    // --- Restliche Dashboard Getters ---
+
+    name(): string {
+      const k = this.authStore.aktuellesKonto;
+      return k ? `${k.vorname} ${k.nachname}` : '';
+    },
+    flammen(): number {
+      return this.authStore.aktuellesKonto?.anzTage || 0;
+    },
+    shortcuts(): any[] {
+      return this.alleLernsets.slice(0, 3);
     }
-  }
+  },
 
-  async function loadLernsets() {
-    // alleLernsets.value = await kontoService.getLernsets()
-    alleLernsets.value = [
-      { id: '1', name: 'Grundlagen I' },
-      { id: '2', name: 'Essen & Trinken' },
-      { id: '3', name: 'Reisen' },
-      { id: '4', name: 'Tiere' }
-    ]
-  }
+  actions: {
+    async loadHomeValues() {
+      const konto = this.authStore.aktuellesKonto;
 
-  async function loadSprachen() {
-    // Hier würdest du die verfügbaren Sprachen des Nutzers laden
-    ausgewaehlteSprachen.value = [
-      { id: '1', name: 'Französisch', flagge: 'https://...' },
-      { id: '2', name: 'Englisch', flagge: 'https://...' }
-    ]
-  }
+      if (!konto || !konto.id) {
+        this.error = "Benutzerdaten unvollständig!";
+        return;
+      }
 
-  async function aktuelleSpracheAendern(newId: string) {
-    try {
-      // await kontoService.updateAktuelleSprache(newId)
-      aktuelleSpracheId.value = newId
-    } catch (e) {
-      error.value = "Sprache konnte nicht geändert werden"
+      this.loading = true;
+      try {
+        
+        // Wir bereiten die Promises vor
+        const lernsetsPromise = findAllLernsets(konto.id);
+        const sprachenPromise = getSprachenByIds(konto.sprachenIds);
+        
+        // Nur laden, wenn die ID nicht null/leer ist, sonst sofort null zurückgeben
+        const aktuellePromise = konto.aktuelleSpracheId 
+          ? getSpracheById(konto.aktuelleSpracheId) 
+          : Promise.resolve(null);
+
+        const [sets, sprachen, aktuelle] = await Promise.all([
+          lernsetsPromise,
+          sprachenPromise,
+          aktuellePromise
+        ]);
+
+        this.alleLernsets = sets;
+        this.ausgewaehlteSprachen = sprachen;
+        this.aktuelleSprache = aktuelle;
+      } catch (e: any) {
+        this.error = "Fehler beim Laden";
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async updateSprache(neueSpracheId: string | null) {
+      const konto = this.authStore.aktuellesKonto;
+      if (!konto || !konto.id || neueSpracheId === null) return;
+
+      // Speicher den alten Wert für den Notfall (Rollback)
+      const alteSpracheId = konto.aktuelleSpracheId;
+
+      try {
+        // SCHRITT 1: Sofortiges UI Update (Optimistisch)
+        konto.aktuelleSpracheId = neueSpracheId;
+        const gefunden = this.ausgewaehlteSprachen.find(s => String(s.id) === String(neueSpracheId));
+        if (gefunden) {
+          this.aktuelleSprache = { ...gefunden };
+        }
+
+        // SCHRITT 2: Datenbank im Hintergrund (await sorgt dafür, dass wir auf Fehler prüfen können)
+        this.loading = true;
+        await editAktuelleSprache(konto.id, neueSpracheId);
+
+        // SCHRITT 3: Lernsets laden (hängt von der neuen Sprache ab)
+        this.alleLernsets = await findAllLernsets(konto.id);
+
+      } catch (e) {
+        console.error("DB Update fehlgeschlagen:", e);
+        this.error = "Sprachwechsel konnte nicht gespeichert werden.";
+        
+        // ROLLBACK: Wenn DB fehlschlägt, setz die UI zurück
+        konto.aktuelleSpracheId = alteSpracheId;
+        this.aktuelleSprache = this.ausgewaehlteSprachen.find(s => String(s.id) === String(alteSpracheId));
+      } finally {
+        this.loading = false;
+      }
     }
-  }
-
-  return {
-    name, punkte, flammen, alleLernsets, aktuelleSpracheId, ausgewaehlteSprachen,
-    level, progress, punkteBisNaechstesLevel, shortcuts, aktuelleSprache,
-    loadHomeValues, aktuelleSpracheAendern
   }
 })

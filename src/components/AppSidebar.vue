@@ -11,8 +11,7 @@ import {
   SidebarContent,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarTrigger
+  SidebarMenuItem
 } from '@/components/ui/sidebar'
 import SidebarHeader from './ui/sidebar/SidebarHeader.vue';
 
@@ -87,7 +86,6 @@ function isActive(name: string) {
       </SidebarMenu>
     </SidebarContent>
   </Sidebar>
-  <SidebarTrigger />
 </template>
 
 <style scoped>

@@ -4,6 +4,7 @@ import LoginView from '@/views/auth/LoginView.vue'
 import RegisterView from '@/views/auth/RegisterView.vue'
 import HomeView from '@/views/home/Home.vue'
 import ProfileView from '@/views/profil/Profil.vue'
+import EinstellungenView from '@/views/einstellungen/EinstellungenView.vue'
 import LernsetListeView from '@/views/meinevokabeln/LernsetListe.vue'
 import CommunityView from '@/views/community/Community.vue'
 import VokabelnListeView from '@/views/meinevokabeln/VokabelnListe.vue'
@@ -57,7 +58,7 @@ const routes = [
   {
     path: '/settings',
     name: 'settings',
-    component: CommunityView, //TODO: ANPASSEN
+    component: EinstellungenView
   },
 ]
 

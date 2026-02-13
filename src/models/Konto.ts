@@ -23,7 +23,7 @@ export interface Konto {
   email: string;
 
   /** ID des Profilbildes, welches der User auswählt */
-  profilbild_id?: string;     
+  profilbild_id: string;     
   
   /** Gibt an, ob Benachrichtigungen aktiviert sind */
   benachrichtigung: boolean;   
@@ -35,7 +35,7 @@ export interface Konto {
   punkte: number;        
   
   /** ID der aktuell ausgewählten Lernsprache */
-  aktuelleSpracheId: string;
+  aktuelleSpracheId: string | null;
 
   /** IDs aller vom User belegten Sprachen */
   sprachenIds: string[];
