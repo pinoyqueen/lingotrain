@@ -16,7 +16,7 @@ const sprachenCollection = collection(db, COLLECTION_NAME);
 /**
  * Gibt alle Sprachen aus der Collection in Firestore zurück.
  * 
- * @return {Promise<Sprachen>} die gefundenen Sprachen
+ * @return {Promise<Sprachen[]>} die gefundenen Sprachen
  */
 export async function findAllSprachen(): Promise<Sprachen[]> {
   const snapshot = await getDocs(sprachenCollection);
