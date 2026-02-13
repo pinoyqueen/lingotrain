@@ -31,6 +31,8 @@ onMounted(async () => {
 /**
  * Zu den IDs der ausgewählten Sprachen eines Kontos, wird
  * das gesamte Objekt mit Name und Flagge geladen.
+ * 
+ * @returns die Sprachen-Objekte
  */
 const sprachenObjekte = computed(() => {
   const ids = kontoStore.aktuellesKonto?.sprachenIds || [];
@@ -39,15 +41,19 @@ const sprachenObjekte = computed(() => {
             .filter(Boolean);
 })
 
+/**
+ * Zu der ID des Profilbildes eines Kontos, wird
+ * das gesamte Objekt mit dem Link zum Bild geladen.
+ * 
+ * @returns das Objekt des Profilbildes oder null
+ */
 const aktuellesProfilbild = computed(() => {
-  const id = kontoStore.aktuellesKonto?.profilbild_id
-  const bilder = profilbilderStore.verfuegbareProfilbilder
-  
-  // Wenn noch keine Bilder geladen sind oder keine ID da ist
-  if (!id || bilder.length === 0) return '/placeholder-user.png'
-  
+  const id = kontoStore.aktuellesKonto?.profilbild_id;
+  if(!id) return null;
+
+  const bilder = profilbilderStore.verfuegbareProfilbilder;
   const gefunden = bilder.find(p => p.id === id)
-  return gefunden?.bildlink || '/placeholder-user.png'
+  return gefunden?.bildlink || null;
 })
 
 /**
@@ -115,7 +121,7 @@ const changeProfilbild = async (id: string) => {
         <img 
           v-if="aktuellesProfilbild"
           :src="aktuellesProfilbild" 
-          class="w-32 h-32 rounded-full object-cover border-4 border-primary/10"
+          class="w-32 h-32 p-0.5 rounded-full object-cover border-4 border-primary/10"
         />
       </div>
       <Button variant="ghost" @click="showImagePicker = true">

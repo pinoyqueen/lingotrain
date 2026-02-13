@@ -12,13 +12,18 @@ import {
   SelectContent,
   SelectItem
 } from '@/components/ui/select'
+import { useSprachenStore } from '@/stores/sprachenStore'
+import { useProfilbilderStore } from '@/stores/profilbilderStore'
 
 const router = useRouter()
+const sprachenStore = useSprachenStore()
+const profilbilderStore = useProfilbilderStore()
 const auth = useAuthStore()
 
-// Beim Laden der Seite Sprachen aus der DB holen
+// Beim Laden der Seite Sprachen und Profilbilder aus der DB holen
 onMounted(async () => {
-  await auth.loadVerfuegbareSprachen()
+  await sprachenStore.loadVerfuegbareSprachen();
+  await profilbilderStore.loadVerfuegbareProfilbilder();
 })
 
 /**
@@ -46,7 +51,7 @@ function inputClass(error: string | null) {
  * zu können (für die Darstellung).
  */
 const getSelectedSprache = () => {
-  return auth.verfuegbareSprachen.find(s => s.id === auth.registerForm.sprache);
+  return sprachenStore.verfuegbareSprachen.find(s => s.id === auth.registerForm.sprache);
 }
 
 /**
@@ -84,7 +89,7 @@ async function onRegister() {
             </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem v-for="s in auth.verfuegbareSprachen" :key="s.id" :value="s.id">
+            <SelectItem v-for="s in sprachenStore.verfuegbareSprachen" :key="s.id" :value="s.id">
               <div class="flex items-center gap-5">
                 <img :src="s.flagge || s.flag" class="h-5 w-auto" />
                 {{ s.sprache }}

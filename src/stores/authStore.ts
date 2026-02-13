@@ -4,6 +4,7 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, se
 import { createKonto, findKontoById, findKontoByUsername } from "@/repositories/KontoRepository"
 import type { Konto } from "@/models/Konto";
 import router from "@/router";
+import { useProfilbilderStore } from "./profilbilderStore";
 
 /**
  * Authentifizierungs-Store.
@@ -15,6 +16,8 @@ import router from "@/router";
  */
 export const useAuthStore = defineStore("auth", () => {
   const auth = getAuth();
+
+  const profilbilderStore = useProfilbilderStore();
 
   // -----------------------
   // Formulare
@@ -238,6 +241,10 @@ export const useAuthStore = defineStore("auth", () => {
         return false;
       }
 
+      // Zufälliges Profilbild bei Registrierung auswählen
+      const bilder = profilbilderStore.verfuegbareProfilbilder;
+      const zufallsId = bilder[Math.floor(Math.random() * bilder.length)].id;
+
       // Konto-Objekt erstellen
       const konto: Konto = {
         id: user.uid,
@@ -248,7 +255,7 @@ export const useAuthStore = defineStore("auth", () => {
         anzTage: 0,
         punkte: 0,
         benachrichtigung: false,
-        profilbild_id: "",
+        profilbild_id: zufallsId,
         sprachenIds: [registerForm.sprache],
         aktuelleSpracheId: registerForm.sprache,
         lernsets: [],
