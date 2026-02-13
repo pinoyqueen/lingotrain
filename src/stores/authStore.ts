@@ -1,8 +1,7 @@
 import { defineStore } from "pinia";
 import { reactive, ref, watch } from "vue";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence, signOut } from "firebase/auth";
-import { addSprache, createKonto, findKontoById, findKontoByUsername, removeSprache, updateKonto } from "@/repositories/KontoRepository"
-import { findAllSprachen } from "@/repositories/SprachenRepository";
+import { createKonto, findKontoById, findKontoByUsername } from "@/repositories/KontoRepository"
 import type { Konto } from "@/models/Konto";
 import router from "@/router";
 
@@ -332,120 +331,6 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   // -----------------------
-  // Sprachen 
-  // -----------------------
-
-  const verfuegbareSprachen = ref<any[]>([]);
-  const sprachenLoading = ref(false);
-
-  /** 
-   * Lädt alle verfügbaren Sprachen aus der DB.
-   * 
-   * Hier werden alle Sprachen aus der DB geladen, die der Nutzer auswählen kann.
-   */
-  async function loadVerfuegbareSprachen() {
-
-    if (verfuegbareSprachen.value.length > 0) return;
-
-    sprachenLoading.value = true;
-    try {
-      verfuegbareSprachen.value = await findAllSprachen();
-    } catch (error) {
-      console.error("Fehler beim Laden der Sprachen:", error);
-    } finally {
-      sprachenLoading.value = false;
-    }
-  }
-
-  /** 
-   * Fügt eine Sprache zum Konto hinzu.
-   * 
-   * Hier wird eine neue Sprache zum Konto des aktuell eingeloggten Nutzers
-   * hinzugefügt. Dies wird lokal aber auch in der DB aktualisiert.
-   * Außerdem wird die aktuelle Sprache, die der Nutzer zum Lernen ausgewählt hat,
-   * auf die neu hinzugefügte Sprache gesetzt.
-   * 
-   * @param {string} spracheId die ID der Sprache, die hinzugefügt werden soll
-   */
-  async function addSpracheZuKonto(spracheId: string) {
-    if (!aktuellesKonto.value || !aktuellesKonto.value.id) return;
-
-    // Aktualisieren der Sprache in der DB
-    await addSprache(aktuellesKonto.value.id, spracheId);
-
-    // Auch lokal die Sprache aktualisieren
-    if (!aktuellesKonto.value.sprachenIds.includes(spracheId)) {
-      aktuellesKonto.value.sprachenIds.push(spracheId);
-      aktuellesKonto.value.aktuelleSpracheId = spracheId;
-    }
-  }
-
-  /** 
-   * Entfernt eine Sprache aus dem Konto.
-   * 
-   * Hier wird eine Sprache aus dem Konto des aktuell eingeloggten Nutzers
-   * entfernt. Dies wird lokal aber auch in der DB aktualisiert.
-   * 
-   * Sollte die zu entfernende Sprache auch die aktuelle Sprache sein, dann 
-   * wird die aktuelle Sprache auf die erste im Array der ausgewählten Sprachen
-   * gesetzt. Ist keine vorhanden, wird {@code null} gesetzt.
-   * 
-   * @param {string} spracheId die ID der Sprache, die entfernt werden soll
-   */
-  async function removeSpracheVonKonto(spracheId: string) {
-    if (!aktuellesKonto.value || !aktuellesKonto.value.id) return;
-
-    const neueListe = aktuellesKonto.value.sprachenIds.filter(id => id !== spracheId);
-    let neueAktiveId : string | null;
-
-    // wenn die zu entfernende Sprache die aktuelle ist, wird die aktuelle Sprache neu gesetzt
-    if (aktuellesKonto.value.aktuelleSpracheId === spracheId) {
-      neueAktiveId = neueListe[0] ?? null; 
-    } else {
-      neueAktiveId = aktuellesKonto.value.aktuelleSpracheId;
-    }
-
-    try {
-      // Aktualisieren der DB
-      await removeSprache(aktuellesKonto.value.id, spracheId, neueAktiveId);
-
-      // Lokal aktualisieren
-      aktuellesKonto.value.sprachenIds = neueListe;
-      aktuellesKonto.value.aktuelleSpracheId = neueAktiveId;
-
-    } catch (error) {
-      console.error("Fehler beim Löschen im Store:", error);
-    }
-  }
-
-  // -----------------------
-  // Aktualisierungen der Daten 
-  // -----------------------
-
-  /** 
-   * Aktualisiert ausgewählte Felder des aktuellen Konto-Dokuments.
-   * 
-   * Es wird zunächst ein lokales Update durchgeführt und anschließend
-   * die Änderungen ebenfalls in der Datenbank übernommen.
-   * 
-   * @param {Partial<Konto>} data - Die zu aktualisierenden Felder
-   */
-  async function updateKontoData(data: Partial<Konto>) {
-    if (!aktuellesKonto.value?.id) return;
-
-    try {
-      // Lokales UI-Update
-      Object.assign(aktuellesKonto.value, data);
-
-      // Aktualisieren der DB
-      await updateKonto(aktuellesKonto.value.id, data); 
-
-    } catch (error) {
-      console.error("Fehler beim Aktualisieren des Kontos:", error);
-    }
-  }
-
-  // -----------------------
   // Watches
   // -----------------------
 
@@ -466,14 +351,8 @@ export const useAuthStore = defineStore("auth", () => {
     registerErrors,
     aktuellesKonto,
     authReady,
-    verfuegbareSprachen,
-    sprachenLoading,
-    loadVerfuegbareSprachen,
     register,
     login,
-    logout,
-    updateKontoData,
-    addSpracheZuKonto,
-    removeSpracheVonKonto
+    logout
   };
 });

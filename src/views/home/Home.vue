@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Flame, Trophy } from 'lucide-vue-next'
-import { useHomeStore } from '@/stores/homeStore'
 
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -15,12 +14,41 @@ import {
   SelectItem
 } from '@/components/ui/select'
 
-const router = useRouter()
-const homeStore = useHomeStore()
+import { useKontoStore } from '@/stores/kontoStore'
+import { useLernsetStore } from '@/stores/lernsetStore'
+import { LevelCalculator } from '@/models/LevelCalculator'
 
-// Beim Laden der Seite alle nötigen Werte aus der DB laden
+const router = useRouter()
+const kontoStore = useKontoStore()
+const lernsetStore = useLernsetStore()
+const calculator = new LevelCalculator()
+
+// Beim Laden der Seite alle nötigen Werte laden
 onMounted(async () => {
-  await homeStore.loadHomeValues()
+
+  // Konto und Sprachen laden
+  await kontoStore.loadKontoValues();
+
+  // Lernsets für aktuelles Konto + aktuelle Sprache laden
+  if (kontoStore.aktuellesKonto?.id) {
+    await lernsetStore.loadMySets(kontoStore.aktuellesKonto.id);
+  }
+})
+
+// --- Computeds für Level / Punkte ---
+const punkte = computed(() => kontoStore.aktuellesKonto?.punkte || 0);
+const level = computed(() => calculator.level(punkte.value));
+const progress = computed(() => calculator.progress(punkte.value));
+const punkteBisNaechstesLevel = computed(() => calculator.punkteBisNaechstesLevel(punkte.value));
+
+/** 
+ * Lernset-Shortcuts (nur für die aktuelle Sprache) erstellen
+ */ 
+const shortcuts = computed(() => {
+  if (!kontoStore.aktuelleSprache) return []
+  return lernsetStore.sets
+    .filter(l => l.zielspracheId === kontoStore.aktuelleSprache.id)
+    .slice(0, 3);
 })
 
 /**
@@ -53,7 +81,7 @@ function navigateToLernset(id: string, name: string) {
       
       <!-- Ausgabe der Begrüßung mit dem Namen -->
       <h1 class="text-4xl text-primary font-bold tracking-tight leading-tight">
-        Hallo, {{ homeStore.name }}!
+        Hallo, {{ kontoStore.aktuellesKonto?.vorname }} {{ kontoStore.aktuellesKonto?.nachname }}!
       </h1>
 
       <!-- Auswahl der aktuellen Sprache aus allen Sprachen, die der Nutzer seinem Konto hinzugefügt hat -->
@@ -61,15 +89,15 @@ function navigateToLernset(id: string, name: string) {
         <Label class="mb-1.5 px-1 text-xs font-bold text-muted-foreground uppercase">Lernsprache</Label>
         
         <Select 
-          :model-value="homeStore.authStore.aktuellesKonto?.aktuelleSpracheId" 
-          :disabled="!homeStore.aktuelleSprache || homeStore.ausgewaehlteSprachen.length === 0"
-          @update:model-value="(val) => homeStore.updateSprache(String(val))"
+          :model-value="kontoStore.aktuellesKonto?.aktuelleSpracheId" 
+          :disabled="!kontoStore.aktuelleSprache || kontoStore.ausgewaehlteSprachen.length === 0"
+          @update:model-value="(val) => kontoStore.updateAktuelleSprache(String(val))"
         >
           <SelectTrigger class="w-full bg-background border-2 shadow-sm">
             <div class="flex items-center gap-4">
-                <template v-if="homeStore.aktuelleSprache">
-                  <img :src="homeStore.aktuelleSprache.flagge" class="h-4 w-auto" />
-                  <span class="font-medium">{{ homeStore.aktuelleSprache.sprache }}</span>
+                <template v-if="kontoStore.aktuelleSprache">
+                  <img :src="kontoStore.aktuelleSprache.flagge" class="h-4 w-auto" />
+                  <span class="font-medium">{{ kontoStore.aktuelleSprache.sprache }}</span>
                 </template>
                 <span v-else>Wähle eine Sprache</span>
             </div>
@@ -77,7 +105,7 @@ function navigateToLernset(id: string, name: string) {
 
           <SelectContent>
             <SelectItem 
-              v-for="s in homeStore.ausgewaehlteSprachen" 
+              v-for="s in kontoStore.ausgewaehlteSprachen" 
               :key="s.id" 
               :value="s.id"
             >
@@ -99,7 +127,7 @@ function navigateToLernset(id: string, name: string) {
           <span class="text-xs font-bold uppercase text-secondary-foreground/70">Aktuelles Level</span>
           <div class="flex items-center gap-2">
             <Trophy class="w-6 h-6 text-secondary-foreground" />
-            <span class="text-2xl font-black text-secondary-foreground">Level {{ homeStore.level }}</span>
+            <span class="text-2xl font-black text-secondary-foreground">Level {{ level }}</span>
           </div>
         </div>
 
@@ -108,7 +136,7 @@ function navigateToLernset(id: string, name: string) {
         <div class="flex flex-col items-center gap-1">
           <span class="text-xs font-bold uppercase text-secondary-foreground/70">Lernserie</span>
           <div class="flex items-center gap-2">
-            <span class="text-2xl font-black text-secondary-foreground">{{ homeStore.flammen }} </span>
+            <span class="text-2xl font-black text-secondary-foreground">{{ kontoStore.aktuellesKonto?.anzTage }} </span>
             <Flame class="w-6 h-6 text-secondary-foreground fill-secondary-foreground" />
           </div>
         </div>
@@ -123,7 +151,7 @@ function navigateToLernset(id: string, name: string) {
         <Card class="h-full border-2 shadow-sm bg-primary-variant">
           <CardContent class="py-4 flex flex-col h-full space-y-8">
             <div class="flex-grow flex flex-col items-center justify-center py-12 bg-white rounded-2xl">
-              <span class="text-7xl font-black text-surface-foreground/90">{{ homeStore.punkte }}</span>
+              <span class="text-7xl font-black text-surface-foreground/90">{{ punkte }}</span>
               <span class="text-sm font-bold text-surface-foreground/50 uppercase tracking-widest mt-2">
                 Gesamtpunkte
               </span>
@@ -135,9 +163,9 @@ function navigateToLernset(id: string, name: string) {
                   <span class="text-sm font-bold text-primary-foreground">Fortschritt</span>
                   <span class="text-xs text-primary-foreground">Bis zum nächsten Level</span>
                 </div>
-                <span class="font-bold text-primary-foreground">Noch {{ homeStore.punkteBisNaechstesLevel }} XP</span>
+                <span class="font-bold text-primary-foreground">Noch {{ punkteBisNaechstesLevel }} XP</span>
               </div>
-              <Progress :model-value="homeStore.progress" class="h-4 bg-primary-foreground/30" style="--primary: white;" />
+              <Progress :model-value="progress" class="h-4 bg-primary-foreground/30" style="--primary: white;" />
             </div>
           </CardContent>
         </Card>
@@ -150,15 +178,15 @@ function navigateToLernset(id: string, name: string) {
         </h2>
         
         <div 
-          v-if="homeStore.shortcuts.length > 0" 
+          v-if="shortcuts.length > 0" 
           class="flex flex-col gap-4 flex-grow"
         >
           <Button 
-            v-for="set in homeStore.shortcuts" 
+            v-for="set in shortcuts" 
             :key="set.id"
             variant="secondary"
             class="flex-grow max-h-[200px] min-h-[100px] text-xl font-bold justify-center px-8 border-2 shadow-sm whitespace-normal text-center"
-            @click="navigateToLernset(set.id, set.name)"
+            @click="navigateToLernset(set.id!, set.name)"
           >
             {{ set.name }}
           </Button>
