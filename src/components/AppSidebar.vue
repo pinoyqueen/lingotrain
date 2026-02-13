@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import ProfileIcon from '@/assets/icons/ProfileIcon.vue'
 import MeineVokabelnIcon from '@/assets/icons/MeineVokabelnIcon.vue';
 import CommnityIcon from '@/assets/icons/CommnityIcon.vue';
+import LernsetListe from '@/views/meinevokabeln/LernsetListe.vue';
 
 import {
   Sidebar,
@@ -14,7 +15,6 @@ import {
   SidebarTrigger
 } from '@/components/ui/sidebar'
 import SidebarHeader from './ui/sidebar/SidebarHeader.vue';
-import SidebarProvider from './ui/sidebar/SidebarProvider.vue';
 
 const route = useRoute()
 
@@ -46,6 +46,20 @@ const items = [
     icon: Settings,
   }
 ]
+
+function isActive(name: string) {
+  const current = route.name as string
+
+  // Gruppe: Meine Vokabeln Bereich
+  const meineVokabelnRoutes = ['meinevokabeln', 'lernset']
+
+  if (name === 'meinevokabeln') {
+    return meineVokabelnRoutes.includes(current)
+  }
+
+  return current === name
+}
+
 </script>
 
 <template>
@@ -62,7 +76,7 @@ const items = [
               :to="{ name: item.name }"
               class="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-100"
               :class="{
-                  'bg-gray-200 font-semibold text-black': route.name === item.name
+                  'bg-gray-200 font-semibold text-black': isActive(item.name)
                 }"
             >
               <component :is="item.icon" class="w-5 h-5" />
