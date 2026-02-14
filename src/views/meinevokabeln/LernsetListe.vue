@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, reactive } from 'vue'
 import { useLernsetStore } from '@/stores/lernsetStore'
+import { useKontoStore } from '@/stores/kontoStore'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -22,13 +23,16 @@ import { Toaster } from '@/components/ui/sonner'
 import { slugify } from '@/utils/slugify'
 
 // TODO: mit aktuellesKontoID erstezen
-const kontoId = 'IpPbkgnEfSMKhQq8mA6tB3dxaLe2';
+const kontoStore = useKontoStore();
+const kontoId = kontoStore.aktuellesKonto?.id;
+const aktuelleSprache = kontoStore.aktuelleSprache.id;
 // Store/ViewModel holen
 const lernsetStore = useLernsetStore();
 
 // entspricht onViewCreated() im Fragment
 onMounted(() => {
-  lernsetStore.loadMySets(kontoId);
+  if (!kontoId) return;
+  lernsetStore.loadMySets(kontoId, aktuelleSprache);
 });
 
 // UI States
@@ -93,16 +97,20 @@ function deleteLernset(item: Lernset) : void {
 
 // Methode zum Speichern neues Lernsets
 async function saveLernset() {
+  if (!kontoId) {
+    console.error("Kein Konto geladen");
+    return;
+  }
+
   if (!selectedSet.value) {
     // Neues Set anlegen
-    // TODO: zielspracheid setzen
     await lernsetStore.addSet({
       name: form.name,
       beschreibung: form.beschreibung,
       isPublic: form.isPublic,
       ownerId: kontoId,
-      zielspracheId: '',
-    })
+      zielspracheId: aktuelleSprache,
+    }, aktuelleSprache)
   } else {
     // Bestehendes Set bearbeiten
     await lernsetStore.editSet({
@@ -110,7 +118,7 @@ async function saveLernset() {
       name: form.name,
       beschreibung: form.beschreibung,
       isPublic: form.isPublic,
-    })
+    }, aktuelleSprache)
   }
 
   toast.success('Lernset gespeichert!')

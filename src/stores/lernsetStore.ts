@@ -11,11 +11,11 @@ export const useLernsetStore = defineStore('lernset', {
 
   actions: {
     // Lädt alle Lernsets des aktuellen Benutzers
-    async loadMySets(kontoId: string) {
+    async loadMySets(kontoId: string, aktuelleSprache: string) {
       this.loading = true
       this.fehler = "";
       try {
-        this.sets = await findAllLernsets(kontoId)
+        this.sets = await findAllLernsets(kontoId, aktuelleSprache)
       } catch (e: any) {
         this.fehler = "Fehler beim Laden der Lernsets: " + e.message
       } finally {
@@ -24,21 +24,21 @@ export const useLernsetStore = defineStore('lernset', {
     },
 
     // Neues Lernset hinzufügen
-    async addSet(set: Lernset) {
+    async addSet(set: Lernset, aktuelleSprache: string) {
       this.loading = true
       // Neue Set in DB speichern
       await createLernset(set)
       // Liste neu laden
-      this.sets = await findAllLernsets(set.ownerId)
+      this.sets = await findAllLernsets(set.ownerId, aktuelleSprache)
       this.loading = false
     }, 
 
     // bestehendes Lernset bearbeiten
-    async editSet(set: Lernset) {
+    async editSet(set: Lernset, aktuelleSprache: string) {
       if (!set.id) throw new Error('ID fehlt zum Bearbeiten!')
       await editLernset(set.ownerId, set)
       // Liste neu laden
-      this.sets = await findAllLernsets(set.ownerId)
+      this.sets = await findAllLernsets(set.ownerId, aktuelleSprache)
     },
 
     // Vokabel löschen

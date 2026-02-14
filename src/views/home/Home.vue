@@ -31,7 +31,7 @@ onMounted(async () => {
 
   // Lernsets für aktuelles Konto + aktuelle Sprache laden
   if (kontoStore.aktuellesKonto?.id) {
-    await lernsetStore.loadMySets(kontoStore.aktuellesKonto.id);
+    await lernsetStore.loadMySets(kontoStore.aktuellesKonto.id, kontoStore.aktuelleSprache);
   }
 })
 

@@ -57,9 +57,14 @@ export async function deleteLernset(
    FIND ALL (by owner)
 ====================== */
 export async function findAllLernsets(
-  kontoId: string
+  kontoId: string,
+  aktuelleSprache: string
 ): Promise<Lernset[]> {
-  const q = query(setCollection, where('ownerId', '==', kontoId))
+  const q = query(
+    setCollection,
+    where('ownerId', '==', kontoId),
+    where('zielspracheId', '==', aktuelleSprache)
+  );
   const snapshot = await getDocs(q)
 
   return snapshot.docs.map(docSnap => ({
