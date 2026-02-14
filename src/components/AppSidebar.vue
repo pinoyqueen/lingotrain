@@ -51,8 +51,12 @@ function isActive(name: string) {
   // Gruppe: Meine Vokabeln Bereich
   const meineVokabelnRoutes = ['meinevokabeln', 'lernset']
 
+  const settingsRoutes = ['settings', 'kontodaten-bearbeiten']
+
   if (name === 'meinevokabeln') {
     return meineVokabelnRoutes.includes(current)
+  } else if (name === 'settings') {
+    return settingsRoutes.includes(current)
   }
 
   return current === name

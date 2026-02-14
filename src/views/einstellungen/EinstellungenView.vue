@@ -133,7 +133,7 @@ const changeProfilbild = async (id: string) => {
     <section class="space-y-4">
       <h2 class="text-xl font-bold">Konto</h2>
       <div 
-        @click="router.push({ name: 'profil-bearbeiten' })"
+        @click="router.push({ name: 'kontodaten-bearbeiten' })"
         class="flex items-center justify-between p-4 bg-secondary/70 rounded-lg cursor-pointer hover:bg-secondary/50 transition"
       >
         <span>Kontodaten bearbeiten</span>
