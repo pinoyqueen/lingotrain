@@ -24,15 +24,15 @@ import { slugify } from '@/utils/slugify'
 
 // TODO: mit aktuellesKontoID erstezen
 const kontoStore = useKontoStore();
-const kontoId = kontoStore.aktuellesKonto?.id;
-const aktuelleSprache = kontoStore.aktuelleSprache.id;
+const kontoId = computed(() => kontoStore.aktuellesKonto?.id);
+const aktuelleSprache = computed(() => kontoStore.aktuelleSprache?.id);
 // Store/ViewModel holen
 const lernsetStore = useLernsetStore();
 
 // entspricht onViewCreated() im Fragment
 onMounted(() => {
   if (!kontoId) return;
-  lernsetStore.loadMySets(kontoId, aktuelleSprache);
+  lernsetStore.loadMySets(kontoId.value!, aktuelleSprache.value!);
 });
 
 // UI States
@@ -108,9 +108,9 @@ async function saveLernset() {
       name: form.name,
       beschreibung: form.beschreibung,
       isPublic: form.isPublic,
-      ownerId: kontoId,
-      zielspracheId: aktuelleSprache,
-    }, aktuelleSprache)
+      ownerId: kontoId.value!,
+      zielspracheId: aktuelleSprache.value!,
+    }, aktuelleSprache.value)
   } else {
     // Bestehendes Set bearbeiten
     await lernsetStore.editSet({
@@ -118,7 +118,7 @@ async function saveLernset() {
       name: form.name,
       beschreibung: form.beschreibung,
       isPublic: form.isPublic,
-    }, aktuelleSprache)
+    }, aktuelleSprache.value)
   }
 
   toast.success('Lernset gespeichert!')

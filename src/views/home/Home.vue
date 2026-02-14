@@ -27,7 +27,7 @@ const calculator = new LevelCalculator()
 onMounted(async () => {
 
   // Konto und Sprachen laden
-  await kontoStore.loadKontoValues();
+  await kontoStore.loadSprachenZuKonto();
 
   // Lernsets für aktuelles Konto + aktuelle Sprache laden
   if (kontoStore.aktuellesKonto?.id) {
