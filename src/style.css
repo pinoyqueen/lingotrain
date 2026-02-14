@@ -21,6 +21,7 @@
   --color-secondary-variant: var(--secondary-variant);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-surface: var(--surface);
   --color-surface-foreground: var(--surface-foreground);
   --color-muted: var(--muted);
@@ -61,6 +62,7 @@
   --secondary-variant: #94B5C5;
   --secondary-foreground: #000000;
   --warning: #b2575d;
+  --warning-foreground: #ffffff;
   --surface: #ffffff;
   --surface-foreground: #000000;
   --muted: oklch(0.97 0 0);
