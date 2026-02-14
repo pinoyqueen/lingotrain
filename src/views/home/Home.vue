@@ -28,11 +28,6 @@ onMounted(async () => {
 
   // Konto und Sprachen laden
   await kontoStore.loadSprachenZuKonto();
-
-  // Lernsets für aktuelles Konto + aktuelle Sprache laden
-  if (kontoStore.aktuellesKonto?.id) {
-    await lernsetStore.loadMySets(kontoStore.aktuellesKonto.id, kontoStore.aktuelleSprache);
-  }
 })
 
 // --- Computeds für Level / Punkte ---
@@ -42,14 +37,9 @@ const progress = computed(() => calculator.progress(punkte.value));
 const punkteBisNaechstesLevel = computed(() => calculator.punkteBisNaechstesLevel(punkte.value));
 
 /** 
- * Lernset-Shortcuts (nur für die aktuelle Sprache) erstellen
+ * Lernset-Shortcuts erstellen
  */ 
-const shortcuts = computed(() => {
-  if (!kontoStore.aktuelleSprache) return []
-  return lernsetStore.sets
-    .filter(l => l.zielspracheId === kontoStore.aktuelleSprache.id)
-    .slice(0, 3);
-})
+const shortcuts = computed(() => lernsetStore.sets.slice(0, 3));
 
 /**
  * Navigation zu einem bestimmten Lernset.
