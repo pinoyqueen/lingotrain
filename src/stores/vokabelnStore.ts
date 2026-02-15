@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
 import { createVokabeln, editVokabeln, findAllVokabelnByLernsetId, deleteVokabel } from '@/repositories/VokabelnRepository'
 import type { Vokabeln } from '@/models/Vokabeln'
+import { create } from '@/repositories/VokabelKontoRepository'
+import { VOKABELN_STATUS } from '@/models/VokabelnStatus'
+import { useKontoStore } from './kontoStore'
 
 export const useVokabelnStore = defineStore('vokabeln', {
     state: () => ({
@@ -27,7 +30,16 @@ export const useVokabelnStore = defineStore('vokabeln', {
         async addVokabel(v: Vokabeln) {
             if (!v.setId) throw new Error("setId fehlt!")
             this.loading = true
-            await createVokabeln(v)
+            const vokDocRef = await createVokabeln(v)
+            const kontoId = useKontoStore().aktuellesKonto?.id
+            if (kontoId) {
+                await create({
+                    vokabelId: vokDocRef.id,
+                    kontoId: kontoId,
+                    status: VOKABELN_STATUS.NICHT_GELERNT,
+                    lernsetId: v.setId
+                })
+            }
             // Liste neu laden
             this.liste = await findAllVokabelnByLernsetId(v.setId)
             this.loading = false
@@ -44,6 +56,7 @@ export const useVokabelnStore = defineStore('vokabeln', {
         },
 
          // Vokabel löschen
+         // TODO: VokabelKonto auch löschen
         async deleteVokabel(v: Vokabeln) {
             if (!v.id) throw new Error("ID fehlt zum Löschen!")
             this.loading = true

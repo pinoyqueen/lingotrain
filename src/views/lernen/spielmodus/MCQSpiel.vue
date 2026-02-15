@@ -4,5 +4,5 @@ const myVar = ref(0);
 </script>
 
 <template>
-  <h2>Spielmodus</h2>
+  <h2>MCQ Spiel</h2>
 </template>

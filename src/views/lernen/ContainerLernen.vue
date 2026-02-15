@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import TestSpiel from './spielmodus/TestSpiel.vue';
+import ContainerSpiel from './spielmodus/ContainerSpiel.vue';
 import KarteiKarten from './karteikarten/KarteiKarten.vue';
 import Card from '@/components/ui/card/Card.vue';
 import Progress from '@/components/ui/progress/Progress.vue';
@@ -11,8 +11,10 @@ const lernsetId = String(route.params.id)
 const slug = String(route.params.slug)
 const modus = String(route.params.modus)
 
+
 const activeComponent = computed(() => {
-  if (modus === 'spielmodus') return TestSpiel
+  if (modus === 'spielmodus') 
+    return ContainerSpiel
   if (modus === 'kartenmodus') return KarteiKarten
   return null
 })

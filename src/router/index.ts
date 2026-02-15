@@ -8,7 +8,7 @@ import EinstellungenView from '@/views/einstellungen/EinstellungenView.vue'
 import LernsetListeView from '@/views/meinevokabeln/LernsetListe.vue'
 import CommunityView from '@/views/community/Community.vue'
 import VokabelnListeView from '@/views/meinevokabeln/VokabelnListe.vue'
-import BaseLernenView from '@/views/lernen/BaseLernen.vue'
+import ContainerLernenView from '@/views/lernen/ContainerLernen.vue'
 import KontodatenBearbeiten from '@/views/einstellungen/KontodatenBearbeiten.vue'
 
 const routes = [
@@ -48,7 +48,7 @@ const routes = [
   {
     path: '/lernen/:modus/:id/:slug',
     name: 'lernen',
-    component: BaseLernenView,
+    component: ContainerLernenView,
     props: true,
   },
   {

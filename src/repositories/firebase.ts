@@ -21,11 +21,11 @@ export const db = getFirestore(app)
 export const auth = getAuth(app)
 
 // 🧪 Emulator NUR im Dev-Modus verbinden
-// if (import.meta.env.DEV) {
-//   console.log("🔥 Firebase Emulator aktiv")
+if (import.meta.env.DEV) {
+  console.log("🔥 Firebase Emulator aktiv")
 
-//   connectFirestoreEmulator(db, "localhost", 8080)
-//   connectAuthEmulator(auth, "http://localhost:9099", {
-//     disableWarnings: true
-//   })
-// }
+  connectFirestoreEmulator(db, "localhost", 8080)
+  connectAuthEmulator(auth, "http://localhost:9099", {
+    disableWarnings: true
+  })
+}
