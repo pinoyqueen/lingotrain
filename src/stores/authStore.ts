@@ -1,10 +1,12 @@
 import { defineStore } from "pinia";
 import { reactive, ref, watch } from "vue";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence, signOut } from "firebase/auth";
-import { createKonto, findKontoById, findKontoByUsername } from "@/repositories/KontoRepository"
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence, signOut, reload, EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail, updatePassword, deleteUser } from "firebase/auth";
+import { createKonto, deleteKonto, findKontoById, findKontoByUsername } from "@/repositories/KontoRepository"
 import type { Konto } from "@/models/Konto";
 import router from "@/router";
 import { useProfilbilderStore } from "./profilbilderStore";
+import { useKontoStore } from "./kontoStore";
+import { deleteLernset, findAllIdsByKonto } from "@/repositories/LernsetRepository";
 
 /**
  * Authentifizierungs-Store.
@@ -311,12 +313,72 @@ export const useAuthStore = defineStore("auth", () => {
       // Konto des Nutzers aus der DB laden
       aktuellesKonto.value = await findKontoById(userCredential.user.uid);
       
+      // Prüfen, ob die Email geändert und verifiziert wurde 
+      if (aktuellesKonto.value) {
+        await handleAuthState(userCredential.user);
+      }
+
       resetLogin();
       return true;
 
     } catch (err: any) {
       loginErrors.global = "Die Email oder das Passwort ist falsch";
       return false;
+    }
+  }
+
+  async function handleAuthState(user: any) {
+    if (!user) return;
+
+    try {
+      // 1. Status vom Firebase Server neu laden (wichtig für emailVerified)
+      await reload(user);
+
+      // 2. Wenn Email verifiziert ist, mit Firestore synchronisieren
+      if (user.emailVerified) {
+        // Zugriff auf den KontoStore, um die DB-Update-Funktion zu nutzen
+        const kontoStore = useKontoStore();
+        
+        if (aktuellesKonto.value && aktuellesKonto.value.email !== user.email) {
+          // Update in Firestore
+          await kontoStore.updateKontoData({ email: user.email });
+          console.log("Email erfolgreich synchronisiert: ", user.email);
+        }
+      }
+    } catch (error) {
+      console.error("Fehler bei handleAuthState Synchronisierung:", error);
+    }
+  }
+
+  async function reauthenticate(passwort: string) {
+    const user = auth.currentUser;
+    if (!user || !user.email) throw new Error("Nicht eingeloggt");
+
+    try {
+      const credential = EmailAuthProvider.credential(user.email, passwort);
+    
+      await reauthenticateWithCredential(user, credential);
+      await reload(user);
+
+    } catch (error : any) {
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        throw new Error("PASSWORD_INCORRECT");
+      }
+
+      throw error;
+    }
+  }
+
+  async function updateEmailWithAuth(neueEmail: string, passwort: string) {
+    await reauthenticate(passwort); 
+    await verifyBeforeUpdateEmail(auth.currentUser!, neueEmail); 
+  }
+
+  async function updatePasswordWithAuth(neuesPasswort: string, altesPasswort: string) {
+    await reauthenticate(altesPasswort);
+    const user = auth.currentUser;
+    if (user) {
+      await updatePassword(user, neuesPasswort); 
     }
   }
 
@@ -334,6 +396,34 @@ export const useAuthStore = defineStore("auth", () => {
 
     } catch (error) {
       console.error("Logout fehlgeschlagen", error);
+    }
+  }
+
+  async function deleteAccount(passwort: string) {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Kein User angemeldet");
+    const userId = user.uid;
+
+    await reauthenticate(passwort);
+
+    try {
+
+      // Lernsets zu dem Konto laden und inkl. Vokabeln löschen
+      const lernsetIds = await findAllIdsByKonto(userId);
+      for (const setId of lernsetIds) {
+          await deleteLernset(setId, userId);
+      }
+
+      await deleteKonto(userId);
+
+      await deleteUser(user);
+
+      aktuellesKonto.value = null;
+      router.push({ name: 'login' });
+      
+    } catch (error) {
+      console.error("Fehler beim endgültigen Löschen:", error);
+      throw error;
     }
   }
 
@@ -363,6 +453,9 @@ export const useAuthStore = defineStore("auth", () => {
     logout,
     validateEmail,
     validatePassword,
-    validateRequiredInputs
+    validateRequiredInputs,
+    updateEmailWithAuth,
+    updatePasswordWithAuth,
+    deleteAccount
   };
 });

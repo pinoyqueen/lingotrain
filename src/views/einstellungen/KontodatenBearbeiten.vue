@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -17,6 +16,7 @@ import {
 import { useAuthStore } from '@/stores/authStore'
 import { useKontoStore } from '@/stores/kontoStore'
 import { toast } from 'vue-sonner'
+import router from '@/router'
 
 const authStore = useAuthStore();
 const kontoStore = useKontoStore();
@@ -38,11 +38,11 @@ const errors = reactive({
   username: null as string | null,
   aktuellesPasswort: null as string | null,
   neuesPasswort: null as string | null,
-  bestaetigungPasswort: null as string | null,
-  global: null as string | null
+  bestaetigungPasswort: null as string | null
 })
 
 const loeschPasswort = ref('')
+const loeschError = ref<string | null>(null)
 const isSubmitted = ref(false)
 
 watch(form, () => {
@@ -78,7 +78,7 @@ function validateInputs(): boolean {
   errors.email = authStore.validateEmail(form.email);
   
   // Passwort nur validieren, wenn eins der Felder ausgefüllt ist
-  if(form.aktuellesPasswort || form.neuesPasswort || form.bestaetigungPasswort) {
+  if(wantsPasswordChange()) {
     
     errors.aktuellesPasswort = authStore.validateRequiredInputs(form.aktuellesPasswort, "Aktuelles Passwort fehlt");
     errors.neuesPasswort = authStore.validatePassword(form.neuesPasswort);
@@ -90,6 +90,17 @@ function validateInputs(): boolean {
   }
 
   return !Object.values(errors).some(e => e);
+}
+
+function isEmailChanged(neueEmail: string): boolean {
+  const aktuellesKonto = kontoStore.aktuellesKonto;
+
+  return (neueEmail !== null) && !(neueEmail === aktuellesKonto?.email);
+}
+
+function wantsPasswordChange(): boolean {
+  return !!(form.neuesPasswort.trim() ||
+            form.bestaetigungPasswort.trim());
 }
 
 async function onSpeichern() {
@@ -111,26 +122,63 @@ async function onSpeichern() {
         benutzername: form.username,
     })
 
-    if (success) {
+    if (success && isEmailChanged(form.email)) {
+      if(!form.aktuellesPasswort) {
+        errors.aktuellesPasswort = "Passwort erforderlich";
+        return;
+      }
+      
+      await authStore.updateEmailWithAuth(form.email, form.aktuellesPasswort);
+      toast.success("Verifizierungs-E-Mail wurde gesendet. Bitte bestätige diese, um deine E-Mail zu ändern.");
+      
+      // Session beenden, da die Email noch nicht verifiziert ist
+      setTimeout(() => { 
+        authStore.logout();
+        router.push({ name: 'login' });
+      }, 3000); // 3 Sekunden Zeit zum Lesen des Toasts geben
+    }
+
+    if (success && wantsPasswordChange()) {
+      await authStore.updatePasswordWithAuth(form.neuesPasswort, form.aktuellesPasswort)
+    }
+
+    if (success && !isEmailChanged(form.email)) {
       toast.success("Daten erfolgreich aktualisiert")
     } 
 
   } catch (err: any) {
-    if(err.message === "USERNAME_EXISTS") {
-      errors.username = "Benutzername ist bereits vergeben.";
-      toast.error("Benutzername existiert bereits.");
+    if (err.message === "PASSWORD_INCORRECT") {
+      errors.aktuellesPasswort = "Das Passwort ist nicht korrekt.";
+      toast.error("Authentifizierung fehlgeschlagen.");
+    } else if (err.message === "USERNAME_EXISTS") {
+      errors.username = "Benutzername bereits vergeben.";
+      toast.error("Ändern des Benutzernamen fehlgeschlagen.");
     } else {
-      errors.global = err.message || "Fehler beim Speichern"
-      if(errors.global){
-        toast.error(errors.global);
-      }
+      toast.error("Ein unbekannter Fehler ist aufgetreten.");
+      console.error(err);
     }
-    
   }
 }
 
 async function kontoLoeschen() {
+  loeschError.value = null;
 
+  if(!loeschPasswort.value) {
+    loeschError.value = "Passwort erforderlich";
+    return;
+  }
+
+  try {
+    await authStore.deleteAccount(loeschPasswort.value);
+    toast.success("Dein Konto wurde erfolgreich gelöscht.");
+
+  } catch (err: any) {
+    if (err.message === "PASSWORD_INCORRECT") {
+      loeschError.value = "Das Passwort ist falsch.";
+    } else {
+      toast.error("Ein Fehler ist aufgetreten");
+    }
+  }
 }
 </script>
 
@@ -176,7 +224,7 @@ async function kontoLoeschen() {
 
       <div class="space-y-1">
         <Label class="mb-1.5 px-1">Aktuelles Passwort</Label>
-        <Input v-model="form.aktuellesPasswort" type="password" placeholder="Erforderlich für Passwortänderungen" :class="inputClass(errors.aktuellesPasswort)" />
+        <Input v-model="form.aktuellesPasswort" type="password" placeholder="Erforderlich für Email- oder Passwortänderungen" :class="inputClass(errors.aktuellesPasswort)" />
         <p v-if="errors.aktuellesPasswort" class="text-[var(--warning)] text-sm px-1">{{ errors.aktuellesPasswort }}</p>
       </div>
 
@@ -208,13 +256,16 @@ async function kontoLoeschen() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div class="py-4">
-              <Input type="password" v-model="loeschPasswort" placeholder="Dein Passwort" class="border-gray-300" />
+              <Input type="password" v-model="loeschPasswort" placeholder="Dein Passwort" :class="inputClass(loeschError)"  />
+              <p v-if="loeschError" class="text-[var(--warning)] text-sm px-1">{{ loeschError }}</p>
             </div>
             <AlertDialogFooter>
-              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-              <AlertDialogAction @click="kontoLoeschen" class="bg-red-600 text-white hover:bg-red-700">
+              <AlertDialogCancel @click="loeschError = null; loeschPasswort = ''">Abbrechen</AlertDialogCancel>
+              
+              <!-- Button statt AlertDialogAction, damit es sich bei falscher Passworteingabe nicht direkt schließt -->
+              <Button @click="kontoLoeschen" class="bg-warning text-white hover:bg-warning/90">
                 Löschen bestätigen
-              </AlertDialogAction>
+              </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

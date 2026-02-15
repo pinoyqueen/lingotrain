@@ -8,7 +8,8 @@ import {
   getDocs, 
   getDoc, 
   arrayUnion,
-  arrayRemove
+  arrayRemove,
+  deleteDoc
 } from "firebase/firestore";
 import { db } from "./firebase"; 
 import type { Konto } from "@/models/Konto";
@@ -179,6 +180,17 @@ export async function removeSprache(id: string, spracheId: string, neueAktiveSpr
     
   } catch (error) {
     console.error("Fehler beim Entfernen der Sprache im Repository:", error);
+    throw error; 
+  }
+}
+
+export async function deleteKonto(id: string): Promise<void> {
+  try {
+    const docRef = doc(kontoCollection, id);
+    await deleteDoc(docRef);
+
+  } catch (error) {
+    console.error("Fehler beim Löschen des Kontos: ", error);
     throw error; 
   }
 }
