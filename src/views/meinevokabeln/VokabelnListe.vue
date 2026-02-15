@@ -158,29 +158,30 @@ async function saveVokabel() {
   </template>
 
   <template v-else>
+    <ButtonGroup class="fixed top-0 right-0 mt-3 mr-3">
+      <Button
+        v-show="!isLeer"
+        variant="outline"
+        class="bg-[var(--button-primary)] w-32 h-16 flex items-center justify-center"
+        @click="showMenu = !showMenu"
+      >
+        Lernen
+        <BookAIcon class="ml-2"/>
+      </Button>
+      <Button v-show="!isLeer" variant="outline" class="bg-[var(--button-primary)] w-32 h-16" @click="showBearbeiten = !showBearbeiten">
+        {{ btnTitle }}
+        <component :is="showBearbeiten ? CheckIcon : PencilIcon" />
+      </Button>
+      <Button variant="outline" class="bg-[var(--button-primary)] size-16"  @click="openNewDialog">
+        <CirclePlusIcon />
+      </Button>
+    </ButtonGroup>
+
     <template v-if="isLeer">
       <p class="text-gray-500 text-center mt-8">Keine Einträge vorhanden.</p>
     </template>
 
     <template v-else>
-      <ButtonGroup class="fixed top-0 right-0 mt-3 mr-3">
-        <Button
-          variant="outline"
-          class="bg-[var(--button-primary)] w-32 h-16 flex items-center justify-center"
-          @click="showMenu = !showMenu"
-        >
-          Lernen
-          <BookAIcon class="ml-2"/>
-        </Button>
-        <Button variant="outline" class="bg-[var(--button-primary)] w-32 h-16" @click="showBearbeiten = !showBearbeiten">
-          {{ btnTitle }}
-          <component :is="showBearbeiten ? CheckIcon : PencilIcon" />
-        </Button>
-        <Button variant="outline" class="bg-[var(--button-primary)] size-16"  @click="openNewDialog">
-          <CirclePlusIcon />
-        </Button>
-      </ButtonGroup>
-
       <div class="mt-20 p-4 max-h-[calc(100vh-120px)] overflow-y-auto">
         <Item
           variant="outline"
@@ -228,8 +229,9 @@ async function saveVokabel() {
           </div>
           </div>
         </div>
-
-      <!-- MODAL -->
+    </template>
+  </template>
+  <!-- MODAL -->
       <div
         v-if="showDialog"
         class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
@@ -281,9 +283,6 @@ async function saveVokabel() {
 
       <!-- TOAST -->
       <Toaster position="top-center" />
-    </template>
-  </template>
-
   
 
 </template>

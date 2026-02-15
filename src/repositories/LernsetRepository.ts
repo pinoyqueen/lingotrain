@@ -122,7 +122,6 @@ export async function findAllIdsByKontoAndSprache(
    EDIT
 ====================== */
 export async function editLernset(
-  ownerId: string,
   l: Lernset
 ) {
   

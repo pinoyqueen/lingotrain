@@ -36,7 +36,7 @@ export const useLernsetStore = defineStore('lernset', {
     // bestehendes Lernset bearbeiten
     async editSet(set: Lernset, aktuelleSprache: string) {
       if (!set.id) throw new Error('ID fehlt zum Bearbeiten!')
-      await editLernset(set.ownerId, set)
+      await editLernset(set)
       // Liste neu laden
       this.sets = await findAllLernsets(set.ownerId, aktuelleSprache)
     },
