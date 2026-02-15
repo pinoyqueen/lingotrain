@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -14,7 +14,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { useAuthStore } from '@/stores/authStore'
+import { useKontoStore } from '@/stores/kontoStore'
+import { toast } from 'vue-sonner'
 
+const authStore = useAuthStore();
+const kontoStore = useKontoStore();
 
 const form = reactive({
   vorname: '',
@@ -27,15 +32,28 @@ const form = reactive({
 })
 
 const errors = reactive({
-  vorname: null,
-  nachname: null,
-  email: null,
-  username: null,
-  passwort: null,
-  global: null
+  vorname: null as string | null,
+  nachname: null as string | null,
+  email: null as string | null,
+  username: null as string | null,
+  aktuellesPasswort: null as string | null,
+  neuesPasswort: null as string | null,
+  bestaetigungPasswort: null as string | null,
+  global: null as string | null
 })
 
 const loeschPasswort = ref('')
+
+// Laden der initialen Daten
+onMounted(() => {
+  const konto = authStore.aktuellesKonto;
+  if(konto) {
+    form.vorname = konto.vorname;
+    form.nachname = konto.nachname;
+    form.username = konto.benutzername;
+    form.email = konto.email;
+  }
+})
 
 function inputClass(error: string | null) {
   return [
@@ -46,8 +64,51 @@ function inputClass(error: string | null) {
   ]
 }
 
-async function onSpeichern() {
+function validateInputs(): boolean {
+  errors.vorname = authStore.validateRequiredInputs(form.vorname, "Vorname fehlt");
+  errors.nachname = authStore.validateRequiredInputs(form.nachname, "Nachname fehlt");
+  errors.username = authStore.validateRequiredInputs(form.username, "Benutzername fehlt");
   
+  errors.email = authStore.validateEmail(form.email);
+  
+  // Passwort nur validieren, wenn eins der Felder ausgefüllt ist
+  if(form.aktuellesPasswort || form.neuesPasswort || form.bestaetigungPasswort) {
+    
+    errors.aktuellesPasswort = authStore.validateRequiredInputs(form.aktuellesPasswort, "Aktuelles Passwort fehlt");
+    errors.neuesPasswort = authStore.validatePassword(form.neuesPasswort);
+    
+    errors.bestaetigungPasswort = 
+    form.neuesPasswort !== form.bestaetigungPasswort
+      ? "Stimmt nicht überein"
+      : null;
+  }
+
+  return !Object.values(errors).some(e => e);
+}
+
+async function onSpeichern() {
+  // Errors resetten
+  Object.keys(errors).forEach(
+      k => (errors[k as keyof typeof errors] = null)
+  );
+
+  // Validierung
+  if (!validateInputs()) return;
+
+  //Speichern
+  try{
+    const success = await kontoStore.updateKontoData({
+        vorname: form.vorname,
+        nachname: form.nachname,
+        benutzername: form.username,
+    })
+
+    if (success) {
+      toast.success("Daten erfolgreich aktualisiert")
+    } 
+  } catch (err: any) {
+    errors.global = err.message || "Fehler beim Speichern"
+  }
 }
 
 async function kontoLoeschen() {
@@ -90,17 +151,17 @@ async function kontoLoeschen() {
 
       <div class="space-y-1">
         <Label class="mb-1.5 px-1">Aktuelles Passwort</Label>
-        <Input v-model="form.aktuellesPasswort" type="password" placeholder="Erforderlich für Passwortänderungen" :class="inputClass(errors.passwort)" />
+        <Input v-model="form.aktuellesPasswort" type="password" placeholder="Erforderlich für Passwortänderungen" :class="inputClass(errors.aktuellesPasswort)" />
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div class="space-y-1">
           <Label class="mb-1.5 px-1">Neues Passwort</Label>
-          <Input v-model="form.neuesPasswort" type="password" :class="inputClass(null)" />
+          <Input v-model="form.neuesPasswort" type="password" :class="inputClass(errors.neuesPasswort)" />
         </div>
         <div class="space-y-1">
           <Label class="mb-1.5 px-1">Bestätigen</Label>
-          <Input v-model="form.bestaetigungPasswort" type="password" :class="inputClass(null)" />
+          <Input v-model="form.bestaetigungPasswort" type="password" :class="inputClass(errors.bestaetigungPasswort)" />
         </div>
       </div>
 

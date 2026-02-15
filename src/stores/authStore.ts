@@ -360,6 +360,9 @@ export const useAuthStore = defineStore("auth", () => {
     authReady,
     register,
     login,
-    logout
+    logout,
+    validateEmail,
+    validatePassword,
+    validateRequiredInputs
   };
 });

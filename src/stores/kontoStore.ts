@@ -1,6 +1,6 @@
 import { defineStore, storeToRefs } from "pinia";
 import { useAuthStore } from "./authStore";
-import { addSprache, editAktuelleSprache, removeSprache, updateKonto } from "@/repositories/KontoRepository";
+import { addSprache, editAktuelleSprache, findKontoByUsername, removeSprache, updateKonto } from "@/repositories/KontoRepository";
 import type { Konto } from "@/models/Konto";
 import { deleteLernset, findAllIdsByKontoAndSprache } from "@/repositories/LernsetRepository";
 import { getSpracheById, getSprachenByIds } from "@/repositories/SprachenRepository";
@@ -128,18 +128,56 @@ export const useKontoStore = defineStore('konto', {
          * 
          * @param {Partial<Konto>} data - Die zu aktualisierenden Felder
          */
-        async updateKontoData(data: Partial<Konto>) {
-            if (!this.aktuellesKonto?.id) return;
+        async updateKontoData(data: Partial<Konto>): Promise<boolean> {
+            if (!this.aktuellesKonto?.id) {
+                throw new Error("Kein Benutzer angemeldet");
+            };
 
             try {
-                // Lokales UI-Update
-                Object.assign(this.aktuellesKonto, data);
+
+                if(data.benutzername && (data.benutzername !== this.aktuellesKonto.benutzername)) {
+                    const exists = await findKontoByUsername(data.benutzername);
+                    if(exists && (exists.id !== this.aktuellesKonto.id)) {
+                        throw new Error("Benutzername ist bereits vergeben");
+                    }
+                }
+
+                const updatedKonto = {
+                    ...this.aktuellesKonto,
+                    ...data
+                };
 
                 // Aktualisieren der DB
                 await updateKonto(this.aktuellesKonto.id, data); 
 
+                this.aktuellesKonto = updatedKonto;
+                
+                return true;
+
             } catch (error) {
                 console.error("Fehler beim Aktualisieren des Kontos:", error);
+                throw error;
+            }
+        },
+
+        async updateProfilbild(profilbild_id: string): Promise<boolean> {
+            if (!this.aktuellesKonto?.id) return false;
+
+            try {
+                // Aktualisieren der DB
+                await updateKonto(
+                    this.aktuellesKonto.id, 
+                    { profilbild_id: profilbild_id }
+                ); 
+
+                // Lokal aktualisieren
+                this.aktuellesKonto.profilbild_id = profilbild_id;
+                
+                return true;
+
+            } catch (error) {
+                console.error("Fehler beim Aktualisieren des Profilbildes:", error);
+                throw error;
             }
         },
 
