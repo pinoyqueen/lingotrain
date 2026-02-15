@@ -9,6 +9,7 @@ import LernsetListeView from '@/views/meinevokabeln/LernsetListe.vue'
 import CommunityView from '@/views/community/Community.vue'
 import VokabelnListeView from '@/views/meinevokabeln/VokabelnListe.vue'
 import BaseLernenView from '@/views/lernen/BaseLernen.vue'
+import KontodatenBearbeiten from '@/views/einstellungen/KontodatenBearbeiten.vue'
 
 const routes = [
   {
@@ -60,6 +61,11 @@ const routes = [
     name: 'settings',
     component: EinstellungenView
   },
+  {
+    path: '/settings/kontodaten',
+    name: 'kontodaten-bearbeiten',
+    component: KontodatenBearbeiten
+  }
 ]
 
 const router = createRouter({

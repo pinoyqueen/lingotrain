@@ -5,7 +5,23 @@ import { useAuthStore } from '@/stores/authStore'
 import { ChevronRight, Plus, Trash2, LogOut } from 'lucide-vue-next'
 
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription 
+} from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { useSprachenStore } from '@/stores/sprachenStore'
 import { useKontoStore } from '@/stores/kontoStore'
 import { useProfilbilderStore } from '@/stores/profilbilderStore'
@@ -21,6 +37,10 @@ const showImagePicker = ref(false)
 
 /** Ist der Dialog zum Auswählen einer Sprache geöffnet? */
 const showLanguagePicker = ref(false)
+
+// Steuerung für den Lösch-Dialog
+const showDeleteAlert = ref(false)
+const languageToDelete = ref<string | null>(null)
 
 // Beim Laden der Seite alle verfügbaren Sprachen und Profilbilder laden
 onMounted(async () => {
@@ -57,6 +77,14 @@ const aktuellesProfilbild = computed(() => {
 })
 
 /**
+ * Öffnet den Alert-Dialog und speichert die ID der Sprache zwischen
+ */
+const confirmRemoveLanguage = (id: string) => {
+  languageToDelete.value = id
+  showDeleteAlert.value = true
+}
+
+/**
  * Entfernen einer Sprache eines Kontos.
  * 
  * Hier wird zunächst eine Abfrage durchgeführt, ob die Sprache wirklich gelöscht werden soll.
@@ -64,9 +92,11 @@ const aktuellesProfilbild = computed(() => {
  * 
  * @param id die ID der zu löschenden Sprache
  */
-const removeLanguage = async (id: string) => {
-  if (confirm("Möchten Sie diese Sprache wirklich löschen?")) {
-    await kontoStore.removeSpracheVonKonto(id);
+const removeLanguage = async () => {
+  if(languageToDelete.value) {
+    await kontoStore.removeSpracheVonKonto(languageToDelete.value);
+    languageToDelete.value = null;
+    showDeleteAlert.value = false;
   }
 }
 
@@ -133,7 +163,7 @@ const changeProfilbild = async (id: string) => {
     <section class="space-y-4">
       <h2 class="text-xl font-bold">Konto</h2>
       <div 
-        @click="router.push({ name: 'profil-bearbeiten' })"
+        @click="router.push({ name: 'kontodaten-bearbeiten' })"
         class="flex items-center justify-between p-4 bg-secondary/70 rounded-lg cursor-pointer hover:bg-secondary/50 transition"
       >
         <span>Kontodaten bearbeiten</span>
@@ -160,7 +190,7 @@ const changeProfilbild = async (id: string) => {
                 <img :src="sprache.flagge" class="w-auto h-5" />
                 <span class="font-medium">{{ sprache.sprache }}</span>
             </div>
-          <Button variant="ghost" size="icon" @click="removeLanguage(sprache.id)">
+          <Button variant="ghost" size="icon" @click="confirmRemoveLanguage(sprache.id)">
             <Trash2 class="w-4 h-4 text-destructive" />
           </Button>
         </div>
@@ -171,6 +201,29 @@ const changeProfilbild = async (id: string) => {
     <Button variant="primary" class="w-full flex gap-2" @click="authStore.logout">
       <LogOut class="w-4 h-4" /> Abmelden
     </Button>
+
+    <AlertDialog v-model:open="showDeleteAlert">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Sprache wirklich entfernen?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Möchtest du die Sprache 
+            "{{ sprachenObjekte.find(s => s.id === languageToDelete)?.sprache }}"
+            wirklich aus deinem Profil löschen? 
+            Dein Lernfortschritt in dieser Sprache könnte verloren gehen.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel @click="languageToDelete = null">Abbrechen</AlertDialogCancel>
+          <AlertDialogAction 
+            @click="removeLanguage"
+            class="bg-warning text-warning-foreground hover:bg-warning/80"
+          >
+            Löschen
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
 
     <!-- Dialog zum Auswählen einer neuen Sprache, der sich beim Hinzufügen einer neuen Sprache öffnet -->
     <Dialog v-model:open="showLanguagePicker">
@@ -201,7 +254,7 @@ const changeProfilbild = async (id: string) => {
       </DialogContent>
     </Dialog>
 
-    <!-- Dialog zum Auswählen einer neuen Sprache, der sich beim Hinzufügen einer neuen Sprache öffnet -->
+    <!-- Dialog zum Auswählen eines neuen Profilbildes -->
     <Dialog v-model:open="showImagePicker">
       <DialogContent class="sm:max-w-md max-h-[80vh] flex flex-col">
         <DialogHeader>

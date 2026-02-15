@@ -31,7 +31,7 @@ export const useKontoStore = defineStore('konto', {
         /** 
          * Lädt Sprachen und aktuelle Sprache aus der DB für das Konto.
          */
-        async loadKontoValues() {
+        async loadSprachenZuKonto() {
             const konto = this.aktuellesKonto;
             if (!konto || !konto.id) return;
 
