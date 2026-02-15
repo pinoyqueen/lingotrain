@@ -138,7 +138,7 @@ export const useKontoStore = defineStore('konto', {
                 if(data.benutzername && (data.benutzername !== this.aktuellesKonto.benutzername)) {
                     const exists = await findKontoByUsername(data.benutzername);
                     if(exists && (exists.id !== this.aktuellesKonto.id)) {
-                        throw new Error("Benutzername ist bereits vergeben");
+                        throw new Error("USERNAME_EXISTS");
                     }
                 }
 

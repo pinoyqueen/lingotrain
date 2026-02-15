@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { Toaster } from 'vue-sonner'
 
 import MainLayout from '@/components/MainLayout.vue'
 import AuthLayout from '@/components/AuthLayout.vue'
@@ -44,4 +45,14 @@ watch(
   <component :is="Layout">
     <router-view />
   </component>
+
+  <Toaster 
+      position="top-right"
+      :toastOptions="{
+        classes: {
+          success: '!bg-[var(--success)] !text-success-foreground border-none',
+          error: '!bg-warning !text-warning-foreground',
+        }
+      }"
+    />
 </template>

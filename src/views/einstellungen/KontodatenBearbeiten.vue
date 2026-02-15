@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -43,6 +43,12 @@ const errors = reactive({
 })
 
 const loeschPasswort = ref('')
+const isSubmitted = ref(false)
+
+watch(form, () => {
+  if (!isSubmitted.value) return;
+  validateInputs();
+}, { deep: true });
 
 // Laden der initialen Daten
 onMounted(() => {
@@ -87,6 +93,8 @@ function validateInputs(): boolean {
 }
 
 async function onSpeichern() {
+  isSubmitted.value = true;
+
   // Errors resetten
   Object.keys(errors).forEach(
       k => (errors[k as keyof typeof errors] = null)
@@ -106,8 +114,18 @@ async function onSpeichern() {
     if (success) {
       toast.success("Daten erfolgreich aktualisiert")
     } 
+
   } catch (err: any) {
-    errors.global = err.message || "Fehler beim Speichern"
+    if(err.message === "USERNAME_EXISTS") {
+      errors.username = "Benutzername ist bereits vergeben.";
+      toast.error("Benutzername existiert bereits.");
+    } else {
+      errors.global = err.message || "Fehler beim Speichern"
+      if(errors.global){
+        toast.error(errors.global);
+      }
+    }
+    
   }
 }
 
@@ -126,22 +144,29 @@ async function kontoLoeschen() {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div class="space-y-1">
           <Label class="mb-1.5 px-1">Vorname</Label>
-          <Input v-model="form.vorname" :class="inputClass(errors.vorname)" />
+          <Input 
+            v-model="form.vorname" 
+            :class="inputClass(errors.vorname)" 
+          />
+          <p v-if="errors.vorname" class="text-[var(--warning)] text-sm px-1">{{ errors.vorname }}</p>
         </div>
         <div class="space-y-1">
           <Label class="mb-1.5 px-1">Nachname</Label>
           <Input v-model="form.nachname" :class="inputClass(errors.nachname)" />
+          <p v-if="errors.nachname" class="text-[var(--warning)] text-sm px-1">{{errors.nachname }}</p>
         </div>
       </div>
 
       <div class="space-y-1">
         <Label class="mb-1.5 px-1">E-Mail-Adresse</Label>
         <Input v-model="form.email" type="email" :class="inputClass(errors.email)" />
+        <p v-if="errors.email" class="text-[var(--warning)] text-sm px-1">{{ errors.email }}</p>
       </div>
 
       <div class="space-y-1">
         <Label class="mb-1.5 px-1">Benutzername</Label>
         <Input v-model="form.username" :class="inputClass(errors.username)" />
+        <p v-if="errors.username" class="text-[var(--warning)] text-sm px-1">{{ errors.username }}</p>
       </div>
 
       <div class="relative py-4">
@@ -152,16 +177,19 @@ async function kontoLoeschen() {
       <div class="space-y-1">
         <Label class="mb-1.5 px-1">Aktuelles Passwort</Label>
         <Input v-model="form.aktuellesPasswort" type="password" placeholder="Erforderlich für Passwortänderungen" :class="inputClass(errors.aktuellesPasswort)" />
+        <p v-if="errors.aktuellesPasswort" class="text-[var(--warning)] text-sm px-1">{{ errors.aktuellesPasswort }}</p>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div class="space-y-1">
           <Label class="mb-1.5 px-1">Neues Passwort</Label>
           <Input v-model="form.neuesPasswort" type="password" :class="inputClass(errors.neuesPasswort)" />
+          <p v-if="errors.neuesPasswort" class="text-[var(--warning)] text-sm px-1">{{ errors.neuesPasswort }}</p>
         </div>
         <div class="space-y-1">
           <Label class="mb-1.5 px-1">Bestätigen</Label>
           <Input v-model="form.bestaetigungPasswort" type="password" :class="inputClass(errors.bestaetigungPasswort)" />
+          <p v-if="errors.bestaetigungPasswort" class="text-[var(--warning)] text-sm px-1">{{ errors.bestaetigungPasswort }}</p>
         </div>
       </div>
 
