@@ -206,12 +206,6 @@ async function saveLernset() {
             class="w-full border rounded p-2"
           />
 
-          <!-- Öffentlich -->
-          <label class="flex items-center gap-2">
-            <input type="checkbox" v-model="form.isPublic" />
-            Öffentlich
-          </label>
-
           <!-- Buttons -->
           <div class="flex justify-end gap-2">
             <Button variant="outline" @click="showDialog = false">
