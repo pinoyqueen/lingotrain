@@ -22,7 +22,6 @@ import { toast } from 'vue-sonner'
 import { Toaster } from '@/components/ui/sonner'
 import { slugify } from '@/utils/slugify'
 
-// TODO: mit aktuellesKontoID erstezen
 const kontoStore = useKontoStore();
 const kontoId = computed(() => kontoStore.aktuellesKonto?.id);
 const aktuelleSprache = computed(() => kontoStore.aktuelleSprache?.id);

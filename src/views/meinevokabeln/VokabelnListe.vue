@@ -23,8 +23,6 @@ import { toast } from 'vue-sonner'
 import { Toaster } from '@/components/ui/sonner'
 import 'vue-sonner/style.css'
 
-// TODO: mit aktuellesKontoID erstezen
-// const kontoId = 'IpPbkgnEfSMKhQq8mA6tB3dxaLe2';
 // Store/ViewModel holen
 const vokabelnStore = useVokabelnStore()
 const route = useRoute()

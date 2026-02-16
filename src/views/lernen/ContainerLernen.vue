@@ -24,9 +24,12 @@ const progress = ref(0)
 </script>
 
 <template>
-    <Card class="w-full m-8 shadow-xl p-6">
+  <div class="min-h-screen p-4 box-border">
+    <Card class="w-full h-full flex flex-col rounded-xl shadow-xl overflow-hidden">
         <Progress :model-value="progress" class="w-full" />
         <component v-if="activeComponent" :is="activeComponent" :lernsetId="lernsetId" :slug="slug" v-model:progress="progress"/>
         <p v-else>Unbekannter Modus: {{ modus }}</p>
     </Card>
+  </div>
+    
 </template>
