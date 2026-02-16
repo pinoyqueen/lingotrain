@@ -168,7 +168,6 @@ export async function addSprache(id: string, spracheId: string): Promise<void> {
  * @param {string | null} neueAktiveSpracheId - Neue aktive Sprache oder null
  * @returns {Promise<void>}
  */
-
 export async function removeSprache(id: string, spracheId: string, neueAktiveSpracheId: string | null): Promise<void> {
   try {
     const docRef = doc(kontoCollection, id);
@@ -184,6 +183,15 @@ export async function removeSprache(id: string, spracheId: string, neueAktiveSpr
   }
 }
 
+/**
+ * Löscht ein Konto.
+ *
+ * Das Document mit der übergebenen ID wird aus der Konto-Collection
+ * der Firebase DB gelöscht.
+ *
+ * @param {string} id - Konto-ID
+ * @returns {Promise<void>}
+ */
 export async function deleteKonto(id: string): Promise<void> {
   try {
     const docRef = doc(kontoCollection, id);

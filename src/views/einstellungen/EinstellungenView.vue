@@ -134,7 +134,7 @@ const verfuegbareSprachenZumHinzufuegen = computed(() => {
  * @param id die ID des neu ausgewählten Profilbildes
  */
 const changeProfilbild = async (id: string) => {
-  await kontoStore.updateProfilbild(id);
+  await kontoStore.updateKontoData({ profilbild_id: id });
 
   showImagePicker.value = false;
 }

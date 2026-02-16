@@ -1,8 +1,8 @@
 import { defineStore, storeToRefs } from "pinia";
 import { useAuthStore } from "./authStore";
-import { addSprache, editAktuelleSprache, findKontoByUsername, removeSprache, updateKonto } from "@/repositories/KontoRepository";
+import { addSprache, deleteKonto, editAktuelleSprache, findKontoByUsername, removeSprache, updateKonto } from "@/repositories/KontoRepository";
 import type { Konto } from "@/models/Konto";
-import { deleteLernset, findAllIdsByKontoAndSprache } from "@/repositories/LernsetRepository";
+import { deleteLernset, findAllIdsByKonto, findAllIdsByKontoAndSprache } from "@/repositories/LernsetRepository";
 import { getSpracheById, getSprachenByIds } from "@/repositories/SprachenRepository";
 
 /**
@@ -13,6 +13,7 @@ import { getSpracheById, getSprachenByIds } from "@/repositories/SprachenReposit
  *  - Hinzufügen und Entfernen einer Sprache
  *  - Aktualisieren der aktuellen Sprache
  *  - Aktualisieren der Kontodaten
+ *  - Löschen des Kontos (inkl. der zugehörigen Daten)
  */
 export const useKontoStore = defineStore('konto', {
     state: () => {
@@ -123,8 +124,11 @@ export const useKontoStore = defineStore('konto', {
         /** 
          * Aktualisiert ausgewählte Felder des aktuellen Konto-Dokuments.
          * 
-         * Es wird zunächst ein lokales Update durchgeführt und anschließend
-         * die Änderungen ebenfalls in der Datenbank übernommen.
+         * Zunächst wird geprüft, ob in den übergebenen Daten der Benutzername gesetzt ist. Falls
+         * ja, wird geprüft, ob der Benutzername schon vergeben ist oder nicht. Wäre er vergeben,
+         * wird ein Fehler mit "USERNAME_EXISTS" geworfen.
+         * 
+         * Anschließend werden die Daten in der DB aktualisiert und danach auch lokal.
          * 
          * @param {Partial<Konto>} data - Die zu aktualisierenden Felder
          */
@@ -160,27 +164,6 @@ export const useKontoStore = defineStore('konto', {
             }
         },
 
-        async updateProfilbild(profilbild_id: string): Promise<boolean> {
-            if (!this.aktuellesKonto?.id) return false;
-
-            try {
-                // Aktualisieren der DB
-                await updateKonto(
-                    this.aktuellesKonto.id, 
-                    { profilbild_id: profilbild_id }
-                ); 
-
-                // Lokal aktualisieren
-                this.aktuellesKonto.profilbild_id = profilbild_id;
-                
-                return true;
-
-            } catch (error) {
-                console.error("Fehler beim Aktualisieren des Profilbildes:", error);
-                throw error;
-            }
-        },
-
         /**
          * Aktualisiert die aktuelle Sprache.
          * 
@@ -210,9 +193,34 @@ export const useKontoStore = defineStore('konto', {
             } catch (e) {
                 console.error("DB Update fehlgeschlagen:", e);
                 
-                // ROLLBACK: Wenn DB fehlschlägt, wird die UI zurückgesetzt
+                // Rollback: Wenn DB fehlschlägt, wird die UI zurückgesetzt
                 konto.aktuelleSpracheId = alteSpracheId;
                 this.aktuelleSprache = this.ausgewaehlteSprachen.find(s => String(s.id) === String(alteSpracheId));
+            }
+        },
+
+        /**
+         * Löschen aller Konto-Daten.
+         * 
+         * Diese Methode löscht alle Lernsets und die zugehörigen Vokabeln aus der
+         * Firestore Datenbank. Anschließend wird auch das Konto-Document des
+         * Nutzers aus der Datenbank gelöscht.
+         * 
+         * @param userId die ID des Kontos, das gelöscht werden soll
+         */
+        async deleteAllUserData(userId: string) {
+            try{
+                // Lernsets zu dem Konto laden und inkl. Vokabeln löschen
+                const lernsetIds = await findAllIdsByKonto(userId);
+                for (const setId of lernsetIds) {
+                    await deleteLernset(setId, userId);
+                }
+
+                // Konto aus Firestore DB löschen
+                await deleteKonto(userId);
+
+            } catch (error) {
+                throw error;
             }
         }
     }

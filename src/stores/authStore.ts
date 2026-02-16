@@ -1,18 +1,20 @@
 import { defineStore } from "pinia";
 import { reactive, ref, watch } from "vue";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence, signOut, reload, EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail, updatePassword, deleteUser } from "firebase/auth";
-import { createKonto, deleteKonto, findKontoById, findKontoByUsername } from "@/repositories/KontoRepository"
+import { createKonto, findKontoById, findKontoByUsername } from "@/repositories/KontoRepository"
 import type { Konto } from "@/models/Konto";
 import router from "@/router";
 import { useProfilbilderStore } from "./profilbilderStore";
 import { useKontoStore } from "./kontoStore";
-import { deleteLernset, findAllIdsByKonto } from "@/repositories/LernsetRepository";
 
 /**
  * Authentifizierungs-Store.
  * 
  * Verwaltet Login, Registrierung, Formularzustände, Fehler und das aktuelle
  * Konto.
+ * Außerdem bietet es Methoden, um Email und Passwort des aktuellen Auth-
+ * Kontos zu aktualisieren oder das Konto zu löschen.
+ * 
  * Es wird Firebase Auth für die Authentifizierung genutzt. Als DB wird
  * Firestore über das {@link KontoRepository} genutzt.
  */
@@ -202,7 +204,7 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   // -----------------------
-  // Registrierung und Login
+  // Registrierung, Login und Logout
   // -----------------------
 
   /** 
@@ -327,6 +329,117 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
+  /**
+   * Loggt einen Benutzer aus.
+   * 
+   * Das Ausloggen findet über Firebase Auth statt. Anschließend wird das aktuelle Konto
+   * resettet und der Nutzer automatisch zum Login navigiert.
+   */
+  async function logout() {
+    try {
+      await signOut(auth);
+      aktuellesKonto.value = null;
+      router.push({ name: 'login' });
+
+    } catch (error) {
+      console.error("Logout fehlgeschlagen", error);
+    }
+  }
+
+  // -----------------------
+  // Verwaltung des Kontos
+  // -----------------------
+
+  /**
+   * Aktualisieren der Email des aktuell eingeloggten Nutzers.
+   * 
+   * Diese Methode reauthentifiziert den Nutzer zunächst mithilfe des aktuellen
+   * Passworts. 
+   * 
+   * Anschließend wird versucht, die Email zu ändern. Dafür wird an die neue Email
+   * eine Email mit einem Verifizierungslink versendet. Klickt der Nutzer den 
+   * Verifizierungslink an, wird die Email in Firebase Auth aktualisiert.
+   * 
+   * @param neueEmail die neue Email
+   * @param passwort das aktuelle Passwort
+   */
+  async function updateEmailWithAuth(neueEmail: string, passwort: string) {
+    await reauthenticate(passwort); 
+    await verifyBeforeUpdateEmail(auth.currentUser!, neueEmail); 
+  }
+
+  /**
+   * Aktualisieren des Passworts des aktuell eingeloggten Nutzers.
+   * 
+   * Diese Methode reauthentifiziert den Nutzer zunächst mithilfe des aktuellen
+   * Passworts. 
+   * 
+   * Anschließend wird das Passwort auf das neu gewünschte Passwort aktualisiert.
+   * 
+   * @param aktuellesPasswort das noch aktuelle Passwort des Nutzers
+   * @param neuesPasswort das neu gewünschte Passwort des Nutzers
+   */
+  async function updatePasswordWithAuth(aktuellesPasswort: string, neuesPasswort: string) {
+    await reauthenticate(aktuellesPasswort);
+
+    const user = auth.currentUser;
+    if (user) {
+      await updatePassword(user, neuesPasswort); 
+    }
+  }
+
+  /**
+   * Löschen eines Benutzerkontos.
+   * 
+   * Diese Methode reauthentifiziert den Nutzer zunächst mithilfe des aktuellen
+   * Passworts.
+   * 
+   * Anschließend werden alle Lernsets des Nutzers, inklusive der Vokabeln gelöscht.
+   * Im Anschluss wird das Konto zunächst aus Firestore gelöscht und anschließend
+   * wird der Nutzer auch aus Firebase Auth entfernt.
+   * 
+   * @param passwort das aktuelle Passwort des Nutzers
+   */
+  async function deleteAccount(passwort: string) {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Kein User angemeldet");
+    const userId = user.uid;
+
+    // Re-Authentifizierung
+    await reauthenticate(passwort);
+
+    try {
+      // Konto-Daten aus der DB löschen
+      const kontoStore = useKontoStore();
+      await kontoStore.deleteAllUserData(userId);
+
+      // User aus Firebase Auth löschen
+      await deleteUser(user);
+
+      // aktuelles Konto entfernen und zu Login navigieren
+      aktuellesKonto.value = null;
+      router.push({ name: 'login' });
+      
+    } catch (error) {
+      console.error("Fehler beim endgültigen Löschen:", error);
+      throw error;
+    }
+  }
+
+  // -----------------------
+  // Interne Auth-Logik (Hilfsfunktionen)
+  // -----------------------
+
+  /**
+   * Synchronisiert den Authentifizierungszustand mit der Datenbank.
+   * 
+   * Diese Methode lädt den aktuellen Status des Nutzers von Firebase Auth neu.
+   * Dies ist wichtig, um die Email-Verifizierung nach einer Email-Änderung zu prüfen.
+   * Falls die E-Mail im Auth-System verifiziert wurde, aber im Firestore-Konto noch 
+   * die alte E-Mail steht, wird das Konto in der Datenbank automatisch aktualisiert.
+   * 
+   * @param {any} user das Objekt des Firebase-Users
+   */
   async function handleAuthState(user: any) {
     if (!user) return;
 
@@ -350,9 +463,22 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
+  /**
+   * Re-Authentifiziert einen Nutzer in Firebase Auth.
+   * 
+   * Diese Methode dient dazu, den aktuell eingeloggten Nutzer in
+   * Firebase Auth neu zu authentifizieren. Dafür ist das aktuelle
+   * Passwort nötig.
+   * 
+   * Ist das Passwort falsch, wird "PASSWORD_INCORRECT" als Fehler geworfen.
+   * 
+   * @param passwort das aktuelle Passwort des Nutzers 
+   */
   async function reauthenticate(passwort: string) {
     const user = auth.currentUser;
-    if (!user || !user.email) throw new Error("Nicht eingeloggt");
+    if (!user || !user.email) {
+      throw new Error("Nicht eingeloggt");
+    }
 
     try {
       const credential = EmailAuthProvider.credential(user.email, passwort);
@@ -365,64 +491,6 @@ export const useAuthStore = defineStore("auth", () => {
         throw new Error("PASSWORD_INCORRECT");
       }
 
-      throw error;
-    }
-  }
-
-  async function updateEmailWithAuth(neueEmail: string, passwort: string) {
-    await reauthenticate(passwort); 
-    await verifyBeforeUpdateEmail(auth.currentUser!, neueEmail); 
-  }
-
-  async function updatePasswordWithAuth(neuesPasswort: string, altesPasswort: string) {
-    await reauthenticate(altesPasswort);
-    const user = auth.currentUser;
-    if (user) {
-      await updatePassword(user, neuesPasswort); 
-    }
-  }
-
-  /**
-   * Loggt einen Benutzer aus.
-   * 
-   * Das Ausloggen findet über Firebase Auth statt. Anschließend wird das aktuelle Konto
-   * resettet und der Nutzer automatisch zum Login navigiert.
-   */
-  async function logout() {
-    try {
-      await signOut(auth);
-      aktuellesKonto.value = null;
-      router.push({ name: 'login' });
-
-    } catch (error) {
-      console.error("Logout fehlgeschlagen", error);
-    }
-  }
-
-  async function deleteAccount(passwort: string) {
-    const user = auth.currentUser;
-    if (!user) throw new Error("Kein User angemeldet");
-    const userId = user.uid;
-
-    await reauthenticate(passwort);
-
-    try {
-
-      // Lernsets zu dem Konto laden und inkl. Vokabeln löschen
-      const lernsetIds = await findAllIdsByKonto(userId);
-      for (const setId of lernsetIds) {
-          await deleteLernset(setId, userId);
-      }
-
-      await deleteKonto(userId);
-
-      await deleteUser(user);
-
-      aktuellesKonto.value = null;
-      router.push({ name: 'login' });
-      
-    } catch (error) {
-      console.error("Fehler beim endgültigen Löschen:", error);
       throw error;
     }
   }
@@ -448,12 +516,12 @@ export const useAuthStore = defineStore("auth", () => {
     registerErrors,
     aktuellesKonto,
     authReady,
-    register,
-    login,
-    logout,
     validateEmail,
     validatePassword,
     validateRequiredInputs,
+    register,
+    login,
+    logout,
     updateEmailWithAuth,
     updatePasswordWithAuth,
     deleteAccount
