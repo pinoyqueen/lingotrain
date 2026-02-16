@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/item'
 import type { Lernset } from '@/models/Lernset'
 import { toast } from 'vue-sonner'
-import { Toaster } from '@/components/ui/sonner'
 import { slugify } from '@/utils/slugify'
 
 const kontoStore = useKontoStore();
@@ -83,7 +82,7 @@ function deleteLernset(item: Lernset) : void {
   const ok = window.confirm(`Willst du das Lernset "${item.name}" wirklich löschen?`)
   if (ok) {
     lernsetStore.deleteLernset(item)
-    toast.info(item.name + ' gelöscht')
+    toast.success(item.name + ' gelöscht')
   }
   showBearbeiten.value = false;
 }
@@ -225,8 +224,5 @@ async function saveLernset() {
 
         </div>
       </div>
-
-      <!-- TOAST -->
-      <Toaster position="top-center" />
 
 </template>
