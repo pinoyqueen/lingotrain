@@ -21,6 +21,7 @@ import router from '@/router'
 const authStore = useAuthStore();
 const kontoStore = useKontoStore();
 
+/** Formulardaten für die Kontobearbeitung */
 const form = reactive({
   vorname: '',
   nachname: '',
@@ -31,6 +32,7 @@ const form = reactive({
   bestaetigungPasswort: ''
 })
 
+/** Fehlermeldungen für die einzelnen Eingabefelder */
 const errors = reactive({
   vorname: null as string | null,
   nachname: null as string | null,
@@ -41,16 +43,22 @@ const errors = reactive({
   bestaetigungPasswort: null as string | null
 })
 
+/** Das eingegebene Passwort beim Löschen des Kontos */
 const loeschPasswort = ref('')
+
+/** Die Fehlermeldung für die Eingabe des Passworts beim Löschen des Kontos */
 const loeschError = ref<string | null>(null)
+
+/** Sollen die Änderungen gespeichert werden? */
 const isSubmitted = ref(false)
 
+// Überwacht Änderungen am Formular, damit Echtzeit-Feedback nach erstem submitten möglich ist
 watch(form, () => {
   if (!isSubmitted.value) return;
   validateInputs();
 }, { deep: true });
 
-// Laden der initialen Daten
+// Laden der initialen Daten in das Formular
 onMounted(() => {
   const konto = authStore.aktuellesKonto;
   if(konto) {
@@ -61,6 +69,15 @@ onMounted(() => {
   }
 })
 
+/**
+ * Erstellt dynamische CSS-Klassen für Eingabefelder.
+ * 
+ * Setzt den Rahmen auf die primäre Farbe, wenn das Eingabefeld in den Fokus kommt.
+ * Bei Fehlern wird der Rahmen stattdessen in einer Warn-Farbe markiert.
+ * 
+ * @param {string | null} error Fehlermeldung des jeweiligen Feldes
+ * @return Liste der Klassen für das Eingabefeld
+ */
 function inputClass(error: string | null) {
   return [
     'border rounded-md px-3 py-2 w-full transition-all',
@@ -70,6 +87,14 @@ function inputClass(error: string | null) {
   ]
 }
 
+/**
+ * Validiert die Benutzereingaben.
+ * 
+ * Dabei werden die Pflichtfelder und das E-Mail-Format geprüft
+ * sowie ggf. die Passwort-Logik (falls in einem Feld etwas eingegeben wurde).
+ * 
+ * @returns {boolean} True, wenn alle Eingaben gültig sind
+ */
 function validateInputs(): boolean {
   errors.vorname = authStore.validateRequiredInputs(form.vorname, "Vorname fehlt");
   errors.nachname = authStore.validateRequiredInputs(form.nachname, "Nachname fehlt");
@@ -92,17 +117,38 @@ function validateInputs(): boolean {
   return !Object.values(errors).some(e => e);
 }
 
+/**
+ * Prüft, ob die E-Mail im Formular von der aktuell gespeicherten abweicht und
+ * demnach aktualisiert werden soll.
+ * 
+ * @param {string} neueEmail die neue Email
+ * @returns {boolean} True, wenn die Email geändert werden soll
+ */
 function isEmailChanged(neueEmail: string): boolean {
   const aktuellesKonto = kontoStore.aktuellesKonto;
 
   return (neueEmail !== null) && !(neueEmail === aktuellesKonto?.email);
 }
 
+/**
+ * Prüft, ob eins der neuen Passwort-Felder Inhalt enthält und das Passwort
+ * demnach geändert werden soll.
+ * 
+ * @returns {boolean} True, wenn das Passwort geändert werden soll
+ */
 function wantsPasswordChange(): boolean {
   return !!(form.neuesPasswort.trim() ||
             form.bestaetigungPasswort.trim());
 }
 
+/**
+ * Speichern der Änderungen.
+ * 
+ * Hier werden die Daten des Nutzers aktualisiert und die Logik aus dem
+ * KontoStore für Vorname, Nachname und Benutzername aufgerufen.
+ * Für Email- und Passwort-Änderungen wird die Logik aus dem AuthStore
+ * aufgerufen, da es kritische Änderungen an der Authentifizierung sind.
+ */
 async function onSpeichern() {
   isSubmitted.value = true;
 
@@ -122,6 +168,7 @@ async function onSpeichern() {
         benutzername: form.username,
     })
 
+    // Falls die Email geändert werden soll, Email ändern
     if (success && isEmailChanged(form.email)) {
       if(!form.aktuellesPasswort) {
         errors.aktuellesPasswort = "Passwort erforderlich";
@@ -138,8 +185,9 @@ async function onSpeichern() {
       }, 3000); // 3 Sekunden Zeit zum Lesen des Toasts geben
     }
 
+    // Falls Passwort geändert werden soll, Passwort ändern
     if (success && wantsPasswordChange()) {
-      await authStore.updatePasswordWithAuth(form.neuesPasswort, form.aktuellesPasswort)
+      await authStore.updatePasswordWithAuth(form.aktuellesPasswort, form.neuesPasswort)
     }
 
     if (success && !isEmailChanged(form.email)) {
@@ -160,6 +208,13 @@ async function onSpeichern() {
   }
 }
 
+/**
+ * Löscht das gesamte Benutzerkonto.
+ * 
+ * Prüft zunächst, ob ein Passwort eingegeben wurde.
+ * Falls ja und das Passwort ist richtig, wird die Logik aus dem 
+ * AuthStore aufgerufen, um das Konto permanent zu löschen.
+ */
 async function kontoLoeschen() {
   loeschError.value = null;
 
@@ -190,6 +245,8 @@ async function kontoLoeschen() {
     <div class="w-full space-y-6">
       
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        <!-- Vorname -->
         <div class="space-y-1">
           <Label class="mb-1.5 px-1">Vorname</Label>
           <Input 
@@ -198,19 +255,24 @@ async function kontoLoeschen() {
           />
           <p v-if="errors.vorname" class="text-[var(--warning)] text-sm px-1">{{ errors.vorname }}</p>
         </div>
+
+        <!-- Nachname -->
         <div class="space-y-1">
           <Label class="mb-1.5 px-1">Nachname</Label>
           <Input v-model="form.nachname" :class="inputClass(errors.nachname)" />
           <p v-if="errors.nachname" class="text-[var(--warning)] text-sm px-1">{{errors.nachname }}</p>
         </div>
+
       </div>
 
+      <!-- Email -->
       <div class="space-y-1">
         <Label class="mb-1.5 px-1">E-Mail-Adresse</Label>
         <Input v-model="form.email" type="email" :class="inputClass(errors.email)" />
         <p v-if="errors.email" class="text-[var(--warning)] text-sm px-1">{{ errors.email }}</p>
       </div>
 
+      <!-- Benutzername -->
       <div class="space-y-1">
         <Label class="mb-1.5 px-1">Benutzername</Label>
         <Input v-model="form.username" :class="inputClass(errors.username)" />
@@ -222,6 +284,7 @@ async function kontoLoeschen() {
         <div class="relative flex justify-center text-xs uppercase"><span class="bg-gray-50 px-2 text-primary">Passwort ändern</span></div>
       </div>
 
+      <!-- Aktuelles Passwort -->
       <div class="space-y-1">
         <Label class="mb-1.5 px-1">Aktuelles Passwort</Label>
         <Input v-model="form.aktuellesPasswort" type="password" placeholder="Erforderlich für Email- oder Passwortänderungen" :class="inputClass(errors.aktuellesPasswort)" />
@@ -229,21 +292,29 @@ async function kontoLoeschen() {
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        <!-- Neues Passwort -->
         <div class="space-y-1">
           <Label class="mb-1.5 px-1">Neues Passwort</Label>
           <Input v-model="form.neuesPasswort" type="password" :class="inputClass(errors.neuesPasswort)" />
           <p v-if="errors.neuesPasswort" class="text-[var(--warning)] text-sm px-1">{{ errors.neuesPasswort }}</p>
         </div>
+
+        <!-- Passwort-Bestäigung -->
         <div class="space-y-1">
           <Label class="mb-1.5 px-1">Bestätigen</Label>
           <Input v-model="form.bestaetigungPasswort" type="password" :class="inputClass(errors.bestaetigungPasswort)" />
           <p v-if="errors.bestaetigungPasswort" class="text-[var(--warning)] text-sm px-1">{{ errors.bestaetigungPasswort }}</p>
         </div>
+
       </div>
 
       <div class="pt-1 space-y-1">
+
+        <!-- Button zum Speichern der Änderungen -->
         <Button variant="primary" class="w-full mt-4" @click="onSpeichern">Änderungen speichern</Button>
 
+        <!-- Button zum Löschen des Kontos, der beim Klick aber einen Alert-Dialog öffnet (zur Bestätigung) -->
         <AlertDialog>
           <AlertDialogTrigger as-child>
             <Button variant="primary" class="w-full mt-4 bg-warning hover:bg-warning/80">Konto dauerhaft löschen</Button>
