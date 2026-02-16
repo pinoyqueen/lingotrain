@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { createVokabeln, editVokabeln, findAllVokabelnByLernsetId, deleteVokabel } from '@/repositories/VokabelnRepository'
 import type { Vokabeln } from '@/models/Vokabeln'
-import { create } from '@/repositories/VokabelKontoRepository'
+import { create, deleteVK } from '@/repositories/VokabelKontoRepository'
 import { VOKABELN_STATUS } from '@/models/VokabelnStatus'
 import { useKontoStore } from './kontoStore'
 
@@ -56,11 +56,15 @@ export const useVokabelnStore = defineStore('vokabeln', {
         },
 
          // Vokabel löschen
-         // TODO: VokabelKonto auch löschen
         async deleteVokabel(v: Vokabeln) {
             if (!v.id) throw new Error("ID fehlt zum Löschen!")
             this.loading = true
             await deleteVokabel(v.id)
+            // bestehendes VokabelKonto auch löschen
+            const kontoId = useKontoStore().aktuellesKonto?.id
+            if (kontoId) {
+                await deleteVK(kontoId, v.id)
+            }
             // lokal sofort entfernen ohne Reload
             this.liste = this.liste.filter(item => item.id !== v.id)
             this.loading = false

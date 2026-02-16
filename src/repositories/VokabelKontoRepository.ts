@@ -119,9 +119,22 @@ async function resetAndReload(kontoId: string, lernsetId: string): Promise<void>
 
 }
 
-// function delete(kontoId: string, vokabelId: string): void  {
-//     // TODO: delete implementieren
-// }
+export async function deleteVK(kontoId: string, vokabelId: string): Promise<void> {
+    const q = query(
+        vkCollection,
+        where('vokabelId', '==', vokabelId),
+        where('kontoId', '==', kontoId),
+        limit(1)
+    )
+
+    const snap = await getDocs(q)
+    const doc0 = snap.docs[0]
+
+    if (!doc0)
+        throw new Error('Vokabelkonto nicht gefunden')
+
+    await deleteDoc(doc0.ref)
+}
 
 function mapVokabelDoc(docSnap: DocumentSnapshot): Vokabeln {
     const d = docSnap.data() as any
