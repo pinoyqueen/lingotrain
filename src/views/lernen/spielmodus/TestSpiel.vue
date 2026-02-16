@@ -19,23 +19,21 @@ watch(
   }
 )
 
-
 // Prüflogik – passe an deine fachliche Logik an
 function pruefen(): boolean {
   // Beispiel: Richtig, wenn ausgewählte Option der Übersetzung entspricht
   // const ok = selectedOption.value != null && selectedOption.value === props.vokabel.uebersetzung
   const ok = true
-  emit('answered', ok) 
+  emit('answered', ok) // optional, falls du zusätzlich ein Event willst
   return ok
 }
 
 
 // Methode für den Parent freigeben
 defineExpose({ pruefen })
-
 </script>
 
 <template>
-  <h2>MCQ Spiel: {{ props.vokabel.vokabel }}</h2>
+  <h2>Test Spiel: {{ props.vokabel.vokabel }}</h2>
   <Button variant="outline" class="bg-[var(--button-primary)]" @click="pruefen">Lösung prüfen</Button>
 </template>

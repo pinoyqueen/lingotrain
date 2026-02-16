@@ -20,11 +20,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useVokabelnStore } from '@/stores/vokabelnStore'
 import type { Vokabeln } from '@/models/Vokabeln'
 import { toast } from 'vue-sonner'
-import { Toaster } from '@/components/ui/sonner'
 import 'vue-sonner/style.css'
 
-// TODO: mit aktuellesKontoID erstezen
-// const kontoId = 'IpPbkgnEfSMKhQq8mA6tB3dxaLe2';
 // Store/ViewModel holen
 const vokabelnStore = useVokabelnStore()
 const route = useRoute()
@@ -109,7 +106,7 @@ async function deleteVokabel(item: Vokabeln) : Promise<void> {
   const ok = window.confirm(`Willst du die Vokabel "${item.vokabel}" wirklich löschen?`)
   if (ok) {
     await vokabelnStore.deleteVokabel(item)
-    toast.info(item.vokabel + ' gelöscht')
+    toast.success(item.vokabel + ' gelöscht')
   }
   showBearbeiten.value = false;
 }
@@ -280,9 +277,6 @@ async function saveVokabel() {
 
         </div>
       </div>
-
-      <!-- TOAST -->
-      <Toaster position="top-center" />
   
 
 </template>

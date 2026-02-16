@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
 import type { VokabelKonto } from '@/models/VokabelKonto'
-import { getAllVokabelnForTraining } from '@/repositories/VokabelKontoRepository'
+import { getAllVokabelnForTraining,  updateStatus } from '@/repositories/VokabelKontoRepository'
 import { useKontoStore } from './kontoStore'
 import type { Vokabeln } from '@/models/Vokabeln'
+import { VOKABELN_STATUS } from '@/models/VokabelnStatus'
 
 export const useVkStore = defineStore('vokabelKonto', {
     state: () => ({
@@ -39,6 +40,17 @@ export const useVkStore = defineStore('vokabelKonto', {
                 this.aktuelleFrage = next
             
             }
+        },
+        frageBeantwortet(isRichtig: boolean) {
+            var status = isRichtig ? VOKABELN_STATUS.RICHTIG : VOKABELN_STATUS.FALSCH
+            const kontoId = useKontoStore().aktuellesKonto?.id
+            if (kontoId && this.aktuelleFrage?.id) {
+                updateStatus(kontoId, this.aktuelleFrage?.id, status)
+            }
+        },
+        resetRunde() {
+            this.rundeFertig = false
+            this.aktuelleFrage = null
         }
     }
 })
