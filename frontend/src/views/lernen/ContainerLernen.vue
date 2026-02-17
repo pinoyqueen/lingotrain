@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import ContainerSpiel from './spielmodus/ContainerSpiel.vue';
 import KarteiKarten from './karteikarten/KarteiKarten.vue';
@@ -24,12 +24,11 @@ const progress = ref(0)
 </script>
 
 <template>
-  <div class="min-h-screen p-4 box-border">
+  <div class="h-[calc(100vh-60px)] p-4 box-border">
     <Card class="w-full h-full flex flex-col rounded-xl shadow-xl overflow-hidden">
         <Progress :model-value="progress" class="w-full" />
         <component v-if="activeComponent" :is="activeComponent" :lernsetId="lernsetId" :slug="slug" v-model:progress="progress"/>
         <p v-else>Unbekannter Modus: {{ modus }}</p>
     </Card>
   </div>
-    
 </template>

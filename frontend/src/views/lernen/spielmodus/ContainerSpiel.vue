@@ -16,17 +16,23 @@ const isRundeFertig = computed<boolean>(() => vkStore.rundeFertig)
 const MCQSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/MCQSpiel.vue'))
 const PaareSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/PaareSpiel.vue'))
 const TestSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/TestSpiel.vue'))
-// TODO: auch hier die Spiele für Satz
+const SchreibenSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/SchreibenSpiel.vue'))
 
-// --- Liste der Spiele (kannst du jederzeit erweitern) ---
-const WORT_SPIELE = [MCQSpiel, PaareSpiel, TestSpiel]
-// TODO: hier auch die Spiele für Satz
-
+const WORT_SPIELE = [MCQSpiel, PaareSpiel, TestSpiel, SchreibenSpiel]
+const SATZ_SPIELE = [SchreibenSpiel]
 
 // --- State: aktive Komponente + Key zur Forcierung von Re-Render ---
 const activeComponent = ref<any | null>(null)
 const viewKey = ref(0) // erhöht sich bei Wechsel -> Komponente rendert neu
-const show = ref(false)
+
+// Feedback
+const feedbackLoesung = ref('')
+const feedbackRichtig = ref(false)
+const showFeedback = ref(false)
+
+// Button State
+const buttonText = ref('Prüfen')
+const currentSpielRef = ref<any>(null)
 
 // --- Hilfsfunktion: zufällige Auswahl ---
 function pickRandom<T>(arr: T[]): T {
@@ -43,7 +49,7 @@ function chooseSpiel() {
   const vok = aktuelleFrage.value
 
   // TODO: hier mit SATZ_SPIELE ersetzen
-  const spiel_pool = vok.isWort ? WORT_SPIELE : WORT_SPIELE
+  const spiel_pool = vok.isWort ? WORT_SPIELE : SATZ_SPIELE
 
   return pickRandom(spiel_pool)
 }
@@ -62,7 +68,11 @@ onMounted(async () => {
 })
 
 function next() {
-  show.value = false
+  showFeedback.value = false
+  buttonText.value = "Prüfen"
+  feedbackLoesung.value = ''
+  feedbackRichtig.value = false
+
   vkStore.nextFrage()
   console.log("aktuelle Frage: " + vkStore.aktuelleFrage?.vokabel)
 
@@ -77,38 +87,106 @@ function next() {
 }
 
 function onAnswered(result: boolean) {
-  show.value = true
+  feedbackRichtig.value = result
+  feedbackLoesung.value = result ? '' : (aktuelleFrage.value?.vokabel || '')
+  showFeedback.value = true
+
   vkStore.frageBeantwortet(result)
   if (result) {
     console.log("✔️ richtig")
   } else {
     console.log("❌ falsch")
   }
+
+  buttonText.value = 'Next'
 }
 
+function buttonClicked() {
+  if (!aktuelleFrage.value) return
 
+  if (buttonText.value === 'Prüfen') {
+    // Falls die Komponente eine manuelle Prüfen-Funktion hat (wie SchreibenSpiel)
+    if (currentSpielRef.value?.pruefen) {
+      const result = currentSpielRef.value.pruefen()
+      onAnswered(result)
+    }
+  } else {
+    next()
+  }
+}
+
+// --- Styles ---
+const footerStyle = computed(() => {
+  if (!showFeedback.value) return { 
+    backgroundColor: 'transparent', 
+    borderColor: 'transparent',
+    boxShadow: 'none' 
+  }
+  return {
+    backgroundColor: feedbackRichtig.value ? 'var(--success)' : 'var(--warning)',
+    borderColor: 'rgba(255,255,255,0.1)'
+  }
+})
+
+const buttonClass = computed(() => {
+  if (!showFeedback.value) return 'bg-primary hover:bg-primary/80'
+  return 'bg-black/20 hover:bg-black/30 border border-white/20'
+})
 </script>
 
 <template>
-  <h2>Spiel Container</h2>
   <p v-if="isRundeFertig">Runde is fertig</p>
-  <div v-else>
-    <component v-if="activeComponent && aktuelleFrage" 
-                :is="activeComponent" 
-                :vokabel ="aktuelleFrage" 
-                :key="viewKey"
-                @answered="onAnswered"/>
-    
-  <div class="flex justify-end mt-4">
-      <Button
-        v-show="show"
-        @click="next"
-        class="bg-[var(--green)] hover:bg-green-700 text-white font-semibold px-4 py-2 rounded"
-      >
-        Next
-      </Button>
-  </div>
 
+  <div v-else class="flex flex-col h-full w-full">
+    <div class="flex-1 w-full overflow-y-auto p-6 sm:p-10">
+      <component
+        v-if="activeComponent && aktuelleFrage"
+        :is="activeComponent"
+        :vokabel="aktuelleFrage"
+        :key="viewKey"
+        ref="currentSpielRef"
+        @answered="onAnswered" 
+      />
+    </div>
+
+    <div class="w-full p-4 sm:p-6 shrink-0 mt-auto">
+      <footer 
+        class="transition-all duration-300 py-6 px-6 sm:px-10 rounded-2xl shadow-lg border"
+        :style="footerStyle"
+      >
+        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+          
+          <div class="flex-1 w-full min-w-0">
+            <div v-if="showFeedback" class="flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2">
+              <div 
+                class="hidden md:flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-sm"
+                :class="feedbackRichtig ? 'bg-white text-[var(--success)]' : 'bg-white text-[var(--warning)]'"
+              >
+                <span class="text-2xl font-bold">{{ feedbackRichtig ? '✓' : '✕' }}</span>
+              </div>
+
+              <div class="flex flex-col min-w-0 text-white">
+                <h3 class="text-lg font-bold mb-1 leading-none">
+                  {{ feedbackRichtig ? 'Richtig!' : 'Lösung:' }}
+                </h3>
+                <p class="text-base leading-relaxed break-all opacity-95 font-medium">
+                  {{ feedbackRichtig ? 'Hervorragende Arbeit.' : feedbackLoesung }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div :class="!showFeedback ? 'w-full flex justify-end' : 'w-full sm:w-auto'">
+            <Button
+              @click="buttonClicked"
+              class="w-full sm:w-auto px-12 h-12 rounded-xl font-bold text-white transition-all active:scale-95 shadow-md shrink-0"
+              :class="buttonClass"
+            >
+              {{ buttonText }}
+            </Button>
+          </div>
+        </div>
+      </footer>
+    </div>
   </div>
-  
 </template>
