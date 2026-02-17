@@ -71,6 +71,7 @@ function next() {
     return
   }
 
+  // TODO: prüfen ob es genug Vokabeln für das Spiel gibt
   activeComponent.value = chooseSpiel()
   viewKey.value++ // zwingt neu rendering
 }

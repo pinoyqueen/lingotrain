@@ -13,8 +13,6 @@ import {
   limit,
   DocumentReference,
   DocumentSnapshot,
-  QueryDocumentSnapshot,
-  type DocumentData
 } from 'firebase/firestore'
 import type { VokabelKonto } from '@/models/VokabelKonto'
 import { VOKABELN_STATUS, type VokabelnStatus } from '@/models/VokabelnStatus'
@@ -22,14 +20,15 @@ import type { Vokabeln } from '@/models/Vokabeln'
 
 const VOKABELN_COLLECTION = 'Vokabeln'
 const VK_COLLECTION = 'VokabelKonto'
-const vokabelnCollection = collection(db, VOKABELN_COLLECTION)
 const vkCollection = collection(db, VK_COLLECTION)
 
-/* ======================
-   CREATE
-====================== */
+/**
+ * Erstellt einen neuen Eintrag in VokabelKonto.
+ * Dieser Eintrag speichert den Lernstatus einer spezifischen Vokabel für einen bestimmten Benutzer.
+ * @param vk VokabelKonto-Objekt
+ * @returns Promise<DocumentRef> - Referenz zum neuen VokabelKonto-Eintrag
+ */
 export async function create(vk: VokabelKonto) {
-    console.log("VK created")
     const vokabelRef = doc(db, VOKABELN_COLLECTION, vk.vokabelId)
     return await addDoc(vkCollection, {
         vokabelId: vk.vokabelId,
@@ -40,9 +39,12 @@ export async function create(vk: VokabelKonto) {
     })
 }
 
-/* ======================
-   STATUS AKTUALISIEREN
-====================== */
+/**
+ * Aktualisiert den Lernstatus einer bestimmten Vokabel für einen bestimmten Benutzer.
+ * @param kontoId Benutzer-Id
+ * @param vokabelId Id der Vokabel
+ * @param status Neuer Status (NICHT_GELERNT, FALSCH, RICHTIG)
+ */
 export async function updateStatus(kontoId: string, vokabelId: string, status: VokabelnStatus): Promise<void> {
     const q = query(vkCollection,
         where('vokabelId', '==', vokabelId),
@@ -62,6 +64,15 @@ export async function updateStatus(kontoId: string, vokabelId: string, status: V
 
 }
 
+/**
+ * Holt alle Vokabeln eines Lernsets, die für das Training relevant sind.
+ * Das sind nur solche mit Status NICHT_GELERNT oder FALSCH.
+ * Wenn alle gelernt sind, dann automatische Status-Zurücksetzung.
+ * 
+ * @param lernsetId Id des Lernsets
+ * @param kontoId Benutzer-Id
+ * @returns Promise<Vokabeln[]> - Liste der Vokabelobjekte
+ */
 export async function getAllVokabelnForTraining(lernsetId: string, kontoId: string): Promise<Vokabeln[]> {
     const q = query(
         vkCollection,
@@ -78,6 +89,7 @@ export async function getAllVokabelnForTraining(lernsetId: string, kontoId: stri
         return getAllVokabelnForTraining(lernsetId, kontoId)
     }
 
+    // Lade zugehörige Vokabel-Daten
     const vokTasks = snap.docs.map(async (vkDoc) => {
         const data = vkDoc.data() as any
         const ref: DocumentReference | undefined = data?.vokabelRef
@@ -96,10 +108,20 @@ export async function getAllVokabelnForTraining(lernsetId: string, kontoId: stri
         return mapVokabelDoc(vSnap)
     })
 
+    // Filtert null-Einträge heraus
     const resolved = await Promise.all(vokTasks)
     return resolved.filter(Boolean) as Vokabeln[]
     
 }
+
+/**
+ * Setzt alle Vokabelstatus eines Lernsets wieder auf NICHT_GELERNT.
+ * Wird automatisch aufgerufen, wenn alle Vokabeln gelernt wurden.
+ * 
+ * @param kontoId Benutzer Id
+ * @param lernsetId Lernset Id
+ * @returns Promise<void>
+ */
 async function resetAndReload(kontoId: string, lernsetId: string): Promise<void> {
     const qAll = query(
         vkCollection,
@@ -119,6 +141,11 @@ async function resetAndReload(kontoId: string, lernsetId: string): Promise<void>
 
 }
 
+/**
+ * Löscht den VokabelKonto-Eintrag einer bestimmten Vokabel für einen bestimmten Nutzer.
+ * @param kontoId Benutzer-Id
+ * @param vokabelId Id der Vokabel
+ */
 export async function deleteVK(kontoId: string, vokabelId: string): Promise<void> {
     const q = query(
         vkCollection,
@@ -136,6 +163,13 @@ export async function deleteVK(kontoId: string, vokabelId: string): Promise<void
     await deleteDoc(doc0.ref)
 }
 
+/**
+ * Wandelt ein Firestore-Vokabel-Dokument in ein Vokabeln-Modell um.
+ * Stellt sicher, dass fehlende Fehler mit Defaults gefüllt werden.
+ * 
+ * @param docSnap Firestore-Dokument
+ * @returns Vokabeln-Objekt
+ */
 function mapVokabelDoc(docSnap: DocumentSnapshot): Vokabeln {
     const d = docSnap.data() as any
     

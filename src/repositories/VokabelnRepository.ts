@@ -16,9 +16,12 @@ import type { Vokabeln } from '@/models/Vokabeln'
 const COLLECTION_NAME = 'Vokabeln'
 const vokabelnCollection = collection(db, COLLECTION_NAME)
 
-/* ======================
-   CREATE
-====================== */
+/**
+ * Erstellt eine neue Vokabel in Firestore.
+ * 
+ * @param v Vokabel-Objekt, das gespeichert werden soll
+ * @returns Promise mit dem Dokument-Ref der neuen Vokabel
+ */
 export async function createVokabeln(v: Vokabeln) {
   return await addDoc(vokabelnCollection, {
     vokabel: v.vokabel,
@@ -29,9 +32,10 @@ export async function createVokabeln(v: Vokabeln) {
   })
 }
 
-/* ======================
-   DELETE
-====================== */
+/**
+ * Löscht eine einzelne Vokabel anhand ihrer Id.
+ * @param vokabelnId Id der zu löschenden Vokabel
+ */
 export async function deleteVokabel(
   vokabelnId: string
 ) {
@@ -45,9 +49,13 @@ export async function deleteVokabel(
   await deleteDoc(ref)
 }
 
-/* ======================
-   ALLE VOKABELNEINTRÄGE LÖSCHEN, DIE ZU EINEM BESTIMMTEN LERNSET GEHÖREN
-====================== */
+
+/**
+ * Löscht alle Vokabeln, die zu einem bestimmten Lernset gehören.
+ * 
+ * @param lernsetId Id des zugehörigen Lernsets
+ * @returns Promise<void>
+ */
 export async function deleteAllVokabelnByLernsetId(lernsetId: string) {
     const q = query(
       vokabelnCollection,
@@ -68,9 +76,12 @@ export async function deleteAllVokabelnByLernsetId(lernsetId: string) {
   }
 
 
-/* ======================
-   FIND ALL 
-====================== */
+/**
+ * Holt alle Vokabeln, die einem bestimmten Lernset zugeordnet sind.
+ * 
+ * @param lernsetId Id des Lernsets
+ * @returns Promise<Vokabeln[]> - Liste der Vokabeln
+ */
 export async function findAllVokabelnByLernsetId(lernsetId: string): Promise<Vokabeln[]> {
   const q = query(vokabelnCollection, where('setId', '==', lernsetId))
   const snapshot = await getDocs(q)
@@ -81,9 +92,11 @@ export async function findAllVokabelnByLernsetId(lernsetId: string): Promise<Vok
   }))
 }
 
-/* ======================
-   EDIT
-====================== */
+/**
+ * Aktualisiert eine existierende Vokabel.
+ * 
+ * @param v Vokabeln-Objekt mit gültiger Id und den neuen Werten.
+ */
 export async function editVokabeln(v: Vokabeln) {
   
   if (!v.id) {

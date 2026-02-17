@@ -5,15 +5,33 @@ import { create, deleteVK } from '@/repositories/VokabelKontoRepository'
 import { VOKABELN_STATUS } from '@/models/VokabelnStatus'
 import { useKontoStore } from './kontoStore'
 
+/**
+ * Pinia-Store zur Verwaltung von Vokabeln innerhalb eines Lernsets.
+ *
+ * Verantwortlichkeiten:
+ * - Laden aller Vokabeln eines Lernsets
+ * - Erstellen, Aktualisieren und Löschen von Vokabeln
+ * - Synchronisieren des VokabelKonto-Eintrags (Lernstatus pro Nutzer)
+ * - Lokales State- und Fehler-Handling
+
+ */
 export const useVokabelnStore = defineStore('vokabeln', {
     state: () => ({
+        /** Aktuelle Vokabelliste des ausgewählten Lernsets */
         liste: [] as Vokabeln[],
+        /** Ladeindikator für UI-Komponenten */
         loading: false,
+        /** Text für Fehlermeldung */
         fehler: "" as String
     }),
 
     actions: {
-       // Lädt alle Vokabeln eines Lernsets
+       
+        /**
+         * Lädt alle Vokabeln eines Lernsets aus Firestore und setzt sie in den Store.
+         *
+         * @param lernsetId - ID des Lernsets, dessen Vokabeln geladen werden sollen
+         */
         async loadByLernsetId(lernsetId: string) {
             this.loading = true
             this.fehler = ""
@@ -26,11 +44,22 @@ export const useVokabelnStore = defineStore('vokabeln', {
             }
         }, 
 
-         // Neue Vokabel hinzufügen
+        
+        /**
+         * Erstellt eine neue Vokabel und legt gleichzeitig einen VokabelKonto-Eintrag
+         * für den aktuellen Benutzer an (Status = NICHT_GELERNT).
+         * Anschließend wird die Liste für das entsprechende Lernset neu geladen.
+         *
+         * @param v - Vokabel-Objekt
+         *
+         * @throws Error - Wenn setId fehlt
+         */
         async addVokabel(v: Vokabeln) {
             if (!v.setId) throw new Error("setId fehlt!")
             this.loading = true
+            // Vokabel in Firestore anlegen
             const vokDocRef = await createVokabeln(v)
+            // VokabelKonto-Eintrag für aktuellen Benutzer anlegen
             const kontoId = useKontoStore().aktuellesKonto?.id
             if (kontoId) {
                 await create({
@@ -45,7 +74,15 @@ export const useVokabelnStore = defineStore('vokabeln', {
             this.loading = false
         },
 
-        // Bestehende Vokabel bearbeiten
+        
+        /**
+         * Aktualisiert eine bestehende Vokabel in Firestore und lädt danach die
+         * Vokabelliste des zugehörigen Lernsets neu.
+         *
+         * @param v - Vokabel mit gültiger id und setId
+         *
+         * @throws Error - Wenn die id fehlt
+         */
         async editVokabel(v: Vokabeln) {
             if (!v.id) throw new Error("ID fehlt zum Bearbeiten!")
             this.loading = true
@@ -55,7 +92,16 @@ export const useVokabelnStore = defineStore('vokabeln', {
             this.loading = false
         },
 
-         // Vokabel löschen
+        
+        /**
+         * Löscht eine Vokabel aus Firestore und entfernt den dazugehörigen
+         * VokabelKonto-Eintrag des aktuellen Benutzers. Anschließend wird
+         * die Vokabel lokal aus dem Store entfernt.
+         *
+         * @param v - Vokabel-Objekt
+         *
+         * @throws Error - Wenn die id fehlt
+         */
         async deleteVokabel(v: Vokabeln) {
             if (!v.id) throw new Error("ID fehlt zum Löschen!")
             this.loading = true

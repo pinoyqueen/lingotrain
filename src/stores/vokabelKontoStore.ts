@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import type { VokabelKonto } from '@/models/VokabelKonto'
 import { getAllVokabelnForTraining,  updateStatus } from '@/repositories/VokabelKontoRepository'
 import { useKontoStore } from './kontoStore'
 import type { Vokabeln } from '@/models/Vokabeln'

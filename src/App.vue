@@ -47,7 +47,7 @@ watch(
   </component>
 
   <Toaster 
-      position="top-right"
+      position="top-center"
       :toastOptions="{
         classes: {
           success: '!bg-[var(--success)] !text-success-foreground border-none',

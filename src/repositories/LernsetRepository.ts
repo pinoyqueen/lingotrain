@@ -16,9 +16,12 @@ import { deleteAllVokabelnByLernsetId } from "@/repositories/VokabelnRepository"
 const COLLECTION_NAME = 'Set'
 const setCollection = collection(db, COLLECTION_NAME)
 
-/* ======================
-   CREATE
-====================== */
+/**
+ * Erstellt ein neues Lernset-Dokument in Firestore.
+ * 
+ * @param l Das Lernset-Objekt (ohne ID), das gespeichert werden soll.
+ * @returns Promise mit der Referenz auf das neu angelegte Dokument.
+ */
 export async function createLernset(l: Lernset) {
   return await addDoc(setCollection, {
     name: l.name,
@@ -29,9 +32,13 @@ export async function createLernset(l: Lernset) {
   })
 }
 
-/* ======================
-   DELETE (inkl. Owner-Check und alle dazugehörigen Vokabeln löschen)
-====================== */
+/**
+ * Löscht ein Lernset, sofern der anfragende Benutzer der Owner ist.
+ * Zusätzlich werden alle zugehörigen Vokabeln entfernt.
+ * 
+ * @param lernsetId Id des zu löschenden Lernsets
+ * @param kontoId Id des anfragenden Benutzers
+ */
 export async function deleteLernset(
   lernsetId: string,
   kontoId: string
@@ -53,9 +60,13 @@ export async function deleteLernset(
   await deleteDoc(ref)
 }
 
-/* ======================
-   FIND ALL (by owner)
-====================== */
+/**
+ * Liefert alle Lernsets eines Owners in einer bestimmten Zielsprache.
+ * 
+ * @param kontoId Owner-Id
+ * @param aktuelleSprache Id der Zielsprache, nach der gefiltert wird
+ * @returns Promise<Lernset[]> - Liste der Lernsets
+ */
 export async function findAllLernsets(
   kontoId: string,
   aktuelleSprache: string
@@ -73,9 +84,12 @@ export async function findAllLernsets(
   }))
 }
 
-/* ======================
-   FIND BY ID
-====================== */
+/**
+ * Holt ein einzelnes Lernset anhand seiner Dokument-Id.
+ * 
+ * @param lernsetId Id des Lernsets
+ * @returns Promise<Lernset | null> - Lernset mit id oder null, wenn nicht gefunden
+ */
 export async function findLernsetById(
   lernsetId: string
 ): Promise<Lernset | null> {
@@ -89,9 +103,12 @@ export async function findLernsetById(
   }
 }
 
-/* ======================
-   FIND ALL IDS BY KONTO
-====================== */
+/**
+ * Liefert nur die Ids aller Lernsets eines Owners.
+ * 
+ * @param kontoId Owner-Id
+ * @returns Promise<string[]> - Liste der Dokument-ids
+ */
 export async function findAllIdsByKonto(
   kontoId: string
 ): Promise<string[]> {
@@ -101,9 +118,13 @@ export async function findAllIdsByKonto(
   return snapshot.docs.map(d => d.id)
 }
 
-/* ======================
-   FIND ALL IDS BY KONTO + SPRACHE
-====================== */
+/**
+ * Liefert nur die Ids aller Lernsets eines Owners für eine bestimmte Zielsprache.
+ * 
+ * @param kontoId Owner-Id
+ * @param spracheId Id der Zielsprache
+ * @returns Promise<string[]> - Liste der Dokument-Ids
+ */
 export async function findAllIdsByKontoAndSprache(
   kontoId: string,
   spracheId: string
@@ -118,9 +139,11 @@ export async function findAllIdsByKontoAndSprache(
   return snapshot.docs.map(d => d.id)
 }
 
-/* ======================
-   EDIT
-====================== */
+/**
+ * Aktualisiert ein bestehendes Lernset-Dokument.
+ * 
+ * @param l Lernset mit gültiger Id und gewünschten Änderungen
+ */
 export async function editLernset(
   l: Lernset
 ) {
