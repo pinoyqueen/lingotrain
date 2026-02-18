@@ -5,6 +5,8 @@ import { useRoute } from 'vue-router';
 import Button from '@/components/ui/button/Button.vue';
 import type { Vokabeln } from '@/models/Vokabeln';
 
+const MAX_GELERNT = 4
+
 const route = useRoute()
 const vkStore = useVkStore()
 const lernsetId = String(route.params.id)
@@ -18,7 +20,7 @@ const PaareSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/
 const TestSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/TestSpiel.vue'))
 const SchreibenSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/SchreibenSpiel.vue'))
 
-const WORT_SPIELE = [MCQSpiel, PaareSpiel, TestSpiel, SchreibenSpiel]
+const WORT_SPIELE = [MCQSpiel, PaareSpiel, SchreibenSpiel]
 const SATZ_SPIELE = [SchreibenSpiel]
 
 // --- State: aktive Komponente + Key zur Forcierung von Re-Render ---
@@ -34,6 +36,10 @@ const showFeedback = ref(false)
 const buttonText = ref('Prüfen')
 const currentSpielRef = ref<any>(null)
 
+const emit = defineEmits<{
+  (e: 'update:progress', value: number): void
+}>()
+
 // --- Hilfsfunktion: zufällige Auswahl ---
 function pickRandom<T>(arr: T[]): T {
   if (arr.length === 0) {
@@ -43,13 +49,42 @@ function pickRandom<T>(arr: T[]): T {
   return arr[idx]!
 }
 
+function updateProgress() {
+  const value =  Math.round(((vkStore.index + 1) / vkStore.alleVokabeln.length) * 100)
+  emit('update:progress', value)
+}
+
+
 function chooseSpiel() {
   if (!aktuelleFrage.value) return null
 
   const vok = aktuelleFrage.value
+  
+  if(!vok.id) return null
 
-  // TODO: hier mit SATZ_SPIELE ersetzen
-  const spiel_pool = vok.isWort ? WORT_SPIELE : SATZ_SPIELE
+  // Anzahl gelernt für diese Vokabel abfragen
+  // const gelernt = await vkStore.getAnzahlGelernt(vok.id)
+
+  // Entscheidung basierend auf gelernt
+  let spiel_pool: Array<any> = []
+
+  if(vok.isWort) {
+    // Wortspiele kopieren
+    spiel_pool = [...WORT_SPIELE]
+    // if (gelernt >= MAX_GELERNT)
+    //   // MCQSpiel entfernen, falls schon oft gelernt
+    //   spiel_pool = spiel_pool.filter(s => s !== MCQSpiel)
+
+  } else {
+    // Satzspiele kopieren
+    spiel_pool = [...SATZ_SPIELE]
+    // TODO: einfacher Spieltyp für Sätze entfernen
+  }
+
+  // Fallback falls Liste leer ist
+  if (spiel_pool.length === 0) {
+    spiel_pool = vok.isWort ? [...WORT_SPIELE] : [...SATZ_SPIELE]
+  }
 
   return pickRandom(spiel_pool)
 }
@@ -72,7 +107,8 @@ function next() {
   buttonText.value = "Prüfen"
   feedbackLoesung.value = ''
   feedbackRichtig.value = false
-
+  
+  updateProgress()
   vkStore.nextFrage()
   console.log("aktuelle Frage: " + vkStore.aktuelleFrage?.vokabel)
 

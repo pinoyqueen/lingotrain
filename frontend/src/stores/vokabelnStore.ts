@@ -66,7 +66,8 @@ export const useVokabelnStore = defineStore('vokabeln', {
                     vokabelId: vokDocRef.id,
                     kontoId: kontoId,
                     status: VOKABELN_STATUS.NICHT_GELERNT,
-                    lernsetId: v.setId
+                    lernsetId: v.setId,
+                    anzahlGelernt:0
                 })
             }
             // Liste neu laden

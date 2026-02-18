@@ -35,6 +35,7 @@ export async function create(vk: VokabelKonto) {
         kontoId: vk.kontoId,
         status: vk.status,
         lernsetId: vk.lernsetId,
+        anzahlGelernt: vk.anzahlGelernt,
         vokabelRef
     })
 }
@@ -161,6 +162,36 @@ export async function deleteVK(kontoId: string, vokabelId: string): Promise<void
         throw new Error('Vokabelkonto nicht gefunden')
 
     await deleteDoc(doc0.ref)
+}
+
+export async function getAnzahlGelernt(kontoId: string, vokabelId: string): Promise<number> {
+  try {
+    const q = query(
+      collection(db, "vokabelKonto"),
+      where("kontoId", "==", kontoId),
+      where("vokabelId", "==", vokabelId),
+      limit(1)
+    )
+
+    const qs = await getDocs(q)
+
+    if (qs.empty) {
+      return 0
+    }
+
+    const doc = qs.docs[0]
+    if (doc) {
+        const val = doc.data().anzahlGelernt
+
+        return val ?? 0
+    }
+    
+    return 0
+
+  } catch (e) {
+    console.error("Abfrage anzahlGelernt fehlgeschlagen", e)
+    throw e
+  }
 }
 
 /**

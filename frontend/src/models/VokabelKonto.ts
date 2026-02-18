@@ -4,5 +4,6 @@ export interface VokabelKonto {
   vokabelId: string
   kontoId: string
   status: VokabelnStatus
+  anzahlGelernt: number
   lernsetId: string
 }

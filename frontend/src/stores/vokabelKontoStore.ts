@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { getAllVokabelnForTraining,  updateStatus } from '@/repositories/VokabelKontoRepository'
+import { getAllVokabelnForTraining,  getAnzahlGelernt,  updateStatus } from '@/repositories/VokabelKontoRepository'
 import { useKontoStore } from './kontoStore'
 import type { Vokabeln } from '@/models/Vokabeln'
 import { VOKABELN_STATUS } from '@/models/VokabelnStatus'
@@ -8,9 +8,9 @@ export const useVkStore = defineStore('vokabelKonto', {
     state: () => ({
         alleVokabeln: [] as Vokabeln[],
         index: 0,
-        progress: 0,
         rundeFertig: false,
         aktuelleFrage: null as Vokabeln | null,
+        anzahlGelerntFuerAktuelleVokabel: 0
         // aktuellesSpiel: null as SpielTyp | null
     }),
     actions: {
@@ -50,6 +50,22 @@ export const useVkStore = defineStore('vokabelKonto', {
         resetRunde() {
             this.rundeFertig = false
             this.aktuelleFrage = null
-        }
+        },
+        // async getAnzahlGelernt(vokabelId: string): Promise<void> {
+        //     const kontoId = useKontoStore().aktuellesKonto?.id
+        //     if (kontoId) {
+        //         try {
+        //             const result = await getAnzahlGelernt(kontoId, vokabelId)
+        //             this.anzahlGelerntFuerAktuelleVokabel = result
+        //         } catch (error) {
+        //             console.error("Fehler beim Abrufen der Anzahl gelernt:", error)
+        //             this.anzahlGelerntFuerAktuelleVokabel = 0
+        //         }
+        //     }
+
+            
+        // }
+
+
     }
 })
