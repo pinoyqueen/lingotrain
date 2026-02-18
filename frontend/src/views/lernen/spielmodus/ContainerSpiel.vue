@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useVkStore } from '@/stores/vokabelKontoStore';
-import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
+import { computed, defineAsyncComponent, onMounted, ref, shallowRef } from 'vue';
 import { useRoute } from 'vue-router';
 import Button from '@/components/ui/button/Button.vue';
 import type { Vokabeln } from '@/models/Vokabeln';
@@ -22,7 +22,7 @@ const WORT_SPIELE = [MCQSpiel, PaareSpiel, TestSpiel, SchreibenSpiel]
 const SATZ_SPIELE = [SchreibenSpiel]
 
 // --- State: aktive Komponente + Key zur Forcierung von Re-Render ---
-const activeComponent = ref<any | null>(null)
+const activeComponent = shallowRef<any | null>(null)
 const viewKey = ref(0) // erhöht sich bei Wechsel -> Komponente rendert neu
 
 // Feedback
@@ -138,15 +138,19 @@ const buttonClass = computed(() => {
   <p v-if="isRundeFertig">Runde is fertig</p>
 
   <div v-else class="flex flex-col h-full w-full">
-    <div class="flex-1 w-full overflow-y-auto p-6 sm:p-10">
-      <component
-        v-if="activeComponent && aktuelleFrage"
-        :is="activeComponent"
-        :vokabel="aktuelleFrage"
-        :key="viewKey"
-        ref="currentSpielRef"
-        @answered="onAnswered" 
-      />
+    <div class="flex-1 w-full overflow-y-auto p-6 sm:p-10 flex flex-col justify-center">
+      
+      <div class="w-full max-w-2xl mx-auto animate-in fade-in zoom-in duration-300">
+        <component
+          v-if="activeComponent && aktuelleFrage"
+          :is="activeComponent"
+          :vokabel="aktuelleFrage"
+          :key="viewKey"
+          ref="currentSpielRef"
+          @answered="onAnswered" 
+        />
+      </div>
+      
     </div>
 
     <div class="w-full p-4 sm:p-6 shrink-0 mt-auto">
