@@ -76,7 +76,7 @@ defineExpose({ pruefen })
         v-model="userInput"
         placeholder="Antwort eingeben..."
         :disabled="checked"
-        class="h-20 sm:h-28 sm:text-xl text-center font-bold bg-secondary/20 border-2 !border-transparent focus-visible:ring-offset-0 focus-visible:ring-0 focus-visible:border-secondary transition-all rounded-2xl shadow-inner w-full"
+        class="h-20 sm:h-28 sm:text-2xl md:text-3xl text-center font-bold bg-secondary/20 border-2 !border-transparent focus-visible:ring-offset-0 focus-visible:ring-0 focus-visible:border-secondary transition-all rounded-2xl shadow-inner w-full"
         autofocus
       />
 
