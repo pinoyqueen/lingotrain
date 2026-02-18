@@ -1,8 +1,8 @@
-from llm.prompts import sentence_prompt
-from llm.fake_llm import generate
+from prompts import sentence_prompt
+from llm import generate
 
 def generate_sentence(word, language="Englisch"):
     prompt = sentence_prompt(word, language)
-    sentence = generate(prompt, word)
+    sentence = generate(prompt)
 
     return sentence
