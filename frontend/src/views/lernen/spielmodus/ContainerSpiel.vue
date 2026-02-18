@@ -101,6 +101,14 @@ onMounted(async () => {
 
 })
 
+/**
+ * Schaltet zur nächsten Frage weiter.
+ * 
+ * Hier wird zur nächsten Frage weiter geschaltetet und dabei die UI
+ * zurückgesetzt bzw. aktualisiert.
+ * Der Next-Button wird dabei auch zunächst wieder in den "Prüfen"-Button
+ * umgewandelt.
+ */
 function next() {
   showFeedback.value = false
   buttonText.value = "Prüfen"
@@ -109,7 +117,6 @@ function next() {
   
   updateProgress()
   vkStore.nextFrage()
-  console.log("aktuelle Frage: " + vkStore.aktuelleFrage?.vokabel)
 
   if(!vkStore.aktuelleFrage) {
     activeComponent.value = null
@@ -121,26 +128,44 @@ function next() {
   viewKey.value++ // zwingt neu rendering
 }
 
+/**
+ * Wird aufgerufen, wenn die Frage beantwortet wurde.
+ * 
+ * Diese Funktion wird z.B. nach einem Button-Klick aufgerufen, der signalisiert,
+ * dass die Frage beantwortet wurde. 
+ * Es wird entsprechend ein Feedback über richtig oder falsch und ggf. die Lösung
+ * dazu angezeigt.
+ * 
+ * Der Button wird dann in den Next-Button umgewandelt.
+ * 
+ * @param result True, wenn die Frage richtig beantwortet wurde
+ */
 function onAnswered(result: boolean) {
   feedbackRichtig.value = result
   feedbackLoesung.value = result ? '' : (aktuelleFrage.value?.vokabel || '')
   showFeedback.value = true
 
   vkStore.frageBeantwortet(result)
-  if (result) {
-    console.log("✔️ richtig")
-  } else {
-    console.log("❌ falsch")
-  }
 
   buttonText.value = 'Next'
 }
 
+/**
+ * Click-Handler für den Next-/Prüfen-Button.
+ * 
+ * Diese Funktion prüft, ob der Button aktuell im "Prüfen"-Modus
+ * ist. Falls ja und der aktuelle Modus verfügt über eine Methode
+ * pruefen(), dann wird die Antwort bei Button-Klick validiert. 
+ * 
+ * Ansonsten handelt es sich um den "Next"-Modus und es wird entsprechend
+ * die Funktion {@link #next} aufgerufen und zur nächsten Frage navigiert.
+ */
 function buttonClicked() {
   if (!aktuelleFrage.value) return
 
   if (buttonText.value === 'Prüfen') {
-    // Falls die Komponente eine manuelle Prüfen-Funktion hat (wie SchreibenSpiel)
+
+    // Falls die Komponente eine manuelle Prüfen-Funktion hat
     if (currentSpielRef.value?.pruefen) {
       const result = currentSpielRef.value.pruefen()
       onAnswered(result)
@@ -150,7 +175,15 @@ function buttonClicked() {
   }
 }
 
-// --- Styles ---
+/**
+ * Dynamische Berechnung des Stylings für den Footer.
+ * 
+ * Hier wird je nach Status das Layout für den Footer dynamisch gesetzt.
+ * Zunächst ist der Footer unsichtbar, aber sobald eine Antwort des Nutzers
+ * überprüft wird und in den Feedbackmodus geschaltet wird, erhält der Footer
+ * ein passendes Styling mit Hintergrundfarbe (Grün bei Erfolg, rot bei Fehler) 
+ * sowie einen Schatten.
+ */
 const footerStyle = computed(() => {
   if (!showFeedback.value) return { 
     backgroundColor: 'transparent', 
@@ -158,11 +191,18 @@ const footerStyle = computed(() => {
     boxShadow: 'none' 
   }
   return {
-    backgroundColor: feedbackRichtig.value ? 'var(--success)' : 'var(--warning)',
-    borderColor: 'rgba(255,255,255,0.1)'
+    backgroundColor: feedbackRichtig.value ? 'var(--success)' : 'var(--warning)'
   }
 })
 
+/**
+ * Berechnet die CSS-Klassen für den Prüfen-/Next-Button.
+ * 
+ * Da der Button von Prüfen zu Next und wieder zu Prüfen wechselt, wird
+ * je nach Zustand das Design angepasst. Im Prüfen-Zustand erhält er die
+ * primary-Farbe passend zum allgemeinen Design. Im Next-Zustand hingegen,
+ * wird er an den Footer-Style je nach Erfolg / Fehler angepasst.
+ */
 const buttonClass = computed(() => {
   if (!showFeedback.value) return 'bg-primary hover:bg-primary/80'
   return 'bg-black/20 hover:bg-black/30 border border-white/20'
