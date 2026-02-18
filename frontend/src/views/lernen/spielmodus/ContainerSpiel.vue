@@ -17,7 +17,6 @@ const isRundeFertig = computed<boolean>(() => vkStore.rundeFertig)
 // --- Komponenten: Lazy-loaded ---
 const MCQSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/MCQSpiel.vue'))
 const PaareSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/PaareSpiel.vue'))
-const TestSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/TestSpiel.vue'))
 const SchreibenSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/SchreibenSpiel.vue'))
 
 const WORT_SPIELE = [MCQSpiel, PaareSpiel, SchreibenSpiel]
