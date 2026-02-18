@@ -29,8 +29,8 @@ const items = [
     icon: MeineVokabelnIcon
   },
   {
-    title: 'Community',
-    name: 'community',
+    title: 'Chatbot',
+    name: 'chatbot',
     icon: CommnityIcon,
   },
   {

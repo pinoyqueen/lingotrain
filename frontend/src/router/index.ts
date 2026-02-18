@@ -6,7 +6,7 @@ import HomeView from '@/views/home/Home.vue'
 import ProfileView from '@/views/profil/Profil.vue'
 import EinstellungenView from '@/views/einstellungen/EinstellungenView.vue'
 import LernsetListeView from '@/views/meinevokabeln/LernsetListe.vue'
-import CommunityView from '@/views/community/Community.vue'
+import ChatbotView from '@/views/community/Chatbot.vue'
 import VokabelnListeView from '@/views/meinevokabeln/VokabelnListe.vue'
 import ContainerLernenView from '@/views/lernen/ContainerLernen.vue'
 import KontodatenBearbeiten from '@/views/einstellungen/KontodatenBearbeiten.vue'
@@ -52,9 +52,9 @@ const routes = [
     props: true,
   },
   {
-    path: '/community',
-    name: 'community',
-    component: CommunityView,
+    path: '/chatbot',
+    name: 'chatbot',
+    component: ChatbotView,
   },
   {
     path: '/settings',
