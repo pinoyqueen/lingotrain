@@ -51,20 +51,38 @@ export const useVkStore = defineStore('vokabelKonto', {
             this.rundeFertig = false
             this.aktuelleFrage = null
         },
-        // async getAnzahlGelernt(vokabelId: string): Promise<void> {
-        //     const kontoId = useKontoStore().aktuellesKonto?.id
-        //     if (kontoId) {
-        //         try {
-        //             const result = await getAnzahlGelernt(kontoId, vokabelId)
-        //             this.anzahlGelerntFuerAktuelleVokabel = result
-        //         } catch (error) {
-        //             console.error("Fehler beim Abrufen der Anzahl gelernt:", error)
-        //             this.anzahlGelerntFuerAktuelleVokabel = 0
-        //         }
-        //     }
+        async getAnzahlGelernt(vokabelId: string): Promise<number> {
+            const kontoId = useKontoStore().aktuellesKonto?.id
 
-            
-        // }
+            if (!kontoId) {
+                return 0
+            }
+
+            const result = await getAnzahlGelernt(kontoId, vokabelId)
+            console.log("Firestore gelernt:", result)
+
+            return result ?? 0
+        },
+        getDistractors(richtig: Vokabeln, count: number): Vokabeln[] {
+            // Pool erstellen, ohne die richtige Vokabel und nur Wörter
+            const pool: Vokabeln[] = this.alleVokabeln.filter((v): v is Vokabeln => v !== undefined && v.isWort && v.id !== richtig.id)
+
+            // Pool mischen
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1))
+                const temp = pool[i]
+                if(pool[j])
+                    pool[i] = pool[j]
+                if(temp)
+                    pool[j] = temp
+            }
+
+            console.log("Pool size:", pool.length)
+
+            // gewünschte Anzahl zurückgeben
+            return pool.slice(0, count)
+        }
+        
 
 
     }

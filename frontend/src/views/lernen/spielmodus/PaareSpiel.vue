@@ -14,8 +14,9 @@ const selectedOption = ref<string | null>(null)
 watch(
   () => props.vokabel?.id, // <- Zugriff ist sicher
   (newId, oldId) => {
-    if (!newId) return  // guard, falls beim ersten Tracken noch keine Vokabel da ist
-    selectedOption.value = null // reset beim Fragenwechsel
+    // if (!newId) return  // guard, falls beim ersten Tracken noch keine Vokabel da ist
+    // selectedOption.value = null // reset beim Fragenwechsel
+    console.log("MCQSpiel geladen?")
   }
 )
 

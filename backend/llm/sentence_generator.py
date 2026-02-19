@@ -1,5 +1,5 @@
-from prompts import sentence_prompt
-from llm import generate
+from llm.prompts import sentence_prompt
+from llm.llm import generate
 
 def generate_sentence(word, language="Englisch"):
     prompt = sentence_prompt(word, language)

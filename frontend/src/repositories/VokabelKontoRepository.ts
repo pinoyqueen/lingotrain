@@ -167,7 +167,7 @@ export async function deleteVK(kontoId: string, vokabelId: string): Promise<void
 export async function getAnzahlGelernt(kontoId: string, vokabelId: string): Promise<number> {
   try {
     const q = query(
-      collection(db, "vokabelKonto"),
+      vkCollection,
       where("kontoId", "==", kontoId),
       where("vokabelId", "==", vokabelId),
       limit(1)
@@ -182,7 +182,6 @@ export async function getAnzahlGelernt(kontoId: string, vokabelId: string): Prom
     const doc = qs.docs[0]
     if (doc) {
         const val = doc.data().anzahlGelernt
-
         return val ?? 0
     }
     

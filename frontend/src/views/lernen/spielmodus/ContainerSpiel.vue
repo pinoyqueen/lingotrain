@@ -10,6 +10,7 @@ const MAX_GELERNT = 4
 const route = useRoute()
 const vkStore = useVkStore()
 const lernsetId = String(route.params.id)
+const choosing = ref(false)
 
 const aktuelleFrage = computed<Vokabeln | null>(() => vkStore.aktuelleFrage ?? null)
 const isRundeFertig = computed<boolean>(() => vkStore.rundeFertig)
@@ -19,12 +20,19 @@ const MCQSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/MC
 const PaareSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/PaareSpiel.vue'))
 const SchreibenSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/SchreibenSpiel.vue'))
 
-const WORT_SPIELE = [MCQSpiel, PaareSpiel, SchreibenSpiel]
-const SATZ_SPIELE = [SchreibenSpiel]
+const WORT_SPIELE = [
+  { key: 'mcq', comp: MCQSpiel },
+  { key: 'paare', comp: PaareSpiel },
+  { key: 'schreiben', comp: SchreibenSpiel }
+]
+
+const SATZ_SPIELE = [
+  { key: 'schreiben', comp: SchreibenSpiel }
+]
+
 
 // --- State: aktive Komponente + Key zur Forcierung von Re-Render ---
 const activeComponent = shallowRef<any | null>(null)
-const viewKey = ref(0) // erhöht sich bei Wechsel -> Komponente rendert neu
 
 // Feedback
 const feedbackLoesung = ref('')
@@ -54,38 +62,38 @@ function updateProgress() {
 }
 
 
-function chooseSpiel() {
-  if (!aktuelleFrage.value) return null
+async function chooseSpiel() {
+  console.log("chooseSpiel startet mit: " + activeComponent.value)
+  if(choosing.value) return
+  choosing.value = true
+  try {
+    if (!aktuelleFrage.value) return null
 
-  const vok = aktuelleFrage.value
-  
-  if(!vok.id) return null
+    const vok = aktuelleFrage.value
+    const frageId = vok.id
+    var gelernt = 0
+    if (frageId) {
+      // Anzahl gelernt für diese Vokabel abfragen
+      gelernt = await vkStore.getAnzahlGelernt(frageId)
+      console.log(vok.id + " wird " + gelernt + " mal gelernt")
+    } else
+      console.log("frageId null")
 
-  // Anzahl gelernt für diese Vokabel abfragen
-  // const gelernt = await vkStore.getAnzahlGelernt(vok.id)
+    // Entscheidung basierend auf gelernt
+    let spiel_pool = vok.isWort ? [...WORT_SPIELE] : [...SATZ_SPIELE]
 
-  // Entscheidung basierend auf gelernt
-  let spiel_pool: Array<any> = []
-
-  if(vok.isWort) {
-    // Wortspiele kopieren
-    spiel_pool = [...WORT_SPIELE]
-    // if (gelernt >= MAX_GELERNT)
-    //   // MCQSpiel entfernen, falls schon oft gelernt
-    //   spiel_pool = spiel_pool.filter(s => s !== MCQSpiel)
-
-  } else {
-    // Satzspiele kopieren
-    spiel_pool = [...SATZ_SPIELE]
+    // MCQSpiel entfernen, falls schon oft gelernt
+    if (vok.isWort && gelernt >= MAX_GELERNT) {
+      spiel_pool = spiel_pool.filter(s => s.key !== 'mcq')
+    }
     // TODO: einfacher Spieltyp für Sätze entfernen
-  }
 
-  // Fallback falls Liste leer ist
-  if (spiel_pool.length === 0) {
-    spiel_pool = vok.isWort ? [...WORT_SPIELE] : [...SATZ_SPIELE]
+    const chosen = pickRandom(spiel_pool)
+    activeComponent.value = chosen.comp
+    console.log("chooseSpiel endet mit: " + chosen.key)
+  } finally {
+    choosing.value = false
   }
-
-  return pickRandom(spiel_pool)
 }
 
 onMounted(async () => {
@@ -93,8 +101,7 @@ onMounted(async () => {
     await vkStore.ladeVokabeln(lernsetId)
     
     if (vkStore.aktuelleFrage) {
-      activeComponent.value = chooseSpiel()
-      viewKey.value++
+      await chooseSpiel()
     } else {
       next()
     }
@@ -109,11 +116,12 @@ onMounted(async () => {
  * Der Next-Button wird dabei auch zunächst wieder in den "Prüfen"-Button
  * umgewandelt.
  */
-function next() {
+async function next() {
   showFeedback.value = false
   buttonText.value = "Prüfen"
   feedbackLoesung.value = ''
   feedbackRichtig.value = false
+  activeComponent.value = null
   
   updateProgress()
   vkStore.nextFrage()
@@ -124,8 +132,7 @@ function next() {
   }
 
   // TODO: prüfen ob es genug Vokabeln für das Spiel gibt
-  activeComponent.value = chooseSpiel()
-  viewKey.value++ // zwingt neu rendering
+  await chooseSpiel()
 }
 
 /**
@@ -220,7 +227,7 @@ const buttonClass = computed(() => {
           v-if="activeComponent && aktuelleFrage"
           :is="activeComponent"
           :vokabel="aktuelleFrage"
-          :key="viewKey"
+          :key="aktuelleFrage.id"
           ref="currentSpielRef"
           @answered="onAnswered" 
         />
