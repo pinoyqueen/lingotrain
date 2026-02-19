@@ -23,7 +23,6 @@ import { slugify } from '@/utils/slugify'
 
 const kontoStore = useKontoStore();
 const kontoId = computed(() => kontoStore.aktuellesKonto?.id);
-const aktuelleSprache = computed(() => kontoStore.aktuelleSprache?.id);
 // Store/ViewModel holen
 const lernsetStore = useLernsetStore();
 
@@ -89,6 +88,13 @@ function deleteLernset(item: Lernset) : void {
 
 // Methode zum Speichern neues Lernsets
 async function saveLernset() {
+  const spracheId = kontoStore.aktuellesKonto?.aktuelleSpracheId;
+
+  if (!spracheId) {
+    toast.error("Sprache wird noch geladen...");
+    return;
+  }
+
   if (!kontoId) {
     console.error("Kein Konto geladen");
     return;
@@ -101,8 +107,8 @@ async function saveLernset() {
       beschreibung: form.beschreibung,
       isPublic: form.isPublic,
       ownerId: kontoId.value!,
-      zielspracheId: aktuelleSprache.value!,
-    }, aktuelleSprache.value)
+      zielspracheId: spracheId,
+    }, spracheId)
   } else {
     // Bestehendes Set bearbeiten
     await lernsetStore.editSet({
@@ -110,7 +116,7 @@ async function saveLernset() {
       name: form.name,
       beschreibung: form.beschreibung,
       isPublic: form.isPublic,
-    }, aktuelleSprache.value)
+    }, spracheId)
   }
 
   toast.success('Lernset gespeichert!')

@@ -22,20 +22,23 @@ const lernsetStore = useLernsetStore()
 watch(
   () => [
     kontoStore.aktuellesKonto?.id,
-    kontoStore.aktuellesKonto?.aktuelleSpracheId
+    kontoStore.aktuellesKonto?.aktuelleSpracheId,
+    kontoStore.aktuellesKonto?.sprachenIds
   ],
 
-  async ([uid, spracheId]) => {
+  async ([uid, spracheId, sIds]) => {
 
     // Wenn Konto und Sprache vorhanden sind, dann werden die Lernsets geladen
     if (uid && spracheId) {
-      await lernsetStore.loadMySets(uid, spracheId)
+      await kontoStore.loadSprachenZuKonto(uid as string, sIds as string[], spracheId as string);
+      await lernsetStore.loadMySets(uid as string, spracheId as string);
     } else {
-      lernsetStore.sets = []
+      lernsetStore.sets = [];
     }
   },
   { 
-    immediate: true   // Ausführen des Watchers beim App-Start
+    immediate: true,   // Ausführen des Watchers beim App-Start
+    deep: true
   }
 )
 

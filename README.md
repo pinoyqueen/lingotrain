@@ -7,3 +7,4 @@ Learn more about the recommended Project Setup and IDE Support in the [Vue Docs 
 
 im backend ordner:
 pip install litellm
+pip install fastapi uvicorn pydantic

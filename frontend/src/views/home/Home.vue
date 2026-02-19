@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Flame, Trophy } from 'lucide-vue-next'
 
@@ -22,13 +22,6 @@ const router = useRouter()
 const kontoStore = useKontoStore()
 const lernsetStore = useLernsetStore()
 const calculator = new LevelCalculator()
-
-// Beim Laden der Seite alle nötigen Werte laden
-onMounted(async () => {
-
-  // Konto und Sprachen laden
-  await kontoStore.loadSprachenZuKonto();
-})
 
 // --- Computeds für Level / Punkte ---
 const punkte = computed(() => kontoStore.aktuellesKonto?.punkte || 0);

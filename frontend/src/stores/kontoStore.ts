@@ -31,23 +31,42 @@ export const useKontoStore = defineStore('konto', {
 
         /** 
          * Lädt Sprachen und aktuelle Sprache aus der DB für das Konto.
+         * 
+         * Dabei werden die detaillierten Sprach-Objekte mit Flagge und Name geladen.
+         * 
+         * Außerdem falls Parameter fehlen, werden die Werte automatisch aus dem
+         * aktuellen Konto-State {@link #aktuellesKonto} verwendet. Dadurch kommt es
+         * zu keiner Race Condition beim Start der Seite.
+         * 
+         * @param {string} kontoId die ID des Kontos
+         * @param {string[]} sprachenIds Liste der Sprachen, die der Nutzer ausgewählt hat
+         * @param {string} aktuelleSpracheId ID der aktuell aktiven Sprache im Konto
          */
-        async loadSprachenZuKonto() {
-            const konto = this.aktuellesKonto;
-            if (!konto || !konto.id) return;
+        async loadSprachenZuKonto(kontoId?: string, sprachenIds?: string[], aktuelleSpracheId?: string) {
+            
+            // Fallback auf den Store-State, falls keine Parameter vom Watcher übergeben wurden
+            const id = kontoId || this.aktuellesKonto?.id;
+            const sIds = sprachenIds || this.aktuellesKonto?.sprachenIds || [];
+            const aId = aktuelleSpracheId || this.aktuellesKonto?.aktuelleSpracheId;
+
+            if (!id) return;
 
             try {
-                // Ausgewählte Sprachen und aktuelle Sprache laden
-                const sprachenPromise = getSprachenByIds(konto.sprachenIds);  
-                const aktuelleSprachePromise = konto.aktuelleSpracheId
-                ? getSpracheById(konto.aktuelleSpracheId)
-                : Promise.resolve(null);
-
-                const [sprachen, aktuelleSprache] = await Promise.all([sprachenPromise, aktuelleSprachePromise]);
-
-                // State aktualisieren
+                // Sprachen aus der DB laden
+                const sprachen = await getSprachenByIds(sIds);
                 this.ausgewaehlteSprachen = sprachen;
-                this.aktuelleSprache = aktuelleSprache;
+
+                // das aktuelle Sprach-Objekt suchen
+                if (aId) {
+                    // erst gucken, ob es schon in den geladenen Sprachen ist
+                    const gefunden = sprachen.find(s => String(s.id) === String(aId));
+                    if (gefunden) {
+                        this.aktuelleSprache = { ...gefunden };
+                    } else {
+                        // Wenn nicht in der Liste, explizit laden
+                        this.aktuelleSprache = await getSpracheById(aId);
+                    }
+                }
             } catch (e: any) {
                 console.error("Fehler beim Laden der Kontowerte:", e);
             }
