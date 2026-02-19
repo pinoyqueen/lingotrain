@@ -61,17 +61,15 @@ function updateProgress() {
   emit('update:progress', value)
 }
 
-
 async function chooseSpiel() {
   console.log("chooseSpiel startet mit: " + activeComponent.value)
-  if(choosing.value) return
+  if (choosing.value || !aktuelleFrage.value) return
   choosing.value = true
   try {
-    if (!aktuelleFrage.value) return null
-
     const vok = aktuelleFrage.value
     const frageId = vok.id
-    var gelernt = 0
+
+    let gelernt = 0
     if (frageId) {
       // Anzahl gelernt für diese Vokabel abfragen
       gelernt = await vkStore.getAnzahlGelernt(frageId)
@@ -79,8 +77,20 @@ async function chooseSpiel() {
     } else
       console.log("frageId null")
 
-    // Entscheidung basierend auf gelernt
+  
     let spiel_pool = vok.isWort ? [...WORT_SPIELE] : [...SATZ_SPIELE]
+
+    // prüfen ob es genug Vokabeln für das Spiel gibt
+    const wortCount = vkStore.alleVokabeln
+      .slice(vkStore.index)
+      .filter(v => v?.isWort)
+      .length
+
+    if(wortCount < 3)
+      spiel_pool = spiel_pool.filter(s => s.key !== 'paare')
+    
+    if(vkStore.alleVokabeln.length < 3)
+      spiel_pool = spiel_pool.filter(s => s.key !== 'mcq')
 
     // MCQSpiel entfernen, falls schon oft gelernt
     if (vok.isWort && gelernt >= MAX_GELERNT) {
@@ -88,8 +98,14 @@ async function chooseSpiel() {
     }
     // TODO: einfacher Spieltyp für Sätze entfernen
 
+    // Fallback wenn spiel_pool leer ist
+    if(spiel_pool.length === 0 && vok.isWort) {
+      const fallback = WORT_SPIELE.find(s => s.key === 'schreiben')
+      if (fallback) spiel_pool = [fallback]
+    }
     const chosen = pickRandom(spiel_pool)
     activeComponent.value = chosen.comp
+
     console.log("chooseSpiel endet mit: " + chosen.key)
   } finally {
     choosing.value = false
@@ -131,7 +147,6 @@ async function next() {
     return
   }
 
-  // TODO: prüfen ob es genug Vokabeln für das Spiel gibt
   await chooseSpiel()
 }
 
