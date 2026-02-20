@@ -15,9 +15,9 @@ const Layout = computed(() => route.meta.layout === 'auth' ? AuthLayout : MainLa
 const kontoStore = useKontoStore()
 const lernsetStore = useLernsetStore()
 
-/* Globaler Watcher, der auf Änderungen am eingeloggten Konto oder der
- * aktuellen Sprache reagiert, um automatisch die Aktualisierungen 
- * am Lernset zu laden.
+/* Globaler Watcher, der auf Änderungen am eingeloggten Konto, der
+ * aktuellen Sprache oder den ausgewählten Sprachen reagiert, um 
+ * automatisch die Aktualisierungen am Lernset zu laden.
  */
 watch(
   () => [

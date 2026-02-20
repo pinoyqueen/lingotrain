@@ -19,6 +19,7 @@ const isRundeFertig = computed<boolean>(() => vkStore.rundeFertig)
 const MCQSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/MCQSpiel.vue'))
 const PaareSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/PaareSpiel.vue'))
 const SchreibenSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/SchreibenSpiel.vue'))
+const LueckeSchreibenSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/LueckeSchreibenSpiel.vue'))
 
 const WORT_SPIELE = [
   { key: 'mcq', comp: MCQSpiel },
@@ -27,9 +28,9 @@ const WORT_SPIELE = [
 ]
 
 const SATZ_SPIELE = [
-  { key: 'schreiben', comp: SchreibenSpiel }
+  { key: 'schreiben', comp: SchreibenSpiel },
+  { key: 'lueckeschreiben', comp: LueckeSchreibenSpiel }
 ]
-
 
 // --- State: aktive Komponente + Key zur Forcierung von Re-Render ---
 const activeComponent = shallowRef<any | null>(null)
@@ -67,6 +68,14 @@ async function chooseSpiel() {
   choosing.value = true
   try {
     const vok = aktuelleFrage.value
+
+    // Wenn ein Satz nicht lang genug ist, wird nur der normale Schreiben-Modus verwendet und
+    // nicht zufällig ausgewählt, weil andere Modi dann nicht viel bringen (Lücken füllen etc.)
+    if (!vok.isWort && !isSentenceLongEnough(vok)) {
+      activeComponent.value = SchreibenSpiel;
+      return;
+    }
+
     const frageId = vok.id
 
     let gelernt = 0
@@ -110,6 +119,22 @@ async function chooseSpiel() {
   } finally {
     choosing.value = false
   }
+}
+
+/**
+  * Prüfen, ob ein Satz lang genug für alle Modi ist oder sich nur der Schreiben-Modus eignet.
+  * 
+  * Die Methode prüft, ob ein Satz mehr als 3 Wörter besitzt. Dabei wird der Satz von führenden
+  * und nachfolgenden Leerzeichen entfernt und in seine einzelnen Wörter zerteilt.
+  *
+  * @param vokabel die Vokabel (der Satz)
+  * @return True, wenn der Satz lang genug ist
+  */
+function isSentenceLongEnough(vokabel: Vokabeln): boolean {
+  const satz = vokabel.vokabel
+  if (!satz) return false
+
+  return (satz.trim().split(/\s+/).length > 3)
 }
 
 onMounted(async () => {
@@ -217,6 +242,13 @@ const footerStyle = computed(() => {
   }
 })
 
+const feedbackTitle = computed(() => {
+  if (feedbackRichtig.value) return 'Richtig!'
+
+  // Spiel darf Titel überschreiben
+  return currentSpielRef.value?.feedbackTitle ?? 'Lösung:'
+})
+
 /**
  * Berechnet die CSS-Klassen für den Prüfen-/Next-Button.
  * 
@@ -268,7 +300,7 @@ const buttonClass = computed(() => {
 
               <div class="flex flex-col min-w-0 text-white">
                 <h3 class="text-lg font-bold mb-1 leading-none">
-                  {{ feedbackRichtig ? 'Richtig!' : 'Lösung:' }}
+                  {{ feedbackTitle }}
                 </h3>
                 <p class="text-base leading-relaxed break-all opacity-95 font-medium">
                   {{ feedbackRichtig ? 'Hervorragende Arbeit.' : feedbackLoesung }}
