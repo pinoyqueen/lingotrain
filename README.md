@@ -7,7 +7,14 @@ Learn more about the recommended Project Setup and IDE Support in the [Vue Docs 
 
 im backend ordner:  
 pip install litellm  
-pip install fastapi uvicorn pydantic  
+pip install fastapi uvicorn pydantic 
+
+für die einzelnen Sprachen (allg. spacy und dann deutsch, englisch, französisch, spanisch):  
+pip install spacy   
+python -m spacy download de_core_news_sm  
+python -m spacy download en_core_web_sm  
+python -m spacy download fr_core_news_sm  
+python -m spacy download es_core_news_sm
 
 backend starten:  
 uvicorn main:app --reload (oder ohne --reload)
