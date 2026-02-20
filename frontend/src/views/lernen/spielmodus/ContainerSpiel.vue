@@ -164,10 +164,14 @@ async function next() {
  */
 function onAnswered(result: boolean) {
   feedbackRichtig.value = result
-  feedbackLoesung.value = result ? '' : (aktuelleFrage.value?.vokabel || '')
   showFeedback.value = true
-
-  vkStore.frageBeantwortet(result)
+  if (activeComponent.value != PaareSpiel) {
+    feedbackLoesung.value = result ? '' : ('Lösung: ' + aktuelleFrage.value?.vokabel || '')
+    vkStore.frageBeantwortet(result)
+  } else {
+    feedbackLoesung.value = ''
+  }
+  
 
   buttonText.value = 'Next'
 }
@@ -268,7 +272,7 @@ const buttonClass = computed(() => {
 
               <div class="flex flex-col min-w-0 text-white">
                 <h3 class="text-lg font-bold mb-1 leading-none">
-                  {{ feedbackRichtig ? 'Richtig!' : 'Lösung:' }}
+                  {{ feedbackRichtig ? 'Richtig!' : 'Fast richtig!' }}
                 </h3>
                 <p class="text-base leading-relaxed break-all opacity-95 font-medium">
                   {{ feedbackRichtig ? 'Hervorragende Arbeit.' : feedbackLoesung }}

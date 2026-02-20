@@ -13,6 +13,7 @@ import {
   limit,
   DocumentReference,
   DocumentSnapshot,
+  increment,
 } from 'firebase/firestore'
 import type { VokabelKonto } from '@/models/VokabelKonto'
 import { VOKABELN_STATUS, type VokabelnStatus } from '@/models/VokabelnStatus'
@@ -53,7 +54,6 @@ export async function updateStatus(kontoId: string, vokabelId: string, status: V
         limit(1)
     )
     
-    
     const snap = await getDocs(q)
     const doc0 = snap.docs[0]
 
@@ -61,7 +61,16 @@ export async function updateStatus(kontoId: string, vokabelId: string, status: V
         throw new Error('VokabelKonto nicht gefunden')
     }
 
-    await updateDoc(doc0.ref, { status })
+    if (status === VOKABELN_STATUS.RICHTIG) {
+        await updateDoc(doc0.ref, {
+            status: status,
+            anzahlGelernt: increment(1)
+        })
+    } else {
+        await updateDoc(doc0.ref, {
+            status: status
+        })
+    }
 
 }
 
