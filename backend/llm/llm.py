@@ -17,7 +17,9 @@ def generate(prompt, model="gpt-4.1-mini"):
         api_base = LITELLM_BASE_URL,
 
         # das Modell ist kreativer und wählt nicht immer den gleichen Satz
-        temperature = 0.7
+        temperature = 0.9,
+        top_p=0.9,
+        n=5  # Anzahl der Varianten
     )
 
     return response["choices"][0]["message"]["content"].strip()

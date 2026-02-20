@@ -5,14 +5,16 @@ Du bist ein Sprachlernassistent.
 Generiere bitte exakt einen einfachen Satz in der Sprache Deutsch.
 Beachte dabei folgende Regeln:
 - Der Satz muss das Wort "{germanWord}" enthalten.
-- Der Kontext des Satzes muss zu der Übersetzung des Wortes "{uebersetzung} auf der Sprache {language} passen.
+- Der Satz muss inhaltlich zur Übersetzung "{uebersetzung}" in {language} passen.
 - Der Satz muss grammatikalisch korrekt sein.
-- Der Satz soll mit einem Punkt, Ausrufezeichen oder Fragezeichen enden.
+- Der Satz soll korrekt mit einem Punkt, Ausrufezeichen oder Fragezeichen enden.
+- Achte darauf, dass nur ein Satzzeichen am Ende steht.
 - Benutze einfache Alltagssprache.
-- Halte den Satz kurz.
+- Halte den Satz kurz, aber du darfst ein oder zwei zusätzliche Wörter (z.B. Adjektive) einfügen.
+- Variiere den Satzstil, z.B. mit verschiedenen Verben oder Satzanfängen und vermeide identische Wiederholungen.
 - Erzeuge keine verschachtelten Sätze.
-- Keine Erklärungen.
-- Keine Übersetzungen.
+- Keine Erklärungen, Übersetzungen oder zusätzlichen Sätze.
 
-Gib NUR den einen Satz aus.
+Erzeuge mehrere sinnvolle Versionen des Satzes und wähle eine zufällige aus.
+Gib NUR den einen Satz aus. 
 """
