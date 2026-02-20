@@ -3,8 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from llm.sentence_generator import generate_sentence
 
-# BACKEND STARTEN MIT uvicorn main:app --reload (oder ohne --reload)
-
 # FastAPI App erstellen
 app = FastAPI()
 

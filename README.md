@@ -5,6 +5,9 @@ This template should help get you started developing with Vue 3 and TypeScript i
 Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
 
 
-im backend ordner:
-pip install litellm
-pip install fastapi uvicorn pydantic
+im backend ordner:  
+pip install litellm  
+pip install fastapi uvicorn pydantic  
+
+backend starten:  
+uvicorn main:app --reload (oder ohne --reload)
