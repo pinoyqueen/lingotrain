@@ -46,15 +46,18 @@ function pruefen(): boolean {
   return richtig.value
 }
 
-// die Parent-Komponente kann die pruefen-Funktion nutzen
-defineExpose({ pruefen })
+// die Parent-Komponente kann die pruefen-Funktion nutzen und erhält die Lösung
+defineExpose({ 
+  pruefen,
+  feedbackLoesung: () => props.vokabel.vokabel 
+})
 </script>
 
 <template>
   <div class="max-w-4xl mx-auto flex flex-col items-center justify-center space-y-6 sm:space-y-10 pt-4 sm:pt-10 px-4">
     
     <div class="text-center space-y-4 animate-in fade-in zoom-in duration-500 w-full">
-      <span class="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground/60 block">
+      <span class="text-xs font-bold uppercase tracking-[0.2em] text-surface-foreground/50 block">
         {{ vokabel.isWort ? 'Übersetze die Vokabel' : 'Übersetze den Satz' }}
       </span>
       
@@ -76,7 +79,7 @@ defineExpose({ pruefen })
         v-model="userInput"
         placeholder="Antwort eingeben..."
         :disabled="checked"
-        class="h-20 sm:h-28 sm:text-2xl md:text-3xl text-center font-bold bg-secondary/20 border-2 !border-transparent focus-visible:ring-offset-0 focus-visible:ring-0 focus-visible:border-secondary transition-all rounded-2xl shadow-inner w-full"
+        class="h-20 sm:h-28 sm:text-xl md:text-xl text-center font-bold bg-secondary/20 border-2 border-transparent focus-visible:border-secondary focus-visible:ring-0 transition-all rounded-2xl shadow-inner w-full"
         autofocus
       />
 

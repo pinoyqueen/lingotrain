@@ -15,6 +15,7 @@ const options = ref<Vokabeln[]>([])
 /** War die Antwort des Nutzers richtig? */
 const richtig = ref(false)
 const selectedOption = ref<Vokabeln | null>(null)
+const checked = ref(false)
 
 function mixOptions() {
   // 3 falsche Optionen holen
@@ -39,6 +40,7 @@ function mixOptions() {
 watch(() => props.vokabel?.id, () => {
   selectedOption.value = null
   richtig.value = false
+  checked.value = false
   mixOptions()
 }, { immediate: true } )
 
@@ -46,12 +48,16 @@ watch(() => props.vokabel?.id, () => {
 function pruefen(): boolean {
   if (!selectedOption.value) return false
     richtig.value = selectedOption.value.id === props.vokabel.id
+  checked.value = true
   return richtig.value
 }
 
 
-// die Parent-Komponente kann die pruefen-Funktion nutzen
-defineExpose({ pruefen })
+// die Parent-Komponente kann die pruefen-Funktion nutzen und erhält die Lösung
+defineExpose({ 
+  pruefen,
+  feedbackLoesung: () => props.vokabel.uebersetzung 
+})
 
 </script>
 
@@ -78,6 +84,7 @@ defineExpose({ pruefen })
         v-for="option in options"
         :key="option.id"
         class="w-full text-left"
+        :disabled="checked"
         :class="{
           'bg-primary text-white': selectedOption === option,
           'bg-muted-foreground/10 hover:bg-muted-foreground/20': selectedOption !== option

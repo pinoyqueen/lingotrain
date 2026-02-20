@@ -19,6 +19,7 @@ const isRundeFertig = computed<boolean>(() => vkStore.rundeFertig)
 const MCQSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/MCQSpiel.vue'))
 const PaareSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/PaareSpiel.vue'))
 const SchreibenSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/SchreibenSpiel.vue'))
+const LueckeSchreibenSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/LueckeSchreibenSpiel.vue'))
 
 const WORT_SPIELE = [
   { key: 'mcq', comp: MCQSpiel },
@@ -27,9 +28,9 @@ const WORT_SPIELE = [
 ]
 
 const SATZ_SPIELE = [
-  { key: 'schreiben', comp: SchreibenSpiel }
+  { key: 'schreiben', comp: SchreibenSpiel },
+  { key: 'lueckeschreiben', comp: LueckeSchreibenSpiel }
 ]
-
 
 // --- State: aktive Komponente + Key zur Forcierung von Re-Render ---
 const activeComponent = shallowRef<any | null>(null)
@@ -67,6 +68,14 @@ async function chooseSpiel() {
   choosing.value = true
   try {
     const vok = aktuelleFrage.value
+
+    // Wenn ein Satz nicht lang genug ist, wird nur der normale Schreiben-Modus verwendet und
+    // nicht zufällig ausgewählt, weil andere Modi dann nicht viel bringen (Lücken füllen etc.)
+    if (!vok.isWort && !isSentenceLongEnough(vok)) {
+      activeComponent.value = SchreibenSpiel;
+      return;
+    }
+
     const frageId = vok.id
 
     let gelernt = 0
@@ -110,6 +119,22 @@ async function chooseSpiel() {
   } finally {
     choosing.value = false
   }
+}
+
+/**
+  * Prüfen, ob ein Satz lang genug für alle Modi ist oder sich nur der Schreiben-Modus eignet.
+  * 
+  * Die Methode prüft, ob ein Satz mehr als 3 Wörter besitzt. Dabei wird der Satz von führenden
+  * und nachfolgenden Leerzeichen entfernt und in seine einzelnen Wörter zerteilt.
+  *
+  * @param vokabel die Vokabel (der Satz)
+  * @return True, wenn der Satz lang genug ist
+  */
+function isSentenceLongEnough(vokabel: Vokabeln): boolean {
+  const satz = vokabel.vokabel
+  if (!satz) return false
+
+  return (satz.trim().split(/\s+/).length > 3)
 }
 
 onMounted(async () => {
@@ -156,22 +181,29 @@ async function next() {
  * Diese Funktion wird z.B. nach einem Button-Klick aufgerufen, der signalisiert,
  * dass die Frage beantwortet wurde. 
  * Es wird entsprechend ein Feedback über richtig oder falsch und ggf. die Lösung
- * dazu angezeigt.
+ * bzw. Übersetzung dazu angezeigt.
  * 
  * Der Button wird dann in den Next-Button umgewandelt.
  * 
  * @param result True, wenn die Frage richtig beantwortet wurde
  */
 function onAnswered(result: boolean) {
-  feedbackRichtig.value = result
-  showFeedback.value = true
-  if (activeComponent.value != PaareSpiel) {
-    feedbackLoesung.value = result ? '' : ('Lösung: ' + aktuelleFrage.value?.vokabel || '')
-    vkStore.frageBeantwortet(result)
-  } else {
-    feedbackLoesung.value = ''
+  feedbackRichtig.value = result;
+
+  if(!result) {
+    const spiel = currentSpielRef.value;
+
+    // je nach zurückgegebener Lösung, diese anzeigen; wird keine vom Modus zurückgegeben, dann auch nichts ausgeben
+    if(spiel?.feedbackLoesung) {
+      feedbackLoesung.value = spiel.feedbackLoesung();
+    } else {
+      feedbackLoesung.value = '';
+    }
   }
-  
+
+  showFeedback.value = true
+
+  vkStore.frageBeantwortet(result)
 
   buttonText.value = 'Next'
 }
@@ -219,6 +251,20 @@ const footerStyle = computed(() => {
   return {
     backgroundColor: feedbackRichtig.value ? 'var(--success)' : 'var(--warning)'
   }
+})
+
+/**
+ * Setzt den Titel des Feedback.
+ * 
+ * Bei richtigen Antworten wird hier immer "Richtig" ausgegeben.
+ * Bei falschen Antworten hingegen kann zwischen Lösung und 
+ * spezialisierten Überschriften (z.B. Übersetzung) unterschieden werden.
+ */
+const feedbackTitle = computed(() => {
+  if (feedbackRichtig.value) return 'Richtig!'
+
+  // Spiel darf Titel überschreiben
+  return currentSpielRef.value?.feedbackTitle ?? 'Lösung:'
 })
 
 /**
@@ -272,7 +318,7 @@ const buttonClass = computed(() => {
 
               <div class="flex flex-col min-w-0 text-white">
                 <h3 class="text-lg font-bold mb-1 leading-none">
-                  {{ feedbackRichtig ? 'Richtig!' : 'Fast richtig!' }}
+                  {{ feedbackRichtig ? 'Richtig!' : 'Lösung:' }}
                 </h3>
                 <p class="text-base leading-relaxed break-all opacity-95 font-medium">
                   {{ feedbackRichtig ? 'Hervorragende Arbeit.' : feedbackLoesung }}
