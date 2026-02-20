@@ -181,19 +181,28 @@ async function next() {
  * Diese Funktion wird z.B. nach einem Button-Klick aufgerufen, der signalisiert,
  * dass die Frage beantwortet wurde. 
  * Es wird entsprechend ein Feedback über richtig oder falsch und ggf. die Lösung
- * dazu angezeigt.
+ * bzw. Übersetzung dazu angezeigt.
  * 
  * Der Button wird dann in den Next-Button umgewandelt.
  * 
  * @param result True, wenn die Frage richtig beantwortet wurde
  */
 function onAnswered(result: boolean) {
-  feedbackRichtig.value = result
-  feedbackLoesung.value = result ? '' : (aktuelleFrage.value?.vokabel || '')
+  feedbackRichtig.value = result;
+
+  if(!result) {
+    const spiel = currentSpielRef.value;
+
+    // je nach zurückgegebener Lösung, diese anzeigen; wird keine vom Modus zurückgegeben, dann auch nichts ausgeben
+    if(spiel?.feedbackLoesung) {
+      feedbackLoesung.value = spiel.feedbackLoesung();
+    } else {
+      feedbackLoesung.value = '';
+    }
+  }
+
   showFeedback.value = true
-
   vkStore.frageBeantwortet(result)
-
   buttonText.value = 'Next'
 }
 
@@ -242,6 +251,13 @@ const footerStyle = computed(() => {
   }
 })
 
+/**
+ * Setzt den Titel des Feedback.
+ * 
+ * Bei richtigen Antworten wird hier immer "Richtig" ausgegeben.
+ * Bei falschen Antworten hingegen kann zwischen Lösung und 
+ * spezialisierten Überschriften (z.B. Übersetzung) unterschieden werden.
+ */
 const feedbackTitle = computed(() => {
   if (feedbackRichtig.value) return 'Richtig!'
 

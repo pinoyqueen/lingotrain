@@ -50,8 +50,11 @@ function pruefen(): boolean {
 }
 
 
-// die Parent-Komponente kann die pruefen-Funktion nutzen
-defineExpose({ pruefen })
+// die Parent-Komponente kann die pruefen-Funktion nutzen und erhält die Lösung
+defineExpose({ 
+  pruefen,
+  feedbackLoesung: () => props.vokabel.uebersetzung 
+})
 
 </script>
 
