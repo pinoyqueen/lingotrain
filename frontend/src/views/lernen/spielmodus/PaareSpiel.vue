@@ -96,7 +96,10 @@ function pruefen(): boolean {
 
 
 // Methode für den Parent freigeben
-defineExpose({ pruefen })
+defineExpose({ 
+  pruefen,
+  feedbackTitle: ""
+})
 </script>
 
 <template>

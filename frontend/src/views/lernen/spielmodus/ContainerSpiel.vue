@@ -318,10 +318,10 @@ const buttonClass = computed(() => {
 
               <div class="flex flex-col min-w-0 text-white">
                 <h3 class="text-lg font-bold mb-1 leading-none">
-                  {{ feedbackRichtig ? 'Richtig!' : 'Lösung:' }}
+                  {{ feedbackRichtig ? 'Richtig!' : 'Leider falsch!' }}
                 </h3>
                 <p class="text-base leading-relaxed break-all opacity-95 font-medium">
-                  {{ feedbackRichtig ? 'Hervorragende Arbeit.' : feedbackLoesung }}
+                  {{ feedbackRichtig ? 'Hervorragende Arbeit.' : (feedbackTitle + ' ' + feedbackLoesung) }}
                 </p>
               </div>
             </div>
