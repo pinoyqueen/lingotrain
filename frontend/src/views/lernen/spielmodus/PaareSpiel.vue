@@ -20,6 +20,20 @@ const draggedLeftId = ref<string | null>(null)
 const checked = ref(false)
 const resultMap = ref<Record<string, boolean>>({}) 
 
+function shuffle<T>(array: T[]): T[] {
+  const arr = [...array]
+
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+
+    const temp = arr[i]!
+    arr[i] = arr[j]!
+    arr[j] = temp
+  }
+
+  return arr
+}
+
 function loadPaare() {
   const list = vkStore.getPaare(props.vokabel, 4)
   paare.value = list
@@ -28,7 +42,7 @@ function loadPaare() {
   leftList.value = [...list]
 
   // Vokabeln für die rechte Seite gemischt
-  rightList.value = [...list].sort(() => Math.random() - 0.5)
+  rightList.value = shuffle(list)
   
   matches.value = {}
   rightAssigned.value = {}
@@ -103,11 +117,11 @@ defineExpose({
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto flex flex-col items-center justify-center space-y-6 sm:space-y-10 pt-4 sm:pt-10 px-4">
+  <div class="max-w-4xl mx-auto flex flex-col items-center space-y-8 px-4">
     
     <div class="text-center space-y-4 animate-in fade-in zoom-in duration-500 w-full">
       <h2 
-       class="text-s font-bold uppercase tracking-[0.2em] block"
+       class="text-xs font-bold uppercase tracking-[0.2em] block"
       >
         Ziehe jedes Wort links zu seiner Übersetzung rechts.
       </h2>
@@ -119,9 +133,10 @@ defineExpose({
     </div>
 
     <!-- PAARE ALS BUTTONS -->
-    <div class="max-w-4xl mx-auto pt-4 sm:pt-10 px-4">
+    <div class="w-full relative pb-6">
       <div class="grid grid-cols-2 gap-8">
         <template v-for="(v, i) in leftList" :key="v.id">
+  
           <!-- Linke Spalte -->
           <div class="flex">
             <Button
@@ -142,39 +157,40 @@ defineExpose({
               class="w-full justify-start min-h-[48px] disabled:opacity-100"
               :disabled="checked"
               :class="[ 
-                rightAssigned[v.id!] && !checked && 'border-primary bg-primary/10',
+                rightAssigned[rightList[i]!.id!] && !checked && 'border-primary bg-primary/10',
                 // richtig
-                checked && rightAssigned[v.id!] && resultMap[rightAssigned[v.id!]!] === true && 'bg-[var(--success)] text-white border-[var(--success)]',
+                checked && rightAssigned[rightList[i]!.id!] && resultMap[rightAssigned[rightList[i]!.id!]!] === true && 'bg-[var(--success)] text-white border-[var(--success)]',
                 // falsch
-                checked && rightAssigned[v.id!] && resultMap[rightAssigned[v.id!]!] === false && 'bg-[var(--warning)] text-white border-[var(--warning)]',
+                checked && rightAssigned[rightList[i]!.id!] && resultMap[rightAssigned[rightList[i]!.id!]!] === false && 'bg-[var(--warning)] text-white border-[var(--warning)]',
                 // nicht zugeordnet
-                checked && !rightAssigned[v.id!] && 'bg-[var(--warning)] text-white border-[var(--warning)]'
+                checked && !rightAssigned[rightList[i]!.id!] && 'bg-[var(--warning)] text-white border-[var(--warning)]'
               ]"
               @dragover.prevent
-              @drop="onDrop(v)"
-              @click="undo(v)"
+              @drop="onDrop(rightList[i]!)"
+              @click="undo(rightList[i]!)"
             >
-              <template v-if="rightAssigned[v.id!]">
+              <template v-if="rightAssigned[rightList[i]!.id!]">
                 <span class="font-medium">
-                  {{ leftList.find(l => l.id === rightAssigned[v.id!])?.vokabel }}
+                  {{ leftList.find(l => l.id === rightAssigned[rightList[i]!.id!])?.vokabel }}
                 </span>
                 <span class="mx-2" :class="checked ? 'text-white' : 'text-black'">→</span>
-                <span>{{ v.uebersetzung }}</span>
+                <span>{{ rightList[i]!.uebersetzung }}</span>
               </template>
               <template v-else>
-                {{ v.uebersetzung }}
+                {{ rightList[i]!.uebersetzung }}
               </template>
             </Button>
 
             <!-- Feedback unter dem Button -->
             <p
-              v-if="checked && ((!rightAssigned[v.id!]) || resultMap[rightAssigned[v.id!]!] === false)"
+              v-if="checked && ((!rightAssigned[rightList[i]!.id!]) || resultMap[rightAssigned[rightList[i]!.id!]!] === false)"
               class="mt-1 text-xs text-[var(--warning)]"
             >
-              Richtige Lösung: {{ leftList.find(l => l.id === v.id)?.vokabel }}
+              Richtige Lösung: {{ leftList.find(l => l.id === rightList[i]!.id)?.vokabel }}
             </p>
           </div>
         </template>
+        
       </div>
     </div>
   </div>

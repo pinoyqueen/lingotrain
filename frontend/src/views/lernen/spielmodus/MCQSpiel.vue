@@ -46,9 +46,9 @@ watch(() => props.vokabel?.id, () => {
 
 // Prüflogik – passe an deine fachliche Logik an
 function pruefen(): boolean {
+  checked.value = true
   if (!selectedOption.value) return false
     richtig.value = selectedOption.value.id === props.vokabel.id
-  checked.value = true
   return richtig.value
 }
 
@@ -62,7 +62,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto flex flex-col items-center justify-center space-y-6 sm:space-y-10 pt-4 sm:pt-10 px-4">
+  <div class="max-w-4xl mx-auto flex flex-col items-center space-y-8 px-4">
     
     <div class="text-center space-y-4 animate-in fade-in zoom-in duration-500 w-full">
       <span class="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground/60 block">

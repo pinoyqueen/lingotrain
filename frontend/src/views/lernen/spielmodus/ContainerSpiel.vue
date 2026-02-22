@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { useVkStore } from '@/stores/vokabelKontoStore';
 import { computed, defineAsyncComponent, onMounted, ref, shallowRef } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import Button from '@/components/ui/button/Button.vue';
 import type { Vokabeln } from '@/models/Vokabeln';
 
 const MAX_GELERNT = 4
 
 const route = useRoute()
+const router = useRouter()
 const vkStore = useVkStore()
 const lernsetId = String(route.params.id)
 const choosing = ref(false)
@@ -208,6 +209,14 @@ function onAnswered(result: boolean) {
   buttonText.value = 'Next'
 }
 
+async function nextRunde() {
+  activeComponent.value = null
+  vkStore.resetRunde()
+  await vkStore.ladeVokabeln(lernsetId)
+  chooseSpiel()
+  updateProgress()
+}
+
 /**
  * Click-Handler für den Next-/Prüfen-Button.
  * 
@@ -282,9 +291,13 @@ const buttonClass = computed(() => {
 </script>
 
 <template>
-  <p v-if="isRundeFertig">Runde is fertig</p>
+  <div v-if="isRundeFertig" class="flex h-full w-full flex-col items-center justify-center text-center space-y-4">
+    <p class="font-black text-foreground tracking-tight leading-tight mx-auto text-2xl sm:text-4xl max-w-3xl">Runde geschafft - weiter geht's!</p>
+    <Button @click="nextRunde" class="mt-2 bg-[var(--success)] text-white">Runde starten</Button>
+    <Button @click="() => router.push(`/meinevokabeln/${route.params.id}/${route.params.slug}`)"  class="bg-[var(--warning)] text-white">Zurück zur Vokabeln</Button>
+  </div>
 
-  <div v-else class="flex flex-col h-full w-full">
+  <div v-else class="flex flex-col h-full w-full overflow-y-auto">
     <div class="flex-1 w-full overflow-y-auto p-6 sm:p-10 flex flex-col justify-center">
       
       <div class="w-full max-w-2xl mx-auto animate-in fade-in zoom-in duration-300">

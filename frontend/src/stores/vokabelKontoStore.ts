@@ -59,6 +59,8 @@ export const useVkStore = defineStore('vokabelKonto', {
         resetRunde() {
             this.rundeFertig = false
             this.aktuelleFrage = null
+            this.index = 0
+            this.alleVokabeln = []
         },
         async getAnzahlGelernt(vokabelId: string): Promise<number> {
             const kontoId = useKontoStore().aktuellesKonto?.id
@@ -68,16 +70,13 @@ export const useVkStore = defineStore('vokabelKonto', {
             }
 
             const result = await getAnzahlGelernt(kontoId, vokabelId)
-            console.log("Firestore gelernt:", result)
 
             return result ?? 0
         },
         updateStatus(vokabelnId: string, status: VokabelnStatus) {
-            console.log("updateStatus")
             const kontoId = useKontoStore().aktuellesKonto?.id
             if (kontoId) {
                 repoUpdateStatus(kontoId, vokabelnId, status)
-                console.log("repoUpdateStatus")
             }
         },
         getDistractors(richtig: Vokabeln, count: number): Vokabeln[] {
