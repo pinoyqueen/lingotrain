@@ -53,10 +53,16 @@ Der Satz ist korrekt, wenn die Handlung und Bedeutung mit dem Referenzsatz über
 Antworte ausschließlich im JSON-Format, z.B.:
 {{
   "semantically_correct": true/false,
-  "feedback": "kurze Begründung, falls falsch"
+  "comment": "kurze technische Begründung, falls falsch",
+  "rating": "correct | almost_correct | wrong",
+  "short_feedback": "max 2 kurzer Satz für Lernende, freundlich formuliert, direkt im UI nutzbar,  basierend auf der technischen Begründung",
+  "corrected_sentence": "die beste korrekte Übersetzung",
+  "hint": "kurzer Tipp, ohne die korrekte Antwort zu verraten, falls rating=almost_correct/wrong"
 }}
 
-Gib Feedback, warum der Satz falsch ist (z.B. falsches Verb, andere Handlung, Wort fehlt, Grammatikfehler).
+Gib eine kurze technische Begründung, warum der Satz falsch ist (z.B. falsches Verb, andere Handlung, Wort fehlt, Grammatikfehler).
+Gib freundliches, kurzes Feedback, korrigiere den Satz und gib eine Bewertung (correct, almost_correct, wrong).
+
 """
     response = completion(
         model="gpt-4.1-mini",
@@ -73,6 +79,21 @@ Gib Feedback, warum der Satz falsch ist (z.B. falsches Verb, andere Handlung, Wo
         try:
             return json.loads(match.group())
         except json.JSONDecodeError:
-            return {"semantically_correct": False, "feedback": "JSON konnte nicht geparst werden"}
+            return {
+                "semantically_correct": False,
+                "comment": "JSON konnte nicht geparst werden",
+                "rating": "wrong",
+                "short_feedback": "",
+                "corrected_sentence": "",
+                "hint": "Überprüfe deine Antwort noch einmal."
+            }
     else:
-        return {"semantically_correct": False, "feedback": "Keine JSON-Antwort vom LLM"}
+        return {
+            "semantically_correct": False,
+            "comment": "Keine JSON-Antwort vom LLM",
+            "rating": "wrong",
+            "short_feedback": "",
+            "corrected_sentence": "",
+            "hint": "Überprüfe deine Antwort noch einmal."
+        }
+    

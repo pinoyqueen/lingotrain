@@ -1,4 +1,4 @@
-from nlp.evaluator import evaluate_answer_combined as evaluate_answer
+from backend.nlp.evaluator import evaluate_answer_combined as evaluate_answer
 
 def test():
     test_cases = [
@@ -29,6 +29,91 @@ def test():
             "user_answer": "I buy a pear.",
             "lang": "en",
             "description": "falsches Verb / semantisch falsch, Feedback durch LLM"
+        },
+
+        {
+            "original_sentence": "Ich esse eine Birne, während ich ein Buch lese.",
+            "word": "pear",
+            "user_answer": "I eat a pear while I read a book.",
+            "lang": "en",
+            "description": "korrekt mit Nebensatz"
+        },
+        {
+            "original_sentence": "Ich esse eine Birne, während ich ein Buch lese.",
+            "word": "pear",
+            "user_answer": "I eat a pear while I watch TV.",
+            "lang": "en",
+            "description": "Nebensatz semantisch falsch"
+        },
+        {
+            "original_sentence": "Ich habe gestern eine Birne gegessen.",
+            "word": "pear",
+            "user_answer": "I ate a pear yesterday.",
+            "lang": "en",
+            "description": "korrekt Vergangenheit"
+        },
+        {
+            "original_sentence": "Ich habe gestern eine Birne gegessen.",
+            "word": "pear",
+            "user_answer": "I eat a pear yesterday.",
+            "lang": "en",
+            "description": "Zeitform falsch"
+        },
+        {
+            "original_sentence": "Wenn ich hungrig bin, esse ich eine Birne.",
+            "word": "pear",
+            "user_answer": "If I am hungry, I eat a pear.",
+            "lang": "en",
+            "description": "korrekter Konditionalsatz"
+        },
+        {
+            "original_sentence": "Wenn ich hungrig bin, esse ich eine Birne.",
+            "word": "pear",
+            "user_answer": "If I am hungry, I will eat a pear yesterday.",
+            "lang": "en",
+            "description": "Zeitlogik inkorrekt"
+        },
+        {
+            "original_sentence": "Ich esse eine Birne, weil sie gesund ist.",
+            "word": "pear",
+            "user_answer": "I eat a pear because it is healthy.",
+            "lang": "en",
+            "description": "korrekt mit Begründung"
+        },
+        {
+            "original_sentence": "Ich esse eine Birne, weil sie gesund ist.",
+            "word": "pear",
+            "user_answer": "I eat a pear because I am healthy.",
+            "lang": "en",
+            "description": "Begründung semantisch falsch"
+        },
+        {
+            "original_sentence": "Obwohl ich keinen Hunger habe, esse ich eine Birne.",
+            "word": "pear",
+            "user_answer": "Although I am not hungry, I eat a pear.",
+            "lang": "en",
+            "description": "korrekt mit although"
+        },
+        {
+            "original_sentence": "Obwohl ich keinen Hunger habe, esse ich eine Birne.",
+            "word": "pear",
+            "user_answer": "Although I am not hungry, I sleep a pear.",
+            "lang": "en",
+            "description": "stark semantisch falsch"
+        },
+        {
+            "original_sentence": "Ich esse normalerweise eine Birne nach dem Mittagessen.",
+            "word": "pear",
+            "user_answer": "I usually eat a pear after lunch.",
+            "lang": "en",
+            "description": "Adverb korrekt positioniert"
+        },
+        {
+            "original_sentence": "Ich esse normalerweise eine Birne nach dem Mittagessen.",
+            "word": "pear",
+            "user_answer": "I eat usually a pear after lunch.",
+            "lang": "en",
+            "description": "Adverbstellung falsch"
         }
     ]
 
