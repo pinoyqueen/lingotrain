@@ -1,3 +1,5 @@
+import json
+import re
 import os
 import random
 from litellm import completion
@@ -5,8 +7,17 @@ from .prompts import evaluation_prompt
 
 os.environ["OPENAI_API_KEY"] = "sk-_Pmm8MuGJr5ExE_7BP-wgw"
 
+# Basis-URL für das LiteLLM-Gateway der FH
 LITELLM_BASE_URL = "https://litellm.fh-swf.cloud"
 
+# Diese Funktion generiert einen Satz mithilfe eines Large Language Models (LLM).
+# Dies wird z.B. für das Erzeugen von Sätzen im Vokabeltrainer verwendet.
+# 
+# Argumente: 
+#   - prompt (str): Der Prompt, der an das LLM zum Generieren von Sätzen gesendet wird
+#   - model (str): Das Modell zum Generieren der Sätze (Standardmäßig gpt-4.1-mini)
+#
+# Return: (str) der generierte Satz
 def generate(prompt, model="gpt-4.1-mini"):
     response = completion(
         model = model,
@@ -22,10 +33,10 @@ def generate(prompt, model="gpt-4.1-mini"):
         temperature = 0.9, 
 
         # Wortauswahl wird auf die wahrscheinlichsten 90% beschränkt für variablen, aber noch stabilen Text
-        top_p=0.9, 
+        top_p = 0.9, 
 
         # Anzahl der Varianten, die das Modell erstellt (dann zufällige Auswahl)
-        n=5  
+        n = 5  
     )
 
     # Alle erzeugten Sätze sammeln
@@ -37,23 +48,52 @@ def generate(prompt, model="gpt-4.1-mini"):
     # Zufällige Variante auswählen
     return random.choice(sentences)
 
+# Diese Funktion bewertet einen Satz auf semantische Korrektheit mithilfe eines LLMs.
+# Dabei wird geprüft, ob die Eingabe des Nutzers die gleiche Bedeutung enthält wie der
+# Referenzsatz. Außerdem wird auf grammatikalische Korrektheit geprüft. 
+# Es wird hier nicht geprüft, ob das Zielwort vorhanden ist oder der Satz plausibel ist
+# (die Prüfung wird zuvor schon vorausgesetzt).
+#
+# Argumente: 
+#   - user_sentence (str): der eingegebene Satz des Nutzers
+#   - original_sentence (str): Der Referenzsatz (Originalsatz), der vom LLM generiert wurde
+#   - target_language (str): Die Zielsprache, in der der Nutzer den Satz übersetzen soll
+#
+# Return: (dict) enthält semantically_correct, comment, rating, short_feedback, corrected_sentence und hint
 def evaluate_with_llm(user_sentence, original_sentence, target_language="en"):
+
     prompt = evaluation_prompt(original_sentence, target_language, user_sentence)
 
     response = completion(
-        model="gpt-4.1-mini",
-        messages=[{"role": "user", "content": prompt}],
-        api_base=LITELLM_BASE_URL,
-        temperature=0
+        model = "gpt-4.1-mini",
+        messages = [
+            {
+                "role": "user", 
+                "content": prompt
+            }
+        ],
+        api_base = LITELLM_BASE_URL,
+        temperature = 0
     )
 
-    # Sauberes Parsen des JSON
-    import json, re
+    # JSON aus der Modellantwort extrahieren, Text davor / danach wird nicht benötigt
     text = response["choices"][0]["message"]["content"].strip()
     match = re.search(r'\{.*\}', text, re.DOTALL)
+
     if match:
         try:
-            return json.loads(match.group())
+            result = json.loads(match.group())
+
+            # Falls das LLM ein Feld bei der Rückgabe vergisst, würde ein Standardwert gesetzt (für mehr Robustheit)
+            return {
+                "semantically_correct": result.get("semantically_correct", False),
+                "comment": result.get("comment", ""),
+                "rating": result.get("rating", "wrong"),
+                "short_feedback": result.get("short_feedback", ""),
+                "corrected_sentence": result.get("corrected_sentence", ""),
+                "hint": result.get("hint", "")
+            }
+        
         except json.JSONDecodeError:
             return {
                 "semantically_correct": False,
