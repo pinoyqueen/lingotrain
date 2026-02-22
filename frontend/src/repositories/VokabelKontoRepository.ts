@@ -22,6 +22,7 @@ import type { Vokabeln } from '@/models/Vokabeln'
 const VOKABELN_COLLECTION = 'Vokabeln'
 const VK_COLLECTION = 'VokabelKonto'
 const vkCollection = collection(db, VK_COLLECTION)
+const MAX_N = 10
 
 /**
  * Erstellt einen neuen Eintrag in VokabelKonto.
@@ -75,7 +76,7 @@ export async function updateStatus(kontoId: string, vokabelId: string, status: V
 }
 
 /**
- * Holt alle Vokabeln eines Lernsets, die für das Training relevant sind.
+ * Holt bis zu 10 Vokabeln eines Lernsets, die für das Training relevant sind.
  * Das sind nur solche mit Status NICHT_GELERNT oder FALSCH.
  * Wenn alle gelernt sind, dann automatische Status-Zurücksetzung.
  * 
@@ -88,7 +89,8 @@ export async function getAllVokabelnForTraining(lernsetId: string, kontoId: stri
         vkCollection,
         where('kontoId', '==', kontoId),
         where('lernsetId', '==', lernsetId),
-        where('status', 'in', [VOKABELN_STATUS.NICHT_GELERNT, VOKABELN_STATUS.FALSCH])
+        where('status', 'in', [VOKABELN_STATUS.NICHT_GELERNT, VOKABELN_STATUS.FALSCH]),
+        limit(MAX_N)
     )
 
     const snap = await getDocs(q)
