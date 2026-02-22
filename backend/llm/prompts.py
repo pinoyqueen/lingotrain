@@ -28,6 +28,17 @@ Erzeuge mehrere sinnvolle Versionen des Satzes und wähle eine zufällige aus.
 Gib NUR den einen Satz aus. 
 """
 
+# Generiert den Prompt für das LLM, um einen eingegebenen Satz des Nutzers im Vergleich
+# zu einem Referenzsatz (dem Originalsatz) zu bewerten. Dabei wird besonders auf die
+# semantische Korrektheit geachtet.
+# Zusätzlich werden ein Hinweis, der korrigierte Satz und eine kurze Rückmeldung geliefert.
+#
+# Argumente: 
+#   - original_sentence (str): Der Referenzsatz (Originalsatz), der vom LLM generiert wurde
+#   - target_language (str): Die Zielsprache, in der der Nutzer den Satz übersetzen soll
+#   - user_sentence (str): der eingegebene Satz des Nutzers
+#
+# Return: (str) der fertige Prompt-Text für das LLM
 def evaluation_prompt(original_sentence, target_language, user_sentence):
     return f"""
 Du bist ein Sprachlernassistent.
@@ -43,13 +54,13 @@ Der Satz ist korrekt, wenn die Handlung und Bedeutung mit dem Referenzsatz über
 Antworte ausschließlich im JSON-Format, z.B.:
 {{
   "semantically_correct": true/false,
-  "comment": "kurze technische Begründung, falls falsch",
-  "rating": "correct | almost_correct | wrong",
-  "short_feedback": "max 2 kurze Sätze für Lernende, freundlich formuliert, direkt im UI nutzbar,  basierend auf der technischen Begründung",
-  "corrected_sentence": "die beste korrekte Übersetzung",
-  "hint": "kurzer Tipp, ohne die korrekte Antwort zu verraten, falls rating=almost_correct/wrong"
+  "comment": "kurze technische Begründung, falls falsch", test
+  "rating": "correct | almost_correct | wrong", test
+  "short_feedback": "max 2 kurze Sätze für Lernende, freundlich formuliert, direkt im UI nutzbar,  basierend auf der technischen Begründung", test
+  "corrected_sentence": "die beste korrekte Übersetzung", test
+  "hint": "kurzer Tipp, ohne die korrekte Antwort zu verraten, falls rating=almost_correct/wrong" test
 }}
 
-Gib eine kurze technische Begründung, warum der Satz falsch ist (z.B. falsches Verb, andere Handlung, Wort fehlt, Grammatikfehler).
-Gib freundliches, kurzes Feedback, korrigiere den Satz und gib eine Bewertung (correct, almost_correct, wrong).
+Gib eine kurze technische Begründung, warum der Satz falsch ist (z.B. falsches Verb, andere Handlung, Wort fehlt, Grammatikfehler). test
+Gib freundliches, kurzes Feedback, korrigiere den Satz und gib eine Bewertung (correct, almost_correct, wrong). test
 """
