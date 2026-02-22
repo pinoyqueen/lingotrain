@@ -56,14 +56,30 @@ def contains_target_word(doc, target_word):
 
 # Prüft, ob der Satz plausibel ist.
 # Ein Satz gilt als plausibel, wenn er mehr als ein Token enthält und mindestens
-# ein Verb oder Hilfsverb enthält.
+# ein Verb oder Hilfsverb enthält. Sollte ein Wort die Wurzel eines Satzes sein, so 
+# gilt der Satz auch als plausibel, um auch korrekt konjugierte Verben in verschiedenen
+# Sprachen zu erkennen.
 #
 # Argumente:
 #   - doc : SpaCy-Dokument der Nutzerantwort
 #
 # Return: True, wenn der Satz plausibel ist; ansonsten false
 def is_sentence_plausible(doc):
-    return len(doc) > 1 and any(token.pos_ in ["VERB", "AUX"] for token in doc)
+
+    if len(doc) <= 1:
+        return False
+
+    for token in doc:
+        # POS-Tag oder morphologische Merkmale
+        if token.pos_ in {"VERB", "AUX"} or any(key in token.morph.to_dict() for key in ["Tense", "Person", "VerbForm"]):
+            return True
+        
+        # Wenn ein Wort die Wurzel des Satzes ist, vertrauen wir darauf, dass das LLM die wahre Plausibilität klärt
+        # bei Spanisch werden sonst Wörter wie "como" oder Vergangenheitsformen von Verben nicht anerkannt
+        if token.dep_ == "ROOT":
+            return True
+
+    return False
 
 # Erzeugt einfaches Feedback für die regelbasierten Fehler. Dafür wird kein LLM verwendet.
 # 

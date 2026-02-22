@@ -49,11 +49,21 @@ Bewerte den folgenden Satz eines Lerners im Vergleich zu einem Referenzsatz:
 - Sprache: {target_language}
 - Nutzerantwort: "{user_sentence}"
 
-Der Satz ist korrekt, wenn:
-1. Die Handlung und Bedeutung mit dem Referenzsatz übereinstimmen.
-2. Der Satz grammatikalisch korrekt ist.
-3. Die Zeichensetzung korrekt ist (inklusive Kommas und Satztrennung).
-4. Die Rechtschreibung korrekt ist.
+Bewertungsregeln:
+1. Die Handlung und Bedeutung muss exakt mit dem Referenzsatz übereinstimmen.
+2. Grammatik muss korrekt sein.
+3. Zeichensetzung am Satzende muss korrekt sein:
+   - Aussagesätze → Punkt
+   - Fragesätze → Fragezeichen
+   - Ausrufesätze → Ausrufezeichen
+   Fehlendes oder falsches Satzzeichen gilt als **Fehler**.
+4. Rechtschreibung muss korrekt sein.
+5. Die Bedeutung des Fokuswortes muss zum Referenzsatz passen, auch wenn die Sprachen unterschiedlich sind.
+
+Bewertungsskala: 
+- "wrong": wenn Bedeutung, Handlung, Zeitform oder Zeichensetzung nicht korrekt ist.
+- "almost_correct": wenn kleine stilistische Fehler oder minimale Rechtschreibung/Kommas fehlen.
+- "correct": alles korrekt, inklusive korrekter Satzzeichen.
 
 Antworte ausschließlich im JSON-Format, z.B.:
 {{

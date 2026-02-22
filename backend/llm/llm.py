@@ -15,10 +15,10 @@ LITELLM_BASE_URL = "https://litellm.fh-swf.cloud"
 # 
 # Argumente: 
 #   - prompt (str): Der Prompt, der an das LLM zum Generieren von Sätzen gesendet wird
-#   - model (str): Das Modell zum Generieren der Sätze (Standardmäßig gpt-4.1-mini)
+#   - model (str): Das Modell zum Generieren der Sätze (Standardmäßig gpt-4o)
 #
 # Return: (str) der generierte Satz
-def generate(prompt, model="gpt-4.1-mini"):
+def generate(prompt, model="gpt-4o"):
     response = completion(
         model = model,
         messages = [
@@ -65,7 +65,7 @@ def evaluate_with_llm(user_sentence, original_sentence, target_language="en"):
     prompt = evaluation_prompt(original_sentence, target_language, user_sentence)
 
     response = completion(
-        model = "gpt-4.1-mini",
+        model = "gpt-4o",
         messages = [
             {
                 "role": "user", 
