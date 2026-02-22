@@ -30,7 +30,7 @@ Gib NUR den einen Satz aus.
 
 # Generiert den Prompt für das LLM, um einen eingegebenen Satz des Nutzers im Vergleich
 # zu einem Referenzsatz (dem Originalsatz) zu bewerten. Dabei wird besonders auf die
-# semantische Korrektheit geachtet.
+# semantische Korrektheit geachtet, aber auch auf Zeichensetzung und Rechtschreibung.
 # Zusätzlich werden ein Hinweis, der korrigierte Satz und eine kurze Rückmeldung geliefert.
 #
 # Argumente: 
@@ -49,7 +49,11 @@ Bewerte den folgenden Satz eines Lerners im Vergleich zu einem Referenzsatz:
 - Sprache: {target_language}
 - Nutzerantwort: "{user_sentence}"
 
-Der Satz ist korrekt, wenn die Handlung und Bedeutung mit dem Referenzsatz übereinstimmt und der Satz grammatikalisch korrekt ist.
+Der Satz ist korrekt, wenn:
+1. Die Handlung und Bedeutung mit dem Referenzsatz übereinstimmen.
+2. Der Satz grammatikalisch korrekt ist.
+3. Die Zeichensetzung korrekt ist (inklusive Kommas und Satztrennung).
+4. Die Rechtschreibung korrekt ist.
 
 Antworte ausschließlich im JSON-Format, z.B.:
 {{
