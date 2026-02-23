@@ -29,7 +29,7 @@ const rating = ref("")
 const firstAttempt = ref(true)
 
 // TODO: lernset dynamisch setzen
-const lernsetId = ref("wNow2k3gBJDuucdMPzci")
+const lernsetId = ref("EYydiIexN5xZHOJcmp32")
 
 // --- Computed Properties ---
 /** ID des aktuellen Kontos */
@@ -145,6 +145,12 @@ async function checkAnswer() {
   })
 
   const data = await res.json()
+
+  // erster Versuch entscheidet über den Status der Vokabel, der in der DB gesetzt werden soll
+  // da der Nutzer ansonsten Hinweise hatte und es nicht alleine richtig hatte
+  if(firstAttempt.value) {
+    vkStore.frageBeantwortet(data.correct);
+  }
 
   // Logik für zweite Chance
   if(firstAttempt.value && data.rating !== "correct") {
