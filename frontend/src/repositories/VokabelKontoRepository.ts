@@ -175,6 +175,18 @@ export async function deleteVK(kontoId: string, vokabelId: string): Promise<void
     await deleteDoc(doc0.ref)
 }
 
+/**
+ * Ermittelt, wie oft eine bestimmte Vokabel von einem Benutzer erfolgreich gelernt wurde.
+ * 
+ * Sucht den zugehörigen VokabelKonto-Eintrag über kontoId und vokabelId und gibt den gespeicherten
+ * Zähler, anzahlGelernt, zurück.
+ * 
+ * Falls kein Eintrag existiert oder kein Wert gesetzt ist, wird 0 geliefert.
+ * 
+ * @param kontoId ID des Benutzerkontos
+ * @param vokabelId ID der Vokabel
+ * @returns Promise<number> - Anzahl der Lernvorgänge (Default: 0)
+ */
 export async function getAnzahlGelernt(kontoId: string, vokabelId: string): Promise<number> {
   try {
     const q = query(

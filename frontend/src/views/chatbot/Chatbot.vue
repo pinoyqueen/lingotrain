@@ -6,27 +6,42 @@ import { useVkStore } from "@/stores/vokabelKontoStore"
 import { useKontoStore } from "@/stores/kontoStore"
 import type { Vokabeln } from "@/models/Vokabeln"
 
+// --- Stores initialisieren ---
 const vkStore = useVkStore()
 const kontoStore = useKontoStore()
 
+// --- Reaktive State-Variablen ---
+/** Vom Backend generierter Satz */
 const sentence = ref("")
+/** Ladezustand für UI */
 const loading = ref(false)
+/** Antwort des Benutzers */
 const userInput = ref("")
-const feedback = ref("")      // Für UI-Feedback vom Evaluator
-const comment = ref("")       // Technische Begründung 
-const suggestion = ref("")    // Korrekturvorschlag
-const rating = ref("")        // Bewertung (correct/almost_correct/wrong)
-const firstAttempt = ref(true) // Flag für ersten Versuch
+/** Für UI-Feedback vom Evaluator */
+const feedback = ref("")
+/** Technische Begründung */
+const comment = ref("")
+/** Korrekturvorschlag */
+const suggestion = ref("")
+/** Bewertung (correct/almost_correct/wrong) */
+const rating = ref("") 
+/** Flag für ersten Versuch */
+const firstAttempt = ref(true)
 
 // TODO: lernset dynamisch setzen
 const lernsetId = ref("wNow2k3gBJDuucdMPzci")
 
+// --- Computed Properties ---
+/** ID des aktuellen Kontos */
 const kontoId = computed(() => kontoStore.aktuellesKonto?.id);
+/** aktuelle Lernsprache */
 const aktuelleSprache = computed(() => kontoStore.aktuelleSprache);
+/** aktuelle Vokabel */
 const vokabel = computed<Vokabeln | null>(() => vkStore.aktuelleFrage ?? null)
+/** Prüft, ob die Runde beendet ist */
 const isRundeFertig = computed<boolean>(() => vkStore.rundeFertig)
 
-// Sprache in ISO-Code übersetzen
+/** Mapping für ISO-Code für den Evaluator */
 const languageMap: Record<string,string> = {
   "Englisch": "en",
   "Deutsch": "de",
@@ -34,12 +49,21 @@ const languageMap: Record<string,string> = {
   "Spanisch": "es"
 }
 
+/** Beim Mount Vokabeln laden und Runde zurücksetzen */
 onMounted(async () => {
     vkStore.resetRunde()
     await vkStore.ladeVokabeln(lernsetId.value)
 })
 
-// TODO: wird nach dem Auswahl von Lernset aufgerufen; erstmal manuell per Button-Klick
+/**
+ * Lädt einen Satz für die aktuelle Vokabel.
+ * 
+ * Prüft zunächst, ob die Runde abgeschlossen ist und setzt sie ggf. zurück.
+ * Springt über alle Vokablen, die Sätze sind, bis ein Wort gefunden wird.
+ * Ruft das Backend über /generate-sentence auf, um ein Satz zu generieren.
+ * Bereitet die Vokabel für die erste Eingabe vor.
+ * // TODO: wird nach dem Auswahl von Lernset aufgerufen; erstmal manuell per Button-Klick
+ */
 async function loadSentence() {
   if(isRundeFertig.value) {
     vkStore.resetRunde()
@@ -83,7 +107,11 @@ async function loadSentence() {
   userInput.value = ""
 }
 
-// TODO: diese automatisch nach der zweiter Versuch/richtige Antwort aufrufen; erstmal manuell per Button-Klick
+/**
+ * Lädt die nächste Vokabel im Lernset.
+ * 
+ * // TODO: diese automatisch nach der zweiter Versuch/richtige Antwort aufrufen; erstmal manuell per Button-Klick
+ */
 function nextVokabel() {
   feedback.value = ""
   userInput.value = ""
@@ -91,6 +119,15 @@ function nextVokabel() {
   loadSentence()
 }
 
+/**
+ * Prüft die Eingabe des Nutzers auf Korrektheit.
+ * 
+ * Sendet die Benutzereingabe zusammen mit dem generierten Satz und der Zielvokaben an das Backend /evaluate-answer.
+ * Verarbeitet das Feedback:
+ * - Beim ersten Fehlversuch nur Hinweis anzeigen
+ * - Bei zweitem Versuch oder korrekter Antwort volles Feedback, Kommentare, Vorschlag und Bewertung
+ * 
+ */
 async function checkAnswer() {
   if (!vokabel.value || !userInput.value) return
 

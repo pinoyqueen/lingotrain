@@ -20,49 +20,71 @@ import {
 import type { Lernset } from '@/models/Lernset'
 import { toast } from 'vue-sonner'
 import { slugify } from '@/utils/slugify'
+import AlertDialog from '@/components/ui/alert-dialog/AlertDialog.vue'
+import AlertDialogTrigger from '@/components/ui/alert-dialog/AlertDialogTrigger.vue'
+import AlertDialogContent from '@/components/ui/alert-dialog/AlertDialogContent.vue'
+import AlertDialogHeader from '@/components/ui/alert-dialog/AlertDialogHeader.vue'
+import AlertDialogDescription from '@/components/ui/alert-dialog/AlertDialogDescription.vue'
+import AlertDialogTitle from '@/components/ui/alert-dialog/AlertDialogTitle.vue'
+import AlertDialogFooter from '@/components/ui/alert-dialog/AlertDialogFooter.vue'
+import AlertDialogCancel from '@/components/ui/alert-dialog/AlertDialogCancel.vue'
+import AlertDialogAction from '@/components/ui/alert-dialog/AlertDialogAction.vue'
 
+// --- Aktuelles Konto ---
 const kontoStore = useKontoStore();
 const kontoId = computed(() => kontoStore.aktuellesKonto?.id);
-// Store/ViewModel holen
+
+// --- Lernset Store ---
 const lernsetStore = useLernsetStore();
 
-// UI States
-// gibt an, ob Dialog zum Einfügen angezeigt werden muss
+// --- UI States --- 
+/** Modal sichtbar? */
 const showDialog = ref(false)
-// gibt an, ob die Bearbeiten Icons auf der Lernsets angezeigt werden muss
+/** Bearbeiten-Icons sichtbar? */
 const showBearbeiten = ref(false)
-// gibt an, ob die anzuzeigende Dialog zum Einfügen oder zum Bearbeiten ist
+/** Dialog: neues Set oder Bearbeiten? */
 const neueItem = ref(true)
-
-// Aktuell bearbeitetes Lernset (null = neues Set)
+/** Aktuell bearbeitetes Lernset (null = neues Set) */
 const selectedSet = ref<Lernset | null>(null)
 
-// Daten der Formular
+/** Daten der Formular */
 const form = reactive({
   name: '',
   beschreibung: '',
   isPublic: false,
 })
 
-// Computed für Dialog-Titel
+// --- Computed --- 
+/** Titel des Dialogs */
 const dialogTitle = computed(() => selectedSet.value ? 'Lernset bearbeiten' : 'Neues Lernset')
+/** Beschriftug der Bearbeiten-Buttons */
 const btnTitle = computed(() => showBearbeiten.value ? 'Fertig' : 'Bearbeiten')
-// gibt an, ob die Liste leer ist
+/** true, wenn keine Lernsets vorhanden sind */
 const isLeer = computed(() => lernsetStore.sets.length === 0);
 
-// Methoden
+/**
+ * Öffnet Dialog zum Anlegen eines neuen Lernsets.
+ */
 function openNewDialog() {
   resetForm()
   selectedSet.value = null
   showDialog.value = true
 }
 
+/**
+ * Setzt alle Formularfelder zurück.
+ */
 function resetForm() {
   form.name = ''
   form.beschreibung = ''
   form.isPublic = false
 }
 
+/**
+ * Öffnet Dialog zum Bearbeiten eines bestehendes Lernsets.
+ * 
+ * @param item Lernset, das bearbeitet werden soll
+ */
 function editLernset(item: Lernset) : void {
   // bestehende Daten (inkl. id)
   selectedSet.value = { ...item }
@@ -77,16 +99,23 @@ function editLernset(item: Lernset) : void {
   showBearbeiten.value = false;
 }
 
+/**
+ * Löscht ein Lernset nach Bestätigung.
+ * 
+ * @param item Lernset, das gelöscht werden soll
+ */
 function deleteLernset(item: Lernset) : void {
-  const ok = window.confirm(`Willst du das Lernset "${item.name}" wirklich löschen?`)
-  if (ok) {
-    lernsetStore.deleteLernset(item)
-    toast.success(item.name + ' gelöscht')
-  }
+  lernsetStore.deleteLernset(item)
+  toast.success(item.name + ' gelöscht')
   showBearbeiten.value = false;
 }
 
-// Methode zum Speichern neues Lernsets
+/**
+ * Speichert ein neues oder bearbeitetes Lernset.
+ * 
+ * Neues Set wird angelegt.
+ * Bestehendes Set wird aktualisiert.
+ */
 async function saveLernset() {
   const spracheId = kontoStore.aktuellesKonto?.aktuelleSpracheId;
 
@@ -128,6 +157,8 @@ async function saveLernset() {
 </script>
 
 <template>
+
+  <!-- Skeleton beim Laden -->
   <template v-if="lernsetStore.loading">
     <div class="m-8 mt-20 space-y-4">
       <!-- Simuliert 5 Lernsets -->
@@ -142,6 +173,8 @@ async function saveLernset() {
   </template>
 
   <template v-else>
+
+    <!-- Buttons zur Verwaltung von Lernsets -->
     <ButtonGroup class="fixed top-0 right-0 mt-3 mr-3">
       <Button v-show="!isLeer" variant="outline" class="bg-[var(--button-primary)] w-32 h-16" @click="showBearbeiten = !showBearbeiten">
         {{ btnTitle }}
@@ -152,15 +185,18 @@ async function saveLernset() {
       </Button>
     </ButtonGroup>
 
-     <template v-if="isLeer">
+    <!-- nichts anzeigen wenn keine Lernsets vorhanden ist -->
+    <template v-if="isLeer">
       <p class="text-gray-500 text-center mt-8">Keine Einträge vorhanden.</p>
     </template>
 
+    <!-- Anzeige von Lernsets -->
     <template v-else>
+
       <div class="mt-20 p-4 max-h-[calc(100vh-120px)] overflow-y-auto">
         <Item variant="outline" as-child v-for="item in lernsetStore.sets" :key="item.id" class="mt-4">
           <div class="flex justify-between items-center w-full">
-            <!-- Klickbarer Bereich -->
+            <!-- Klickbarer Bereich zur Weiterleitung an Vokabelliste-->
             <router-link
               :to="{ name: 'lernset', params: { id: item.id, slug: slugify(item.name) } }"
               class="flex-1"
@@ -173,13 +209,24 @@ async function saveLernset() {
 
             <!-- Action Buttons außerhalb vom router-link -->
             <ItemActions class="flex gap-2 ml-2" v-show="showBearbeiten">
-              <button @click="editLernset(item)" class="text-black">
-                <PencilIcon />
-              </button>
-              
-              <button @click="deleteLernset(item)" class="text-red-600">
-                <TrashIcon />
-              </button>
+              <!-- Button zum Bearbeiten -->
+              <button @click="editLernset(item)" class="text-black"> <PencilIcon /> </button>
+              <!-- Button zum Löschen -->
+              <AlertDialog>
+                <AlertDialogTrigger>
+                  <TrashIcon  class="text-[var(--warning)]" />
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Lernset wirklich löschen?</AlertDialogTitle>
+                    <AlertDialogDescription>Willst du das Lernset {{ item.name }} wirklich löschen?</AlertDialogDescription> 
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                    <AlertDialogAction @click="deleteLernset(item)">Löschen</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </ItemActions>
           </div>
         </Item>
@@ -190,39 +237,39 @@ async function saveLernset() {
   </template>
 
   <!-- MODAL -->
-      <div
-        v-if="showDialog"
-        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-      >
-        <div class="bg-white rounded-xl w-[400px] p-6 space-y-4">
+  <div
+    v-if="showDialog"
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+  >
+    <div class="bg-white rounded-xl w-[400px] p-6 space-y-4">
 
-          <h2 class="text-xl font-bold"> {{ dialogTitle }} </h2>
+      <h2 class="text-xl font-bold"> {{ dialogTitle }} </h2>
 
-          <!-- Name -->
-          <input
-            v-model="form.name"
-            placeholder="Name"
-            class="w-full border rounded p-2"
-          />
+      <!-- Name -->
+      <input
+        v-model="form.name"
+        placeholder="Name"
+        class="w-full border rounded p-2"
+      />
 
-          <!-- Beschreibung -->
-          <textarea
-            v-model="form.beschreibung"
-            placeholder="Beschreibung"
-            class="w-full border rounded p-2"
-          />
+      <!-- Beschreibung -->
+      <textarea
+        v-model="form.beschreibung"
+        placeholder="Beschreibung"
+        class="w-full border rounded p-2"
+      />
 
-          <!-- Buttons -->
-          <div class="flex justify-end gap-2">
-            <Button variant="outline" @click="showDialog = false">
-              Abbrechen
-            </Button>
-            <Button variant="outline" class="bg-[var(--button-primary)]" @click="saveLernset" :disabled="!form.name">
-              Speichern
-            </Button>
-          </div>
-
-        </div>
+      <!-- Buttons -->
+      <div class="flex justify-end gap-2">
+        <Button variant="outline" @click="showDialog = false">
+          Abbrechen
+        </Button>
+        <Button variant="outline" class="bg-[var(--button-primary)]" @click="saveLernset" :disabled="!form.name">
+          Speichern
+        </Button>
       </div>
+
+    </div>
+  </div>
 
 </template>

@@ -5,21 +5,35 @@ import Button from '@/components/ui/button/Button.vue';
 import { useVkStore } from '@/stores/vokabelKontoStore';
 import { VOKABELN_STATUS } from '@/models/VokabelnStatus';
 
-/** Empfängt das Vokabel-Objekt vom Parent {@link ContainerSpiel} */
+// --- Props vom Parent ---
+/** Empfängt das Vokabel-Objekt vom Parent ContainerSpiel */
 const props = defineProps<{ vokabel: Vokabeln }>()
 
+// --- Vokabel-Konto Store für Paare ---
 const vkStore = useVkStore()
 
-// Liste von paare
+// --- State/Refs ---
+/** Die generierten Vokabel für das Spiel */
 const paare = ref<Vokabeln[]>([])
+/** Wörter für die linke Spalte */
 const leftList = ref<Vokabeln[]>([])
+/** Übersetzungen für die rechte Spalte */
 const rightList = ref<Vokabeln[]>([])
+/** Mapping von Benutzer links -> rechts (leftId -> rightId) */
 const matches = ref<Record<string, string>>({})
+/** Mapping rechts -> links (rightId -> leftId), um doppelte Zuordnungen zu verhindern */
 const rightAssigned = ref<Record<string, string>>({})
+/** Id der aktuell gezogenen linken Vokabel */
 const draggedLeftId = ref<string | null>(null)
+/** Flag, ob die Antwort bereits überprüft wurde, verhindert Mehrfachklick */
 const checked = ref(false)
+/** Speichert für jede linke Vokabel, ob die Zuordnung richtig war */
 const resultMap = ref<Record<string, boolean>>({}) 
 
+/**
+ * Mischt ein Array zufällig.
+ * @param array 
+ */
 function shuffle<T>(array: T[]): T[] {
   const arr = [...array]
 
@@ -34,6 +48,9 @@ function shuffle<T>(array: T[]): T[] {
   return arr
 }
 
+/**
+ * Lädt die Paare für das Spiel und initialisiert die Listen und Flags.
+ */
 function loadPaare() {
   const list = vkStore.getPaare(props.vokabel, 4)
   paare.value = list
@@ -50,18 +67,22 @@ function loadPaare() {
   resultMap.value = {}
 }
 
-watch(
-  () => props.vokabel?.id,
-  () => loadPaare(),
-  {immediate: true}
-)
-
+/**
+ * Setzt die gezogene linke Vokabel.
+ * 
+ * @param v linke Vokabel
+ */
 function onDragStart(v: Vokabeln) {
   if (checked.value) return
   if (v.id)
     draggedLeftId.value = v.id
 }
 
+/**
+ * Weist die gezogene linke Vokabel der rechten Übersetzung zu.
+ * 
+ * @param right rechte Vokabel
+ */
 function onDrop(right: Vokabeln) {
   if (checked.value) return
   if (!right.id) return
@@ -74,6 +95,10 @@ function onDrop(right: Vokabeln) {
   draggedLeftId.value = null
 }
 
+/**
+ * Entfernt eine Zuordnung bei Klick auf rechte Vokabel.
+ * @param right rechte Vokabel
+ */
 function undo(right: Vokabeln) {
   if (checked.value) return
   if (!right.id) return
@@ -84,7 +109,14 @@ function undo(right: Vokabeln) {
   delete rightAssigned.value[right.id]
 }
 
-// Prüflogik
+/**
+ * Prüft alle Zuordnungen.
+ * 
+ * Zuordnungen werden in resultMap richtig/falsch markiert.
+ * Status werden über vkStore aktualisiert.
+ * 
+ * @returns true, wenn alle korrekt
+ */
 function pruefen(): boolean {
   let allesRichtig = true
   checked.value = true
@@ -98,6 +130,7 @@ function pruefen(): boolean {
 
     if(!richtig) allesRichtig = false
 
+    // Status aktualisieren
     if(richtig) {
       vkStore.updateStatus(left.id, VOKABELN_STATUS.RICHTIG)
     } else {
@@ -108,8 +141,12 @@ function pruefen(): boolean {
   return allesRichtig
 }
 
+/** Watch auf props.vokabel.id: Wenn die Vokabel wechselt, wird neue Paare geladen */
+watch(() => props.vokabel?.id, () => {
+  loadPaare()
+}, { immediate: true })
 
-// Methode für den Parent freigeben
+// die Parent-Komponente kann die pruefen-Funktion nutzen und erhält die Lösung
 defineExpose({ 
   pruefen,
   feedbackTitle: ""

@@ -5,23 +5,28 @@ import { useRoute, useRouter } from 'vue-router';
 import Button from '@/components/ui/button/Button.vue';
 import type { Vokabeln } from '@/models/Vokabeln';
 
+/** Maximale Anzahl, nach der MCQ nicht mehr ausgewählt wird */
 const MAX_GELERNT = 4
 
+// --- Route und Store Setup
 const route = useRoute()
 const router = useRouter()
 const vkStore = useVkStore()
 const lernsetId = String(route.params.id)
 const choosing = ref(false)
+const spielLoading = ref(true)
 
+// --- Reaktive Computed Properties ---
 const aktuelleFrage = computed<Vokabeln | null>(() => vkStore.aktuelleFrage ?? null)
 const isRundeFertig = computed<boolean>(() => vkStore.rundeFertig)
 
-// --- Komponenten: Lazy-loaded ---
+// --- Lazy-loaded Spielkomponenten ---
 const MCQSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/MCQSpiel.vue'))
 const PaareSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/PaareSpiel.vue'))
 const SchreibenSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/SchreibenSpiel.vue'))
 const LueckeSchreibenSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/LueckeSchreibenSpiel.vue'))
 
+// --- Spiel-Pools für Wörter und Sätze ---
 const WORT_SPIELE = [
   { key: 'mcq', comp: MCQSpiel },
   { key: 'paare', comp: PaareSpiel },
@@ -33,23 +38,38 @@ const SATZ_SPIELE = [
   { key: 'lueckeschreiben', comp: LueckeSchreibenSpiel }
 ]
 
-// --- State: aktive Komponente + Key zur Forcierung von Re-Render ---
+// --- State: aktive Kind-Komponente ---
 const activeComponent = shallowRef<any | null>(null)
+const currentSpielRef = ref<any>(null)
 
-// Feedback
+// --- Feedback und UI State
 const feedbackLoesung = ref('')
 const feedbackRichtig = ref(false)
 const showFeedback = ref(false)
-
-// Button State
 const buttonText = ref('Prüfen')
-const currentSpielRef = ref<any>(null)
 
+/** Event-Emitter für Fortschritt */
 const emit = defineEmits<{
   (e: 'update:progress', value: number): void
 }>()
 
-// --- Hilfsfunktion: zufällige Auswahl ---
+/** Beim Mount die Vokabeln laden und erste Frage auswählen */
+onMounted(async () => {
+    vkStore.resetRunde()
+    await vkStore.ladeVokabeln(lernsetId)
+    
+    if (vkStore.aktuelleFrage) {
+      await chooseSpiel()
+    } else {
+      next()
+    }
+
+})
+
+/**
+ * Zufälliges Element aus einem Array wählen
+ * @param arr Array
+ */
 function pickRandom<T>(arr: T[]): T {
   if (arr.length === 0) {
     throw new Error('pickRandom: Array ist leer')
@@ -58,11 +78,21 @@ function pickRandom<T>(arr: T[]): T {
   return arr[idx]!
 }
 
+/**
+ * Berechnet den Fortschritt in Prozent und sendet an Parent via emit.
+ */
 function updateProgress() {
   const value =  Math.round(((vkStore.index + 1) / vkStore.alleVokabeln.length) * 100)
   emit('update:progress', value)
 }
 
+/**
+ * Wählt den Spielmodus für die aktuelle Frage aus.
+ * 
+ * Die Auswahl häng davon an, ob es sich um ein Wort oder einen Satz handelt.
+ * Zusätzlich wird geprüft, wie oft die Vokabel bereits richtig gelernt wurde.
+ * Wenn die maximale Lernzahl erreiccht wurde (Standardwert: 4), werden einfachere Spieltypen deaktiviert.
+ */
 async function chooseSpiel() {
   console.log("chooseSpiel startet mit: " + activeComponent.value)
   if (choosing.value || !aktuelleFrage.value) return
@@ -119,6 +149,7 @@ async function chooseSpiel() {
     console.log("chooseSpiel endet mit: " + chosen.key)
   } finally {
     choosing.value = false
+    spielLoading.value = false
   }
 }
 
@@ -138,18 +169,6 @@ function isSentenceLongEnough(vokabel: Vokabeln): boolean {
   return (satz.trim().split(/\s+/).length > 3)
 }
 
-onMounted(async () => {
-    vkStore.resetRunde()
-    await vkStore.ladeVokabeln(lernsetId)
-    
-    if (vkStore.aktuelleFrage) {
-      await chooseSpiel()
-    } else {
-      next()
-    }
-
-})
-
 /**
  * Schaltet zur nächsten Frage weiter.
  * 
@@ -164,6 +183,7 @@ async function next() {
   feedbackLoesung.value = ''
   feedbackRichtig.value = false
   activeComponent.value = null
+  spielLoading.value = true
   
   updateProgress()
   vkStore.nextFrage()
@@ -209,6 +229,9 @@ function onAnswered(result: boolean) {
   buttonText.value = 'Next'
 }
 
+/**
+ * Starte einer neuen Runde.
+ */
 async function nextRunde() {
   activeComponent.value = null
   vkStore.resetRunde()
@@ -291,6 +314,7 @@ const buttonClass = computed(() => {
 </script>
 
 <template>
+  <!-- wenn Runde fertig ist -->
   <div v-if="isRundeFertig" class="flex h-full w-full flex-col items-center justify-center text-center space-y-4">
     <p class="font-black text-foreground tracking-tight leading-tight mx-auto text-2xl sm:text-4xl max-w-3xl">Runde geschafft - weiter geht's!</p>
     <Button @click="nextRunde" class="mt-2 bg-[var(--success)] text-white">Runde starten</Button>
@@ -298,6 +322,8 @@ const buttonClass = computed(() => {
   </div>
 
   <div v-else class="flex flex-col h-full w-full overflow-y-auto">
+
+    <!-- Kind-Komponenten Container -->
     <div class="flex-1 w-full overflow-y-auto p-6 sm:p-10 flex flex-col justify-center">
       
       <div class="w-full max-w-2xl mx-auto animate-in fade-in zoom-in duration-300">
@@ -313,6 +339,7 @@ const buttonClass = computed(() => {
       
     </div>
 
+    <!-- Feedback und Prüfen/Next Button Container -->
     <div class="w-full p-4 sm:p-6 shrink-0 mt-auto">
       <footer 
         class="transition-all duration-300 py-6 px-6 sm:px-10 rounded-2xl shadow-lg border"
@@ -340,7 +367,7 @@ const buttonClass = computed(() => {
             </div>
           </div>
 
-          <div :class="!showFeedback ? 'w-full flex justify-end' : 'w-full sm:w-auto'">
+          <div v-if="!spielLoading" :class="!showFeedback ? 'w-full flex justify-end' : 'w-full sm:w-auto'">
             <Button
               @click="buttonClicked"
               class="w-full sm:w-auto px-12 h-12 rounded-xl font-bold text-white transition-all active:scale-95 shadow-md shrink-0"
@@ -352,5 +379,6 @@ const buttonClass = computed(() => {
         </div>
       </footer>
     </div>
+
   </div>
 </template>

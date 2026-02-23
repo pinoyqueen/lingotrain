@@ -21,6 +21,15 @@ import { useVokabelnStore } from '@/stores/vokabelnStore'
 import type { Vokabeln } from '@/models/Vokabeln'
 import { toast } from 'vue-sonner'
 import 'vue-sonner/style.css'
+import AlertDialog from '@/components/ui/alert-dialog/AlertDialog.vue'
+import AlertDialogTrigger from '@/components/ui/alert-dialog/AlertDialogTrigger.vue'
+import AlertDialogContent from '@/components/ui/alert-dialog/AlertDialogContent.vue'
+import AlertDialogHeader from '@/components/ui/alert-dialog/AlertDialogHeader.vue'
+import AlertDialogTitle from '@/components/ui/alert-dialog/AlertDialogTitle.vue'
+import AlertDialogDescription from '@/components/ui/alert-dialog/AlertDialogDescription.vue'
+import AlertDialogFooter from '@/components/ui/alert-dialog/AlertDialogFooter.vue'
+import AlertDialogCancel from '@/components/ui/alert-dialog/AlertDialogCancel.vue'
+import AlertDialogAction from '@/components/ui/alert-dialog/AlertDialogAction.vue'
 
 // Store/ViewModel holen
 const vokabelnStore = useVokabelnStore()
@@ -192,7 +201,24 @@ async function saveVokabel() {
             <ItemDescription>{{ item.uebersetzung }}</ItemDescription>
             <ItemActions class="flex gap-2 ml-2" v-show="showBearbeiten">
               <button class="text-black" @click="editVokabel(item)"> <PencilIcon/> </button>
-              <button class="text-[var(--red)]" @click="deleteVokabel(item)"> <TrashIcon/> </button>
+
+              <AlertDialog>
+                <AlertDialogTrigger>
+                  <TrashIcon  class="text-[var(--warning)]" />
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Vokabel wirklich löschen?</AlertDialogTitle>
+                    <AlertDialogDescription>Willst du die Vokabeln {{ item.vokabel }} wirklich löschen?</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                    <AlertDialogAction @click="deleteVokabel(item)">Löschen</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              <!-- <button class="text-[var(--red)]" @click="deleteVokabel(item)"> <TrashIcon/> </button> -->
             </ItemActions>
           </ItemContent>
         </Item>

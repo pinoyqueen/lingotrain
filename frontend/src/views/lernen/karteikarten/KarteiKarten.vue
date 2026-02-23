@@ -11,36 +11,50 @@ import { ArrowLeftIcon, ArrowRightIcon, RefreshCcwIcon, RotateCcwIcon, ShuffleIc
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
+// --- Stores und Route ---
 const vokabelnStore = useVokabelnStore()
 const route = useRoute()
-
 const lernsetId = String(route.params.id)
 
-const isFlipped = ref(false)
+// --- Card State ---
+/** Karte aktuell gedreht? */
+const isFlipped = ref(false) 
+/** Shuffle-Modus aktiv? */
 const shuffleActive = ref(false)
+/** Anzeige-Reihenfolge (Default: Vokabel zuerst) */
 const vokabelVorne = ref(true)
 
-const curr = ref<Vokabeln>()    // Aktuelle Vokabel
-const originalList = ref<Vokabeln[]>([])    // originale Liste (für Shuffle verwendet)
-const currIndex = ref(0)    // Index der aktuellen Vokabel
-const totalCards = ref(0)   // Anzahl gesamten Vokabeln (für Progressbar verwendet)
+// --- Aktuelle Karte und Liste ---
+/** aktuelle Vokabel */
+const curr = ref<Vokabeln>() 
+/** originale Liste (für Shuffle verwendet) */
+const originalList = ref<Vokabeln[]>([])
+/** Index der aktuellen Vokabel */
+const currIndex = ref(0) 
+/** Anzahl gesamten Vokabeln (für Progressbar verwendet) */
+const totalCards = ref(0)
 
+/** Karte umdrehen */
 const flipCard = () => {
   isFlipped.value = !isFlipped.value
 }
 
+/** Event-Emitter für Fortschritt */
 const emit = defineEmits<{
   (e: 'update:progress', value: number): void
 }>()
 
-// entspricht onViewCreated() im Fragment
+/** Laden der Vokabeln beim Mount */
 onMounted(async () => {
     await vokabelnStore.loadByLernsetId(lernsetId)
     originalList.value = [...vokabelnStore.liste] // Original sichern
     totalCards.value = vokabelnStore.liste.length
-    updateCard()
+    updateCard() // erste Karte setzen
 });
 
+/**
+ * Setzt die aktuelle Karte und berechnet Fortschritt.
+ */
 function updateCard() {
     curr.value = vokabelnStore.liste[currIndex.value]
     isFlipped.value = false // Karte zurückdrehen
@@ -50,6 +64,9 @@ function updateCard() {
   
 }
 
+/**
+ * Zeigt die nächste Karte an.
+ */
 function nextCard() {
   if (currIndex.value < vokabelnStore.liste.length - 1) {
     currIndex.value++
@@ -57,6 +74,9 @@ function nextCard() {
   }
 }
 
+/**
+ * Zeigt die vorherige Karte an.
+ */
 function prevCard() {
   if (currIndex.value > 0) {
     currIndex.value--
@@ -64,11 +84,19 @@ function prevCard() {
   }
 }
 
+/**
+ * Runde neu starten und die erste Karte anzeigen.
+ */
 function restart() {
     currIndex.value = 0
     updateCard()
 }
 
+/**
+ * Shuffle-Modus aktivieren bzw. deaktivieren.
+ * Bei aktivem Shuffle wird die Liste gemischt.
+ * Bei deaktiviert wird die Originalreihenfolge wiederhergestellt.
+ */
 function toggleShuffle() {
     shuffleActive.value = !shuffleActive.value
     if (shuffleActive.value) {
@@ -82,6 +110,11 @@ function toggleShuffle() {
     updateCard()
 }
 
+/**
+ * Anzeige Richtung umschalten.
+ * true: Vokabel vorne
+ * false: Übersetzung vorne
+ */
 function toggleDirection() {
     vokabelVorne.value = !vokabelVorne.value
     isFlipped.value = false // immer auf Vorderseite zurück
@@ -121,6 +154,8 @@ function toggleDirection() {
 
     <!-- Buttons -->
     <div class="flex justify-center gap-9 mt-5">
+
+        <!-- Zurück Button -->
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger>
@@ -136,6 +171,7 @@ function toggleDirection() {
             </Tooltip>
         </TooltipProvider>
 
+        <!-- Shuffle Button -->
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger>
@@ -152,6 +188,7 @@ function toggleDirection() {
             </Tooltip>
         </TooltipProvider>
         
+        <!-- Anzeige Richtung -->
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger>
@@ -165,6 +202,7 @@ function toggleDirection() {
             </Tooltip>
         </TooltipProvider>
 
+        <!-- Neu starten -->
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger>
@@ -180,6 +218,7 @@ function toggleDirection() {
             </Tooltip>
         </TooltipProvider>
 
+        <!-- Nächste Button -->
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger>

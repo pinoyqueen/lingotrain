@@ -4,15 +4,37 @@ import { useKontoStore } from './kontoStore'
 import type { Vokabeln } from '@/models/Vokabeln'
 import { VOKABELN_STATUS, type VokabelnStatus } from '@/models/VokabelnStatus'
 
+/**
+ * Pinia-Store zur Verwaltung des Lernfortschritts von vokabeln für das aktuelle Benutzerkonto.
+ * 
+ * Zuständig für:
+ * - Laden der Vokabeln eines Lernsets für Trainingsrunden
+ * - Verwaltung der aktuellen Frage und des Rundenfortschritts
+ * - Status-Updates und Zählen der gelernten Vokabeln
+ * - Generieren von Distraktoren (falsche Antworten) für MC-Fragen oder Paaren
+ */
 export const useVkStore = defineStore('vokabelKonto', {
     state: () => ({
+        /** Alle Vokabeln, die aktuell für das Training geladen wurden */
         alleVokabeln: [] as Vokabeln[],
+        /** Index der aktuellen Frage innerhalb von alleVokabeln */
         index: 0,
+        /** Flag, ob die aktuelle Trainingsrunde abgeschlossen ist */
         rundeFertig: false,
+        /** Aktuell gestellte Frage */
         aktuelleFrage: null as Vokabeln | null,
+        /** Anzahl der bisherigen Lernvorgänge für die aktuelle Vokabel */
         anzahlGelerntFuerAktuelleVokabel: 0
     }),
     actions: {
+        /**
+         * Lädt alle relevanten Vokabeln eines Lernsets für das Training.
+         * 
+         * Es werden nur Vokabeln mit Status NICHT_GELERNT oder FALSCH berücksichtigt.
+         * Nach dem Laden werden die Vokabeln gemischt und die erste Frage gesetzt.
+         * 
+         * @param lernsetId ID des Lernsets
+         */
         async ladeVokabeln(lernsetId: string) {
             const kontoId = useKontoStore().aktuellesKonto?.id
             if (!kontoId) {
@@ -37,6 +59,11 @@ export const useVkStore = defineStore('vokabelKonto', {
             this.rundeFertig = this.alleVokabeln.length === 0
             if (!this.rundeFertig) this.nextFrage()
         },
+        
+        /**
+         * Setzt die nächste Frage im Training als aktuelleFrage.
+         * Markiert die Runde als fertig, wenn alle Vokabeln durchlaufen wurden.
+         */
         nextFrage() {
             if (this.index >= this.alleVokabeln.length) {
                 this.rundeFertig = true
@@ -50,18 +77,35 @@ export const useVkStore = defineStore('vokabelKonto', {
             
             }
         },
+
+        /**
+         * Beantwortet die aktuelle Frage und aktualisiert den Lernstatus.
+         * 
+         * @param isRichtig true, wenn die Antwort korrekt war, sonst false
+         */
         frageBeantwortet(isRichtig: boolean) {
             var status = isRichtig ? VOKABELN_STATUS.RICHTIG : VOKABELN_STATUS.FALSCH
             if (this.aktuelleFrage?.id) {
                 this.updateStatus(this.aktuelleFrage?.id, status)
             }
         },
+
+        /**
+         * Setzt die Trainingsrunde zurück, ohne neue Vokabeln zu laden.
+         * Wird beim Neustart einer Runde verwendet.
+         */
         resetRunde() {
             this.rundeFertig = false
             this.aktuelleFrage = null
             this.index = 0
             this.alleVokabeln = []
         },
+
+        /**
+         * Liefert die Anzahl, wie oft eine Vokabel vom aktuellen Benutzer erfolgreich gelernt wurde.
+         * @param vokabelId ID der Vokabel
+         * @returns Promise<number> - Anzahl der Lernvorgänger
+         */
         async getAnzahlGelernt(vokabelId: string): Promise<number> {
             const kontoId = useKontoStore().aktuellesKonto?.id
 
@@ -73,12 +117,28 @@ export const useVkStore = defineStore('vokabelKonto', {
 
             return result ?? 0
         },
+
+        /**
+         * Aktualisiert den Lernstatus einer Vokabel für das aktuelle Konto.
+         * 
+         * @param vokabelnId Id der Vokabel
+         * @param status neuer Status (NICHT_GELERNT, FALSCH, RICHTIG)
+         */
         updateStatus(vokabelnId: string, status: VokabelnStatus) {
             const kontoId = useKontoStore().aktuellesKonto?.id
             if (kontoId) {
                 repoUpdateStatus(kontoId, vokabelnId, status)
             }
         },
+
+        /**
+         * Generiert eine Liste von Distraktoren für MC-Fragen bei MCQSpiel.
+         * Schließt die richtige Antwort aus und mischt die Auswahl.
+         * 
+         * @param richtig Die richtige Vokabel
+         * @param count Anzahl der Distraktoren
+         * @returns Array von Vokabeln für falsche Antwortmöglichkeiten
+         */
         getDistractors(richtig: Vokabeln, count: number): Vokabeln[] {
             // Pool erstellen, ohne die richtige Vokabel und nur Wörter
             const pool: Vokabeln[] = this.alleVokabeln.filter((v): v is Vokabeln => v !== undefined && v.isWort && v.id !== richtig.id)
@@ -98,6 +158,15 @@ export const useVkStore = defineStore('vokabelKonto', {
             // gewünschte Anzahl zurückgeben
             return pool.slice(0, count)
         },
+
+        /**
+         * Generiert eine Mischung von Vokabeln für das PaareSpiel.
+         * Entfernt ausgewählten Vokabeln aus der Hauptliste, um Duplikate zu vermeiden.
+         * 
+         * @param richtig Die aktuelle Vokabel
+         * @param count Anzahl der gewünschten Paare
+         * @returns Array von Vokabeln für das PaareSpiel
+         */
         getPaare(richtig: Vokabeln, count: number): Vokabeln[] {
             const kandidaten: Vokabeln[] = []
 
