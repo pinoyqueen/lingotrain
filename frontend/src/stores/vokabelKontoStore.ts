@@ -118,6 +118,15 @@ export const useVkStore = defineStore('vokabelKonto', {
             return result ?? 0
         },
 
+        /**
+         * Die Methode gibt den Schwierigkeitsgrad zurück, der für die Vokabel möglich ist
+         * (z.B. um Sätze zur Vokabel passend zum Können zu generieren).
+         * Der Schwierigkeitsgrad basiert dabei auf der Anzahl, wie oft die Vokabel bisher
+         * richtig gelernt wurde ({@link getAnzahlGelernt}).
+         * 
+         * @param {string} vokabelId die ID der Vokabel, dessen Schwierigkeitsgrad bestimmt werden soll
+         * @returns {Promise<"einfach" | "mittel" | "schwer">} der Schwierigkeitsgrad
+         */
         async getSchwierigkeitsgrad(vokabelId: string): Promise<"einfach" | "mittel" | "schwer"> {
             const anzahlGelernt = await this.getAnzahlGelernt(vokabelId);
             

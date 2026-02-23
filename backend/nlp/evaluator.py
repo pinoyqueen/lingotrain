@@ -36,23 +36,38 @@ def get_nlp_for_language(lang_code):
 
 # Prüft, ob die Zielvokabel im eingegebenen Satz vorkommt.
 # Dabei werden auch Vokabeln unterstützt, die aus mehreren Wörtern besteht.
+# Es wird sowohl der exakte Text als auch die Lemma-Form der Wörter geprüft,
+# um Unterschiede wie "hiking" und "hike" zu erkennen.
 # 
 # Argumente:
 #   - doc : SpaCy-Dokument der Nutzerantwort
 #   - target_word (str): die Zielvokabel, die im Satz vorkommen sollte
-#
+#   - target_language (str): die Zielsprache 
+# 
 # Return: True, wenn das Zielwort im Satz vorkommt; ansonsten False
-def contains_target_word(doc, target_word):
+def contains_target_word(doc, target_word, target_language):
 
-    # splitte die Zielvokabel in Wörter und prüfz ob diese Wortfolge vorkommt
+    # Zielvokabel tokenisieren
     target_tokens = target_word.lower().split()
 
+    # Zielvokabel lemmatisieren
+    nlp = get_nlp_for_language(target_language)
+    target_lemmas = [token.lemma_.lower() for token in nlp(target_word)]
+
+    # Tokens und Lemmata des Nutzersatzes
     doc_tokens_text = [token.text.lower() for token in doc]
     doc_tokens_lemma = [token.lemma_.lower() for token in doc]
 
+    # Sliding-Window-Vergleich für Mehrwort-Vokabeln
     for i in range(len(doc_tokens_text) - len(target_tokens) + 1):
-        if (doc_tokens_text[i:i+len(target_tokens)] == target_tokens or
-            doc_tokens_lemma[i:i+len(target_tokens)] == target_tokens):
+        text_slice = doc_tokens_text[i:i + len(target_tokens)]
+        lemma_slice = doc_tokens_lemma[i:i + len(target_tokens)]
+
+        if (
+            text_slice == target_tokens or
+            lemma_slice == target_tokens or
+            lemma_slice == target_lemmas
+        ):
             return True
 
     return False
@@ -146,7 +161,7 @@ def evaluate_answer_combined(user_answer, original_sentence, target_word, target
     doc = nlp(user_answer)
 
     # Überprüfen, ob der Satz das Zielwort enthält
-    if contains_target_word(doc, target_word):
+    if contains_target_word(doc, target_word, target_language):
         result["word_correct"] = True
     else:
         result["correct"] = False

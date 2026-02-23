@@ -3,7 +3,8 @@ from llm.llm import generate
 
 # Generiert einen einfachen Satz in der angegebenen Zielsprache.
 # Der Satz wird passend zu einer deutschen Vokabel und deren
-# Übersetzung mithilfe eines LLMs generiert.
+# Übersetzung mithilfe eines LLMs generiert. Außerdem wird der Satz an den angegebenen
+# Schwierigkeitsgrad angepasst.
 #
 # Argumente:
 #   - germanWord (str): Das deutsche Wort, das im Satz vorkommen soll
