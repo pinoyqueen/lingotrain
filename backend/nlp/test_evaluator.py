@@ -310,6 +310,20 @@ def test():
             "user_answer": "Aunque no tengo hambre como una pera",  
             "lang": "es",
             "description": "fehlendes Komma im Nebensatz"
+        },
+        {
+            "original_sentence": "Morgen werde ich nach Spanien reisen und vom Meer träumen.",
+            "word": "España",
+            "user_answer": "Mañana iré a España y soñaré con el mar.",
+            "lang": "es",
+            "description": "korrekt, Verwendung von spanischen Akzenten"
+        },
+        {
+            "original_sentence": "Morgen werde ich nach Spanien reisen und vom Meer träumen.",
+            "word": "España",
+            "user_answer": "Manana iré a España y soñaré con el mar.",
+            "lang": "es",
+            "description": "falsch, spanischer Akzent fehlt"
         }
     ]
 
