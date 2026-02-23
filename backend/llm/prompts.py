@@ -1,28 +1,47 @@
-# Generiert den Prompt für das LLM, um einen einfachen Satz auf Deutsch zu einem gegebenen
+# Generiert den Prompt für das LLM, um einen Satz auf Deutsch zu einem gegebenen
 # Wort zu erstellen.
+# Je nach Schwierigkeitsgrad wird ein unterschiedlich komplexer Satz generiert.
 #
 # Argumente: 
 #   - germanWord (str): Das Zielwort, das im Satz vorkommen soll
 #   - uebersetzung (str): Die Bedeutung des Wortes in der Zielsprache
 #   - language (str): die Sprache, auf die sich die Bedeutung bezieht
+#   - schwierigkeitsgrad (str): der Schwierigkeitsgrad des zu generierenden Satzes
 #
 # Return: (str) der fertige Prompt-Text für das LLM
-def sentence_prompt(germanWord, uebersetzung, language = "en"):
+def sentence_prompt(germanWord, uebersetzung, language = "en", schwierigkeitsgrad="einfach"):
     return f"""
 Du bist ein Sprachlernassistent.
 
 Generiere bitte exakt einen einfachen Satz in der Sprache Deutsch.
+
+Schwierigkeitsgrad: {schwierigkeitsgrad}
+
 Beachte dabei folgende Regeln:
 - Der Satz muss das Wort "{germanWord}" enthalten.
 - Der Satz muss inhaltlich zur Übersetzung "{uebersetzung}" in {language} passen.
 - Der Satz muss grammatikalisch korrekt sein.
 - Der Satz soll korrekt mit einem Punkt, Ausrufezeichen oder Fragezeichen enden.
 - Achte darauf, dass nur ein Satzzeichen am Ende steht.
-- Benutze einfache Alltagssprache.
-- Halte den Satz kurz, aber du darfst auch einen Nebensatz einfügen.
+- Benutze natürliche Alltagssprache.
 - Variiere den Satzstil, z.B. mit verschiedenen Verben oder Satzanfängen und vermeide identische Wiederholungen.
-- Erzeuge wenn nötig Nebensätze, aber keine verschachtelten Hauptsätze.
 - Keine Erklärungen, Übersetzungen oder zusätzlichen Sätze.
+
+Regeln nach Schwierigkeitsgrad:
+- einfach:
+    - Kurzer Hauptsatz
+    - Präsens
+    - Kein Nebensatz
+    - Ein Verb
+- mittel: 
+    - Hauptsatz mit mindestens einem Nebensatz oder zwei zusammenhängenden Handlungen
+    - Präsens oder Perfekt
+    - Zwei Verben möglich
+- schwer:
+    - mindestens zwei Nebensätze oder maximal ein verschachtelter Nebensatz
+    - Zeitform darf variieren
+    - Adverbien und Konjunktionen erlaubt, Satz soll noch gut lesbar sein
+    - Pronomen und Rückbezüge verwenden
 
 Erzeuge mehrere sinnvolle Versionen des Satzes und wähle eine zufällige aus.
 Gib NUR den einen Satz aus. 

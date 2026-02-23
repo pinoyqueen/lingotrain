@@ -9,10 +9,11 @@ from llm.llm import generate
 #   - germanWord (str): Das deutsche Wort, das im Satz vorkommen soll
 #   - uebersetzung (str): die Übersetzung des deutschen Wortes in der Zielsprache
 #   - language (str): die Zielsprache im Format "en", "fr" etc.
+#   - schwierigkeitsgrad (str): der Schwierigkeitsgrad des Satzes (entweder einfach, mittel oder schwer)
 #
 # Return: (str) der generierte Satz
-def generate_sentence(germanWord, uebersetzung, language="en"):
-    prompt = sentence_prompt(germanWord, uebersetzung, language)
+def generate_sentence(germanWord, uebersetzung, language="en", schwierigkeitsgrad="einfach"):
+    prompt = sentence_prompt(germanWord, uebersetzung, language, schwierigkeitsgrad)
     sentence = generate(prompt)
 
     return sentence

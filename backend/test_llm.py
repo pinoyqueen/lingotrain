@@ -5,7 +5,18 @@ def run_test():
     uebersetzung = "pear"
     language = "Englisch"
 
-    sentence = generate_sentence(germanWord, uebersetzung, language)
+    schwierigkeitsgrad = "einfach"
+    sentence = generate_sentence(germanWord, uebersetzung, language, schwierigkeitsgrad)
+    print(f"Wort: {germanWord}")
+    print(f"Satz: {sentence}")
+
+    schwierigkeitsgrad = "mittel"
+    sentence = generate_sentence(germanWord, uebersetzung, language, schwierigkeitsgrad)
+    print(f"Wort: {germanWord}")
+    print(f"Satz: {sentence}")
+
+    schwierigkeitsgrad = "schwer"
+    sentence = generate_sentence(germanWord, uebersetzung, language, schwierigkeitsgrad)
     print(f"Wort: {germanWord}")
     print(f"Satz: {sentence}")
 

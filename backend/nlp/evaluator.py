@@ -46,12 +46,15 @@ def contains_target_word(doc, target_word):
 
     # splitte die Zielvokabel in Wörter und prüfz ob diese Wortfolge vorkommt
     target_tokens = target_word.lower().split()
-    doc_tokens = [token.lemma_.lower() for token in doc]
-    
-    for i in range(len(doc_tokens) - len(target_tokens) + 1):
-        if doc_tokens[i:i+len(target_tokens)] == target_tokens:
+
+    doc_tokens_text = [token.text.lower() for token in doc]
+    doc_tokens_lemma = [token.lemma_.lower() for token in doc]
+
+    for i in range(len(doc_tokens_text) - len(target_tokens) + 1):
+        if (doc_tokens_text[i:i+len(target_tokens)] == target_tokens or
+            doc_tokens_lemma[i:i+len(target_tokens)] == target_tokens):
             return True
-        
+
     return False
 
 # Prüft, ob der Satz plausibel ist.

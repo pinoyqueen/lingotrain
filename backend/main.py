@@ -20,7 +20,12 @@ app.add_middleware(
 # Generiert einen Satz für ein gegebenes Wort
 @app.post("/generate-sentence")
 def sentence(req: WordRequest):
-    s = generate_sentence(req.word, req.language)
+    s = generate_sentence(
+        germanWord = req.word, 
+        uebersetzung = req.uebersetzung, 
+        language = req.language, 
+        schwierigkeitsgrad = req.schwierigkeitsgrad
+    )
     return {"word": req.word, "sentence": s}
 
 # Bewertet die Antwort des Nutzers und liefert Feedback

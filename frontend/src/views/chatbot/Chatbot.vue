@@ -29,7 +29,7 @@ const rating = ref("")
 const firstAttempt = ref(true)
 
 // TODO: lernset dynamisch setzen
-const lernsetId = ref("EYydiIexN5xZHOJcmp32")
+const lernsetId = ref("KZiUsoL2fYyi4U3ezGKr")
 
 // --- Computed Properties ---
 /** ID des aktuellen Kontos */
@@ -77,10 +77,14 @@ async function loadSentence() {
     vkStore.nextFrage()
   }
 
-  if(!vokabel.value)
-    return
+  // wenn keine Vokabel mit ID vorhanden ist, kann auch kein Satz dazu geladen werden
+  if(!vokabel.value?.id)
+    return;
   
   console.log("Konto: " + kontoId.value + "; Sprache: " + aktuelleSprache.value?.sprache + "; Vokabel: " + vokabel.value?.vokabel)
+
+  // der Satz soll an einen bestimmten Schwierigkeitsgrad angepasst werden
+  const schwierigkeitsgrad = await vkStore.getSchwierigkeitsgrad(vokabel.value.id);
 
   loading.value = true
   const res = await fetch("http://localhost:8000/generate-sentence", {
@@ -89,8 +93,10 @@ async function loadSentence() {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      word: vokabel.value?.uebersetzung,
-      language: aktuelleSprache.value?.sprache
+      word: vokabel.value?.uebersetzung,          // vokabel.uebersetzung ist der deutsche Begriff also hier als Wort gewollt
+      uebersetzung: vokabel.value?.vokabel,       // vokabel.vokabel ist der fremdsprachige Begriff also hier als Übersetzung des deutschen Wortes gewollt
+      language: aktuelleSprache.value?.sprache,
+      schwierigkeitsgrad: schwierigkeitsgrad
     })
   })
 

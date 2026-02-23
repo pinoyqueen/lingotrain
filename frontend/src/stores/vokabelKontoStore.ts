@@ -118,6 +118,18 @@ export const useVkStore = defineStore('vokabelKonto', {
             return result ?? 0
         },
 
+        async getSchwierigkeitsgrad(vokabelId: string): Promise<"einfach" | "mittel" | "schwer"> {
+            const anzahlGelernt = await this.getAnzahlGelernt(vokabelId);
+            
+            if(anzahlGelernt < 5) {
+                return "einfach";
+            } else if(anzahlGelernt < 10) {
+                return "mittel";
+            } else {
+                return "schwer";
+            }
+        },
+
         /**
          * Aktualisiert den Lernstatus einer Vokabel für das aktuelle Konto.
          * 

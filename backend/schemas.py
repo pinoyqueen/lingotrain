@@ -3,7 +3,9 @@ from pydantic import BaseModel
 # --- Modell für Satz-Generierung ---
 class WordRequest(BaseModel):
     word: str                 # Das Wort, für das ein Satz generiert werden soll
+    uebersetzung: str         # die Übersetzung des Wortes (damit der Satz die richtige Bedeutung erhält)
     language: str = "en"      # Standardsprache
+    schwierigkeitsgrad: str   # der Schwierigkeitsgrad, den der generierte Satz haben soll
 
 # --- Modell für Bewertung der Eingabe ---
 class EvalRequest(BaseModel):
