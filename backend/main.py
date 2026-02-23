@@ -1,39 +1,29 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from schemas import WordRequest, EvalRequest
 from llm.sentence_generator import generate_sentence
 from nlp.evaluator import evaluate_answer_combined
 
 # FastAPI App erstellen
 app = FastAPI()
 
-# CORS Middleware hinzufügen
+# CORS Middleware hinzufügen, damit die Frontend-Server Anfragen an die API
+# senden kann, ohne von Browsern blockiert zu werden
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],  # Vue Dev-Server
-    allow_credentials=True,
-    allow_methods=["*"],  # erlaubt POST, OPTIONS usw.
-    allow_headers=["*"],
+    allow_credentials=True,                   # Cookies / Authorization Header erlaubt
+    allow_methods=["*"],                      # Alle HTTP-Methoden zulässig
+    allow_headers=["*"],                      # Alle Header zulässig
 )
 
-# Request Model
-class WordRequest(BaseModel):
-    word: str
-    language: str = "en" # Standardsprache
-
-# Bewertung der Eingabe
-class EvalRequest(BaseModel):
-    user_answer: str
-    original_sentence: str
-    target_word: str
-    target_language: str
-
-# Endpoint
+# Generiert einen Satz für ein gegebenes Wort
 @app.post("/generate-sentence")
 def sentence(req: WordRequest):
     s = generate_sentence(req.word, req.language)
     return {"word": req.word, "sentence": s}
 
+# Bewertet die Antwort des Nutzers und liefert Feedback
 @app.post("/evaluate-answer")
 def evaluate(req: EvalRequest):
     result = evaluate_answer_combined(

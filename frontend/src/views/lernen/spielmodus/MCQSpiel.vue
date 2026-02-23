@@ -4,19 +4,26 @@ import { ref, watch } from 'vue'
 import Button from '@/components/ui/button/Button.vue';
 import { useVkStore } from '@/stores/vokabelKontoStore';
 
-/** Empfängt das Vokabel-Objekt vom Parent {@link ContainerSpiel} */
+// --- Props vom Parent ---
+/** Empfängt das Vokabel-Objekt vom Parent ContainerSpiel */
 const props = defineProps<{ vokabel: Vokabeln }>()
 
+// --- Vokabel-Konto Store für Distractors ---
 const vkStore = useVkStore()
 
-// Distractors + richtige Vokabel mischen
+// --- State/Refs ---
+/** Array der Antwortoptionen (richtige + Distractors), zufällig gemischt */
 const options = ref<Vokabeln[]>([])
-
-/** War die Antwort des Nutzers richtig? */
+/** true/false, ob der Nutzer die richtige Antwort gewählt hat */
 const richtig = ref(false)
+/** aktuell vom Nutzer ausgewählte Option */
 const selectedOption = ref<Vokabeln | null>(null)
+/** Flag, ob die Antwort bereits überprüft wurde, verhindert Mehrfachklick */
 const checked = ref(false)
 
+/**
+ * Generiert Distractors, fügt die richtige Antwort hinzu und mischt die Optionen.
+ */
 function mixOptions() {
   // 3 falsche Optionen holen
   const distractors = vkStore.getDistractors(props.vokabel, 3)
@@ -36,21 +43,25 @@ function mixOptions() {
   options.value = allOptions
 }
 
-// WICHTIG: null-safe auflösen mit Optional Chaining
-watch(() => props.vokabel?.id, () => {
-  selectedOption.value = null
-  richtig.value = false
-  checked.value = false
-  mixOptions()
-}, { immediate: true } )
-
-// Prüflogik – passe an deine fachliche Logik an
+/**
+ * Prüft die Antwort des Nutzers.
+ * 
+ * @returns true, wenn richtig, sonst false
+ */
 function pruefen(): boolean {
   checked.value = true
   if (!selectedOption.value) return false
     richtig.value = selectedOption.value.id === props.vokabel.id
   return richtig.value
 }
+
+/** Watch auf props.vokabel.id: Wenn die Vokabel wechselt, wird Auswahl/Flags zurückgesetzt */
+watch(() => props.vokabel?.id, () => {
+  selectedOption.value = null
+  richtig.value = false
+  checked.value = false
+  mixOptions()
+}, { immediate: true } )
 
 
 // die Parent-Komponente kann die pruefen-Funktion nutzen und erhält die Lösung
