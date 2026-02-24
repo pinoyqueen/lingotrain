@@ -258,7 +258,6 @@ async function resetSession() {
   </Button>
 
   <p v-if="loading">Lade...</p>
-  <!-- <p v-if="sentence">{{ sentence }}</p> -->
 
   <div class="chat-container">
     <div v-for="(msg, index) in messages" :key="index"

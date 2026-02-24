@@ -112,4 +112,15 @@ def evaluate_with_llm(user_sentence, original_sentence, target_language="en"):
             "corrected_sentence": "",
             "hint": "Überprüfe deine Antwort noch einmal."
         }
-    
+
+def conversation_turn(messages):
+
+    response = completion(
+        model = "gpt-4o",
+        messages = messages,
+        api_base = LITELLM_BASE_URL,
+        temperature = 0.7,
+        max_tokens=120
+    )
+
+    return response["choices"][0]["message"]["content"].strip()
