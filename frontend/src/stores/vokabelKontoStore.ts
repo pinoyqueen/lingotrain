@@ -67,6 +67,7 @@ export const useVkStore = defineStore('vokabelKonto', {
         nextFrage() {
             if (this.index >= this.alleVokabeln.length) {
                 this.rundeFertig = true
+                this.aktuelleFrage = null
                 return
             }
             

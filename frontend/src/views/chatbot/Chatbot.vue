@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue"
+import { computed, onMounted, ref, watch } from "vue"
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useVkStore } from "@/stores/vokabelKontoStore"
 import { useKontoStore } from "@/stores/kontoStore"
 import type { Vokabeln } from "@/models/Vokabeln"
+import type { ChatMessage } from "@/models/ChatMessage"
 
 // --- Stores initialisieren ---
 const vkStore = useVkStore()
@@ -27,9 +28,11 @@ const suggestion = ref("")
 const rating = ref("") 
 /** Flag für ersten Versuch */
 const firstAttempt = ref(true)
+/** Chatverlauf */
+const messages = ref<ChatMessage[]>([])
 
 // TODO: lernset dynamisch setzen
-const lernsetId = ref("KZiUsoL2fYyi4U3ezGKr")
+const lernsetId = ref("wNow2k3gBJDuucdMPzci")
 
 // --- Computed Properties ---
 /** ID des aktuellen Kontos */
@@ -49,11 +52,21 @@ const languageMap: Record<string,string> = {
   "Spanisch": "es"
 }
 
-/** Beim Mount Vokabeln laden und Runde zurücksetzen */
+/** Beim Mount Vokabeln laden, Chatverlauf aus dem Session Storage wiederherstellen (falls vorhanden) und Runde zurücksetzen */
 onMounted(async () => {
-    vkStore.resetRunde()
-    await vkStore.ladeVokabeln(lernsetId.value)
+  const saved = sessionStorage.getItem("chatHistory")
+  if (saved) {
+    messages.value = JSON.parse(saved)
+  }
+
+  vkStore.resetRunde()
+  await vkStore.ladeVokabeln(lernsetId.value)
 })
+
+/** Chatverlauf bei jeder Änderung im Session Storage persistieren */
+watch(messages, (newVal) => {
+  sessionStorage.setItem("chatHistory", JSON.stringify(newVal))
+}, { deep: true })
 
 /**
  * Lädt einen Satz für die aktuelle Vokabel.
@@ -65,16 +78,27 @@ onMounted(async () => {
  * // TODO: wird nach dem Auswahl von Lernset aufgerufen; erstmal manuell per Button-Klick
  */
 async function loadSentence() {
+  // prüfen, ob die runde schon fertig ist
   if(isRundeFertig.value) {
-    vkStore.resetRunde()
     console.log("Keine offene Vokabeln mehr")
+    // nachricht nur einmalig senden
+    const letzteMsg = messages.value[messages.value.length - 1]
+    if (!letzteMsg || letzteMsg.content !== "Lernrunde fertig") {
+      saveMessage("assistant", "Lernrunde fertig", "feedback")
+    }
     return
   }
 
   // wenn Vokabel ein Satz ist, nächste Vokabel holen
-  while (!vokabel.value?.isWort) {
+  while (!isRundeFertig.value && !vokabel.value?.isWort) {
     console.log("KEIN WORT --- Konto: " + kontoId.value + "; Sprache: " + aktuelleSprache.value?.sprache + "; Vokabel: " + vokabel.value?.vokabel)
     vkStore.nextFrage()
+  }
+
+   // Runde nach Überspringen prüfen
+  if (isRundeFertig.value) {
+    saveMessage("assistant", "Lernrunde fertig", "feedback")
+    return
   }
 
   // wenn keine Vokabel mit ID vorhanden ist, kann auch kein Satz dazu geladen werden
@@ -103,7 +127,7 @@ async function loadSentence() {
   
   const data = await res.json()
 
-  sentence.value = data.sentence
+  sentence.value = "Übersetzen Sie diesen Satz: " +  data.sentence
   loading.value = false
   firstAttempt.value = true
   feedback.value = ""
@@ -111,6 +135,9 @@ async function loadSentence() {
   suggestion.value = ""
   rating.value = ""
   userInput.value = ""
+
+  // geladenen Satz in Historie-Array speichern
+  saveMessage("assistant", sentence.value, "sentence")
 }
 
 /**
@@ -118,11 +145,11 @@ async function loadSentence() {
  * 
  * // TODO: diese automatisch nach der zweiter Versuch/richtige Antwort aufrufen; erstmal manuell per Button-Klick
  */
-function nextVokabel() {
+async function nextVokabel() {
   feedback.value = ""
   userInput.value = ""
   vkStore.nextFrage()
-  loadSentence()
+  await loadSentence()
 }
 
 /**
@@ -138,6 +165,9 @@ async function checkAnswer() {
   if (!vokabel.value || !userInput.value) return
 
   loading.value = true
+
+  // Benutereingabe in Chatverlauf speichern
+  saveMessage("user", userInput.value, "answer")
 
   const res = await fetch("http://localhost:8000/evaluate-answer", {
     method: "POST",
@@ -172,8 +202,50 @@ async function checkAnswer() {
       comment.value = data.comment || ""
       suggestion.value = data.suggestion || ""
       rating.value = data.rating || ""
+      // TODO: Auswahl zeigen, die nächste Vokabel zu zeigen ODER automatisch nächste Vokabel anzeigen
+      await nextVokabel()
   }
+
+  // Feedback in Historie-Array speichern
+  saveMessage("assistant", feedback.value, "feedback")
   loading.value = false
+}
+
+/**
+ * Fügt eine neue Nachricht dem Chat-Verlauf hinzu.
+ * 
+ * 
+ * @param new_role Rolle des Absenders ("assistant" oder "user")
+ * @param new_content Textinhalt der Nachricht
+ * @param new_type Kategorie der Nachricht ("sentence", "answer" oder "feedback")
+ */
+function saveMessage(new_role: ChatMessage["role"], new_content: string, new_type: ChatMessage["type"]) {
+  messages.value.push({
+    role: new_role,
+    content: new_content,
+    type: new_type
+  })
+}
+
+async function resetSession() {
+  // Chat-Historie leeren
+  messages.value = []
+
+  // SessionStorage löschen
+  sessionStorage.removeItem("chatHistory")
+
+  // UI-State zurücksetzen
+  sentence.value = ""
+  userInput.value = ""
+  feedback.value = ""
+  comment.value = ""
+  suggestion.value = ""
+  rating.value = ""
+  firstAttempt.value = true
+
+  // Lernrunde zurücksetzen
+  vkStore.resetRunde()
+  await vkStore.ladeVokabeln(lernsetId.value)
 }
 
 </script>
@@ -186,7 +258,16 @@ async function checkAnswer() {
   </Button>
 
   <p v-if="loading">Lade...</p>
-  <p v-if="sentence">{{ sentence }}</p>
+  <!-- <p v-if="sentence">{{ sentence }}</p> -->
+
+  <div class="chat-container">
+    <div v-for="(msg, index) in messages" :key="index"
+        :class="msg.role === 'user' ? 'user-msg' : 'assistant-msg'">
+
+      <p>{{ msg.content }}</p>
+
+    </div>
+  </div>
 
   <Input v-model="userInput"
           placeholder="Fehlendes Wort eingeben…"
@@ -206,8 +287,26 @@ async function checkAnswer() {
       <p v-if="rating"><em>Bewertung:</em> {{ rating }}</p>
   </div>
 
-  <Button @click="nextVokabel" :disabled="loading">
-    Nächste Vokabel
+  <Button @click="resetSession" variant="destructive">
+    Session zurücksetzen
   </Button>
 
 </template>
+
+<style>
+  .user-msg {
+    text-align: right;
+    background: #d1e7dd;
+    padding: 8px;
+    border-radius: 12px;
+    margin: 6px 0;
+  }
+
+  .assistant-msg {
+    text-align: left;
+    background: #f8d7da;
+    padding: 8px;
+    border-radius: 12px;
+    margin: 6px 0;
+  }
+</style>
