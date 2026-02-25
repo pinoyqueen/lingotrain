@@ -32,6 +32,7 @@ export const useLernsetStore = defineStore('lernset', {
       this.fehler = "";
       try {
         this.sets = await findAllLernsets(kontoId, aktuelleSprache)
+        return this.sets
       } catch (e: any) {
         this.fehler = "Fehler beim Laden der Lernsets: " + e.message
       } finally {
