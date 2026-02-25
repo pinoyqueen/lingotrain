@@ -288,6 +288,29 @@ async function resetSession() {
       
       <div ref="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar [background-size:20px_20px] dark:bg-none">
         
+        <div v-if="messages.length === 0" class="h-full flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500">
+          <div class="max-w-sm w-full p-8 rounded-3xl border-2 border-dashed border-[var(--color-primary-variant)]/20 flex flex-col items-center text-center">
+            <div class="w-16 h-16 bg-[var(--color-primary)]/10 rounded-full flex items-center justify-center mb-4">
+              <MessageSquareText :size="32" class="text-[var(--color-primary)]" />
+            </div>
+            
+            <h2 class="text-xl font-bold text-[var(--color-surface-foreground)] mb-2">Bereit für dein Training?</h2>
+            <p class="text-sm text-[var(--color-secondary-foreground)] opacity-70 mb-6 leading-relaxed">
+              Lass uns Sätze bilden! Klicke auf den Button unten, um deine erste Vokabel in einem Kontext-Satz zu üben.
+            </p>
+            
+            <Button 
+              variant="primary"
+              @click="loadSentence" 
+              :disabled="loading"
+              class="px-8 py-6 rounded-2xl shadow-lg"
+            >
+              <Bot :size="30" class="mr-2" />
+              Ersten Satz generieren
+            </Button>
+          </div>
+        </div>
+
         <div v-for="(msg, index) in messages" :key="index"
              :class="['flex w-full animate-in fade-in slide-in-from-bottom-2 duration-300', msg.role === 'user' ? 'justify-end' : 'justify-start']">
           
@@ -343,19 +366,21 @@ async function resetSession() {
           </div>
           
           <div class="flex justify-between items-center h-5">
-            <Button 
-              variant="ghost"
-              v-if="!vkStore.rundeFertig && messages.length > 0"
-              @click="loadSentence" 
-              class="text-[11px] font-black text-[var(--color-primary)] flex items-center gap-1.5 hover:gap-2.5 hover:text-[var(--color-primary)] transition-all uppercase tracking-tight"
-            >
-              <ArrowRightCircle :size="12" /> Nächste Vokabel
-            </Button>
-            <div v-else-if="vkStore.rundeFertig" class="flex items-center gap-1.5 text-[var(--color-success)] text-[10px] font-black uppercase">
-               <CheckCircle2 :size="12" /> Runde beendet
-            </div>
+            <div class="flex items-center">
+              <Button 
+                variant="ghost"
+                v-if="!vkStore.rundeFertig && messages.length > 0"
+                @click="loadSentence" 
+                class="text-[11px] font-black text-[var(--color-primary)] flex items-center gap-1.5 hover:gap-2.5 hover:text-[var(--color-primary)] transition-all uppercase tracking-tight h-auto p-0"
+              >
+                <ArrowRightCircle :size="12" /> Nächste Vokabel
+              </Button>
+              <div v-else-if="vkStore.rundeFertig" class="flex items-center gap-1.5 text-[var(--color-success)] text-[10px] font-black uppercase">
+                <CheckCircle2 :size="12" /> Runde beendet
+              </div>
+              </div>
             
-            <div class="text-[9px] text-muted-foreground opacity-40 font-bold flex items-center gap-1.5 uppercase">
+            <div class="text-[9px] text-muted-foreground opacity-40 font-bold flex items-center gap-1.5 uppercase ml-auto">
               <span>Senden</span>
               <kbd class="hidden sm:inline-block border rounded px-1 py-0.5 bg-white text-[9px] shadow-sm">ENTER ↵</kbd>
             </div>
