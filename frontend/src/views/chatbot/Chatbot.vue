@@ -171,7 +171,6 @@ async function nextVokabel() {
  */
 async function checkAnswer() {
   if (!vokabel.value || !userInput.value) return
-
   loading.value = true
 
   // Benutereingabe in Chatverlauf speichern
@@ -189,13 +188,13 @@ async function checkAnswer() {
   })
 
   const data = await res.json()
-
   // erster Versuch entscheidet über den Status der Vokabel, der in der DB gesetzt werden soll
   // da der Nutzer ansonsten Hinweise hatte und es nicht alleine richtig hatte
   if(firstAttempt.value) {
     vkStore.frageBeantwortet(data.correct);
   }
-
+  
+  console.log("checkAnswer Vokabeln updated")
   // Logik für zweite Chance
   if(firstAttempt.value && data.rating !== "correct") {
       // Beim ersten Fehlversuch nur Tipp anzeigen
@@ -204,18 +203,27 @@ async function checkAnswer() {
       suggestion.value = ""
       rating.value = ""
       firstAttempt.value = false
+      // Feedback in Historie-Array speichern
+      saveMessage("assistant", feedback.value, "feedback")
   } else {
       // Zweiter Versuch oder korrekt -> volles Feedback
       feedback.value = data.feedback
-      comment.value = data.comment || ""
-      suggestion.value = data.suggestion || ""
-      rating.value = data.rating || ""
+      comment.value = data.comment
+      suggestion.value = data.suggestion 
+      rating.value = data.rating 
+      // Feedback in Historie-Array speichern
+      saveMessage("assistant", JSON.stringify({
+        feedback: data.feedback,
+        comment: data.comment,
+        suggestion: data.suggestion,
+        rating: data.rating
+      }), "feedback")
+      console.log(comment.value + " " + suggestion.value)
       // TODO: Auswahl zeigen, die nächste Vokabel zu zeigen ODER automatisch nächste Vokabel anzeigen
       await nextVokabel()
   }
 
-  // Feedback in Historie-Array speichern
-  saveMessage("assistant", feedback.value, "feedback")
+  
   loading.value = false
 }
 
