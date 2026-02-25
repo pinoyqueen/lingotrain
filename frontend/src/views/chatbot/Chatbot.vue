@@ -2,6 +2,14 @@
 import { computed, onMounted, ref, watch } from "vue"
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { 
+  Bot,  
+  RotateCcw,  
+  CheckCircle2, 
+  Info, 
+  ArrowRightCircle, 
+  MessageSquareText 
+} from 'lucide-vue-next'
 import { useVkStore } from "@/stores/vokabelKontoStore"
 import { useKontoStore } from "@/stores/kontoStore"
 import type { Vokabeln } from "@/models/Vokabeln"
@@ -32,7 +40,7 @@ const firstAttempt = ref(true)
 const messages = ref<ChatMessage[]>([])
 
 // TODO: lernset dynamisch setzen
-const lernsetId = ref("wNow2k3gBJDuucdMPzci")
+const lernsetId = ref("EYydiIexN5xZHOJcmp32")
 
 // --- Computed Properties ---
 /** ID des aktuellen Kontos */
@@ -251,61 +259,112 @@ async function resetSession() {
 </script>
 
 <template>
-  <h1>Chatbot</h1>
+  <div class="w-full h-[calc(100vh-60px)] flex flex-col p-2 md:p-3 pb-1 gap-2 bg-[var(--color-surface)] overflow-hidden">
+    
+    <div class="flex items-center justify-between px-4 py-2 border-b border-[var(--color-primary-variant)]/20 bg-white/50 backdrop-blur-sm rounded-t-xl">
+      <div class="flex items-center gap-3">
+        <div class="p-1.5 bg-[var(--color-primary)] rounded-lg text-white shadow-sm">
+          <Bot :size="25" />
+        </div>
+        <div>
+          <h1 class="text-base font-bold text-[var(--color-surface-foreground)] leading-tight">Lingotrain AI</h1>
+          <p class="text-[10px] text-[var(--color-secondary-foreground)] uppercase tracking-widest font-bold opacity-60">Vokabel-Kontext</p>
+        </div>
+      </div>
+      <Button @click="resetSession" variant="ghost" size="sm" class="h-8 text-[var(--color-warning)] hover:bg-[var(--color-warning)]/10 text-[11px] font-bold transition-all">
+        <RotateCcw :size="14" class="mr-1.5" /> RESET
+      </Button>
+    </div>
 
-  <Button @click="loadSentence" :disabled="loading">
-    Satz generieren
-  </Button>
+    <div class="flex-1 flex flex-col min-h-0 bg-white dark:bg-zinc-950 rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-[var(--color-secondary-variant)]/40 overflow-hidden">
+      
+      <div ref="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar [background-size:20px_20px] dark:bg-none">
+        
+        <div v-for="(msg, index) in messages" :key="index"
+             :class="['flex w-full animate-in fade-in slide-in-from-bottom-2 duration-300', msg.role === 'user' ? 'justify-end' : 'justify-start']">
+          
+          <div :class="[
+            'max-w-[80%] sm:max-w-[70%] rounded-2xl px-4 py-2.5 text-sm md:text-base shadow-sm border transition-all border-transparent rounded-tr-none',
+            msg.role === 'user' 
+              ? 'bg-[var(--color-primary)]/90 text-[var(--color-primary-foreground)] ' 
+              : 'bg-[var(--color-secondary)]/90 text-[var(--color-secondary-foreground)]'
+          ]">
+            <div v-if="msg.type === 'sentence'" class="flex items-center gap-1 text-[9px] font-black opacity-50 uppercase mb-1 tracking-wider">
+              <MessageSquareText :size="12" /> Aufgabe
+            </div>
 
-  <p v-if="loading">Lade...</p>
+            <p class="font-medium">{{ msg.content }}</p>
 
-  <div class="chat-container">
-    <div v-for="(msg, index) in messages" :key="index"
-        :class="msg.role === 'user' ? 'user-msg' : 'assistant-msg'">
+            <div v-if="msg.type === 'feedback' && index === messages.length - 1" class="mt-2.5 pt-2.5 border-t border-black/5 space-y-2">
+               <p v-if="suggestion" class="text-xs bg-[var(--color-primary)]/5 p-2 rounded-lg italic border border-[var(--color-primary)]/10 flex items-start gap-2">
+                <Info :size="12" class="mt-0.5 shrink-0 text-[var(--color-primary)]" /> 
+                <span class="opacity-90">{{ suggestion }}</span>
+               </p>
+               
+               <div class="flex items-center gap-3">
+                 <span v-if="rating" :class="[
+                   'px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest flex items-center gap-1 shadow-sm',
+                   rating === 'correct' ? 'bg-[var(--color-success)] text-white' : 'bg-[var(--color-warning)] text-white'
+                 ]">
+                   <CheckCircle2 :size="10" v-if="rating === 'correct'" /> {{ rating.replace('_', ' ') }}
+                 </span>
+                 <span v-if="comment" class="text-[11px] font-semibold opacity-50 italic truncate">{{ comment }}</span>
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <p>{{ msg.content }}</p>
-
+      <div class="p-3 bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-md border-t border-[var(--color-secondary-variant)]/30">
+        <div class="w-full flex flex-col gap-2">
+          <div class="relative flex items-center">
+            <Input 
+              v-model="userInput"
+              @keyup.enter="checkAnswer"
+              :disabled="loading || vkStore.rundeFertig"
+              placeholder="Antwort tippen..."
+              class="h-11 text-sm pl-4 pr-28 rounded-xl border-2 focus-visible:ring-[var(--primary)]/60  bg-white shadow-sm transition-all"
+            />
+            <Button 
+              @click="checkAnswer" 
+              :disabled="loading || !userInput || vkStore.rundeFertig"
+              class="absolute right-1.5 h-8 px-4 bg-[var(--color-primary)] text-[var(--color-primary-foreground)] text-xs font-bold rounded-lg shadow-md hover:brightness-110 transition-all"
+            > 
+              Überprüfen
+            </Button>
+          </div>
+          
+          <div class="flex justify-between items-center h-5">
+            <Button 
+              variant="ghost"
+              v-if="!vkStore.rundeFertig && messages.length > 0"
+              @click="loadSentence" 
+              class="text-[11px] font-black text-[var(--color-primary)] flex items-center gap-1.5 hover:gap-2.5 hover:text-[var(--color-primary)] transition-all uppercase tracking-tight"
+            >
+              <ArrowRightCircle :size="12" /> Nächste Vokabel
+            </Button>
+            <div v-else-if="vkStore.rundeFertig" class="flex items-center gap-1.5 text-[var(--color-success)] text-[10px] font-black uppercase">
+               <CheckCircle2 :size="12" /> Runde beendet
+            </div>
+            
+            <div class="text-[9px] text-muted-foreground opacity-40 font-bold flex items-center gap-1.5 uppercase">
+              <span>Senden</span>
+              <kbd class="hidden sm:inline-block border rounded px-1 py-0.5 bg-white text-[9px] shadow-sm">ENTER ↵</kbd>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-
-  <Input v-model="userInput"
-          placeholder="Fehlendes Wort eingeben…"
-          :disabled="loading"
-          class="h-20 sm:h-28 sm:text-xl md:text-xl text-center font-bold bg-secondary/20 border-2 border-transparent focus-visible:border-secondary focus-visible:ring-0 transition-all rounded-2xl shadow-inner w-full"
-          autofocus>
-    </Input>
-
-    <Button @click="checkAnswer" :disabled="loading">
-      Senden
-    </Button>
-
-    <div v-if="feedback">
-      <p><strong>Feedback:</strong> {{ feedback }}</p>
-      <p v-if="suggestion"><strong>Vorschlag:</strong> {{ suggestion }}</p>
-      <p v-if="comment"><em>Kommentar:</em> {{ comment }}</p>
-      <p v-if="rating"><em>Bewertung:</em> {{ rating }}</p>
-  </div>
-
-  <Button @click="resetSession" variant="destructive">
-    Session zurücksetzen
-  </Button>
-
 </template>
 
-<style>
-  .user-msg {
-    text-align: right;
-    background: #d1e7dd;
-    padding: 8px;
-    border-radius: 12px;
-    margin: 6px 0;
-  }
-
-  .assistant-msg {
-    text-align: left;
-    background: #f8d7da;
-    padding: 8px;
-    border-radius: 12px;
-    margin: 6px 0;
-  }
+<style scoped>
+/* Scrollbar etwas dezenter */
+.custom-scrollbar::-webkit-scrollbar { width: 5px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 </style>
