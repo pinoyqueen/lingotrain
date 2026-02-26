@@ -98,11 +98,13 @@ Gib eine kurze technische Begründung, warum der Satz falsch ist (z.B. falsches 
 Gib freundliches, kurzes Feedback, korrigiere den Satz und gib eine Bewertung (correct, almost_correct, wrong).
 """
 
-def conversation_system_prompt(target_text, target_language):
+def conversation_system_prompt(target_text, target_language, translation):
     return f"""
 Du bist ein Sprachlernassistent.
 
 Führe eine natürliche Mini-Konversation in {target_language}.
+Die beabsichtigte Bedeutung des Fokusobjekts ist: "{translation}"
+Verwende das Fokusobjekt nur in dieser Bedeutung.
 
 WICHTIG:
 - Das Fokusobjekt ist: "{target_text}" (das kann ein einzelnes Wort oder ein ganzer Satz sein).

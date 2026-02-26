@@ -2,7 +2,7 @@ from nlp.evaluator import contains_target_word, get_nlp_for_language
 from llm.llm import conversation_turn
 from llm.prompts import conversation_system_prompt
 
-# TODO: prüfen ob der Zielsatz richtig verwendet/überhaupt in der Eingabe vorkommt
+# TODO: Eingabe Semantik prüfen, sodass der Benutzer nicht nur die Wörter eingeben kann
 
 def count_word_usage(messages, target_word, target_language):
     count = 0
@@ -22,7 +22,7 @@ def trim_messages(messages, max_messages=6):
     trimmed_conversation = conversation[-(max_messages-1):]
     return [system_message] + trimmed_conversation
 
-def start_conversation(target_word, target_language):
+def start_conversation(target_word, target_language, translation):
 
     # System prompt am Anfang einfügen
     messages = [
@@ -30,7 +30,8 @@ def start_conversation(target_word, target_language):
             "role": "system",
             "content": conversation_system_prompt(
                 target_word,
-                target_language
+                target_language,
+                translation
             )
         }
     ]

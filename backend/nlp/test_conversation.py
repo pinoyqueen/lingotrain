@@ -2,12 +2,11 @@ from nlp.conversation import start_conversation, next_turn
 
 def run_test():
 
-    # target_vocab = "hike"
-    # target_vocab = "Where is the toilet?"
-    target_vocab = "I saw a film yesterday."
+    target_vocab = "hike"
+    target_translation = "wandern"
     target_language = "en"
 
-    state = start_conversation(target_vocab, target_language)
+    state = start_conversation(target_vocab, target_language, target_translation)
 
     print("\n=== Mini-Konversation gestartet ===")
     print("-----------------------------------")
