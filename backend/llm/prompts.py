@@ -123,3 +123,26 @@ Regeln:
 - Antworte maximal in 2 Sätzen.
 - Korrigiere nicht direkt, gib nur Feedback am Ende der Konversation falls nötig.
 """
+
+def conversation_feedback_prompt(target_word, target_language, conversation_history):
+    
+    messages_text = "\n".join([f"{m['role']}: {m['content']}" for m in conversation_history])
+    
+    return f""""
+Du bist ein Sprachlernassistent.
+
+Analysiere die folgende Mini-Konversation mit Fokus auf die Vokabel "{target_word}" in der Zielsprache {target_language}.
+
+WICHTIG:
+- Erkenne, ob der Lernende die Zielvokabel korrekt verwendet hat.
+- Gib Hinweise auf die häufigsten Fehler oder typische Stolperfallen.
+- Formuliere freundliche Tipps, worauf der Nutzer beim nächsten Mal achten sollte.
+- Gib die Ausgabe ausschließlich im JSON-Format:
+{{
+    "feedback": "max 2 kurze Sätze für Lernende, freundlich formuliert, direkt im UI nutzbar, basierend auf der technischen Begründung",
+    "comment": "technische Begründung, z.B. häufige Fehler",
+    "hint": "kurzer Hinweis für das nächste Mal"
+}}
+
+Die Konversation ist: {messages_text}
+"""

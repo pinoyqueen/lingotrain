@@ -85,3 +85,12 @@ def next_turn(state, user_input, target_language):
         finished = False
 
     return reply, state, finished
+
+def evaluate_conversation(state):
+    usage = state["usage_count"]
+    turns = state["turn_count"]
+
+    if(usage >= 2):
+        return {
+            ""
+        }
