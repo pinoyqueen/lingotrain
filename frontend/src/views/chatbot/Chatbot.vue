@@ -55,8 +55,6 @@ const chatContainer = ref<HTMLElement | null>(null)
 const conversationVocabulary = ref<Vokabeln[]>([])
 /** Der aktuelle Zustand der Konversation */
 const conversationState = ref<any>(null)
-/** Flag, ob die Konversation bereits gestartet wurde. */
-const conversationStarted = ref(false)
 
 // --- Computed Properties ---
 /** ID des aktuellen Kontos */
@@ -136,6 +134,15 @@ watch(messages, (newVal) => {
   sessionStorage.setItem("chatHistory", JSON.stringify(newVal))
 }, { deep: true })
 
+/**
+ * Startet ene neue Konversation mit Fokus auf eine zufällige Vokabel.
+ * 
+ * Prüft zunächst ob noch Vokabeln vorhanden sind. Wenn nicht, gibt Feedback und bricht ab.
+ * Wählt zufällig eine Vokabel aus der Vokabelnliste aus.
+ * Sendet die Vokabel, die Zielsprache und die Übersetzung an das Backend, um die Konversation zu starten.
+ * Speichert den Konversationszustand und zeigt die erste Bot-Nachricht an.
+ * Entfernt die verwendete Vokabel aus der Liste, damir sie nicht erneut verwendet wird.
+ */
 async function startConversation() {
   if (conversationVocabulary.value.length === 0) {
     // TODO: hier die Anzeige anpassen, dass keine Vokabeln mehr für die Konversation vorhanden sind und zurück zur Auswahl springen
@@ -170,8 +177,6 @@ async function startConversation() {
 
   saveMessage("assistant", firstAssistantMessage.content, "sentence")
 
-  conversationStarted.value = true
-
   // verwendeten Vokabel aus der Liste entfernen, damit er nicht nochmal in der Konversation auftaucht
   conversationVocabulary.value = conversationVocabulary.value.filter(v => v.vokabel !== random.vokabel)
 }
@@ -199,9 +204,9 @@ async function loadSentence() {
   // wenn Vokabel ein Satz ist, nächste Vokabel holen
   while (!isRundeFertig.value && !vokabel.value?.isWort) {
     console.log("KEIN WORT --- Konto: " + kontoId.value + "; Sprache: " + aktuelleSprache.value?.sprache + "; Vokabel: " + vokabel.value?.vokabel)
-    // saveMessage("assistant", "Übersetzen Sie diesen Satz: " + vokabel.value?.uebersetzung, "sentence")
-    // return
-    vkStore.nextFrage()
+    saveMessage("assistant", "Übersetzen Sie diesen Satz: " + vokabel.value?.uebersetzung, "sentence")
+    return
+    // vkStore.nextFrage()
   }
 
    // Runde nach Überspringen prüfen
@@ -281,12 +286,22 @@ async function checkAnswer() {
   // Benutereingabe in Chatverlauf speichern
   saveMessage("user", userInput.value, "answer")
 
-  // if(!vokabel.value.isWort) {
-  //   // TODO: hier prüfen ob der Satz vom User richtig übersetzt ist
-  //   // if richtig -> data.correct = true; data.feed
-  //   // if falsch -> 
-  // } else {
-    const res = await fetch("http://localhost:8000/evaluate-answer", {
+  let res
+
+  if(!vokabel.value.isWort) {
+    res = await fetch("http://localhost:8000/evaluate-sentence", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_answer: userInput.value,
+        original_sentence: vokabel.value.vokabel,
+        target_word: vokabel.value.vokabel,
+        target_language: languageMap[aktuelleSprache.value?.sprache]
+      })
+    })
+
+  } else {
+    res = await fetch("http://localhost:8000/evaluate-answer", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -296,49 +311,57 @@ async function checkAnswer() {
         target_language: languageMap[aktuelleSprache.value?.sprache]
       })
     })
+  }
+  const data = await res.json()
 
-    const data = await res.json()
-
-    // erster Versuch entscheidet über den Status der Vokabel, der in der DB gesetzt werden soll
-    // da der Nutzer ansonsten Hinweise hatte und es nicht alleine richtig hatte
-    if(firstAttempt.value) {
-      vkStore.frageBeantwortet(data.correct);
-    }
-    
-    // Logik für zweite Chance
-    if(firstAttempt.value && data.rating !== "correct") {
-        // Beim ersten Fehlversuch nur Tipp anzeigen
-        feedback.value = data.hint || "Überprüfe deine Antwort noch einmal."
-        comment.value = ""
-        suggestion.value = ""
-        rating.value = ""
-        firstAttempt.value = false
-        // Feedback in Historie-Array speichern
-        saveMessage("assistant", feedback.value, "feedback")
-    } else {
-        // Zweiter Versuch oder korrekt -> volles Feedback
-        feedback.value = data.feedback
-        comment.value = data.comment
-        suggestion.value = data.suggestion 
-        rating.value = data.rating 
-
-        // Feedback in Historie-Array speichern
-        saveMessage("assistant", data.feedback, "feedback", {
-          suggestion: data.suggestion,
-          rating: data.rating,
-          comment: data.comment
-        })
-        console.log(comment.value + " " + suggestion.value)
-        // TODO: Auswahl zeigen, die nächste Vokabel zu zeigen ODER automatisch nächste Vokabel anzeigen
-        await nextVokabel()
-    }
-  // }
-
+  // erster Versuch entscheidet über den Status der Vokabel, der in der DB gesetzt werden soll
+  // da der Nutzer ansonsten Hinweise hatte und es nicht alleine richtig hatte
+  if(firstAttempt.value) {
+    vkStore.frageBeantwortet(data.correct);
+  }
   
+  // Logik für zweite Chance
+  if(firstAttempt.value && data.rating !== "correct") {
+      // Beim ersten Fehlversuch nur Tipp anzeigen
+      feedback.value = data.hint || "Überprüfe deine Antwort noch einmal."
+      comment.value = ""
+      suggestion.value = ""
+      rating.value = ""
+      firstAttempt.value = false
+      // Feedback in Historie-Array speichern
+      saveMessage("assistant", feedback.value, "feedback")
+  } else {
+      // Zweiter Versuch oder korrekt -> volles Feedback
+      feedback.value = data.feedback
+      comment.value = data.comment
+      suggestion.value = data.suggestion 
+      rating.value = data.rating 
+
+      // Feedback in Historie-Array speichern
+      saveMessage("assistant", data.feedback, "feedback", {
+        suggestion: data.suggestion,
+        rating: data.rating,
+        comment: data.comment
+      })
+      console.log(comment.value + " " + suggestion.value)
+      // TODO: Auswahl zeigen, die nächste Vokabel zu zeigen ODER automatisch nächste Vokabel anzeigen
+      await nextVokabel()
+  }
 
   loading.value = false
 }
 
+/**
+ * Sendet die Benutzereingabe an das Backend, um die Konversation fortzusetzen.
+ * 
+ * Speichert die Benutzereingabe im Chatverlauf.
+ * Sendet die aktuelle Konversation, Benutzereingabe und Zielsprach an das Backend.
+ * Aktualisiert den Konversationszustand mit der Antwort vom Backend und speichert die Antwort
+ * des Bots im Chatverlauf.
+ * 
+ * Wenn die Konversation abgeschlossen ist, startet automatisch eine neue Konversation
+ * mit der nächsten Vokabel.
+ */
 async function sendConversationMessage() {
   if (!conversationState.value || !userInput.value) {
     console.log("Fehler: Kein Konversationszustand oder keine Benutzereingabe vorhanden.")
@@ -369,7 +392,6 @@ async function sendConversationMessage() {
   loading.value = false
 
   if(data.finished) {
-    conversationStarted.value = false
     startConversation() // direkt neue Konversation mit der nächsten Vokabel starten
   }
 }

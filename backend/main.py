@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from nlp.conversation import next_turn, start_conversation
 from schemas import NextRequest, StartRequest, WordRequest, EvalRequest
 from llm.sentence_generator import generate_sentence
-from nlp.evaluator import evaluate_answer_combined
+from nlp.evaluator import evaluate_answer_combined, evaluate_sentence_similarity
 
 # FastAPI App erstellen
 app = FastAPI()
@@ -33,6 +33,17 @@ def sentence(req: WordRequest):
 @app.post("/evaluate-answer")
 def evaluate(req: EvalRequest):
     result = evaluate_answer_combined(
+        user_answer=req.user_answer,
+        original_sentence=req.original_sentence,
+        target_word=req.target_word,
+        target_language=req.target_language
+    )
+    return result
+
+# Bewertet die Antwort des Nutzers und liefert Feedback
+@app.post("/evaluate-sentence")
+def evaluate(req: EvalRequest):
+    result = evaluate_sentence_similarity(
         user_answer=req.user_answer,
         original_sentence=req.original_sentence,
         target_word=req.target_word,
