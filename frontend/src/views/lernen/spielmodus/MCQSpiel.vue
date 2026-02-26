@@ -48,11 +48,11 @@ function mixOptions() {
  * 
  * @returns true, wenn richtig, sonst false
  */
-function pruefen(): boolean {
+function pruefen(): { richtig: boolean } {
   checked.value = true
-  if (!selectedOption.value) return false
+  if (!selectedOption.value) return { richtig: false }
     richtig.value = selectedOption.value.id === props.vokabel.id
-  return richtig.value
+  return { richtig: richtig.value }
 }
 
 /** Watch auf props.vokabel.id: Wenn die Vokabel wechselt, wird Auswahl/Flags zurückgesetzt */

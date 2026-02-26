@@ -11,6 +11,7 @@ import { getSpracheById, getSprachenByIds } from "@/repositories/SprachenReposit
  * Hier wird das Konto verwaltet, d.h. es gibt Methoden zum:
  *  - Laden der Kontodaten aus der DB
  *  - Hinzufügen und Entfernen einer Sprache
+ *  - Hinzufügen von neuen Punkten zum Konto
  *  - Aktualisieren der aktuellen Sprache
  *  - Aktualisieren der Kontodaten
  *  - Löschen des Kontos (inkl. der zugehörigen Daten)
@@ -23,7 +24,8 @@ export const useKontoStore = defineStore('konto', {
         return {
             aktuellesKonto,
             ausgewaehlteSprachen: [] as any[],
-            aktuelleSprache: null as any | null
+            aktuelleSprache: null as any | null,
+            punkteSchonGespeichert: false,
         };
     },
 
@@ -138,6 +140,26 @@ export const useKontoStore = defineStore('konto', {
             } catch (error) {
                 console.error("Fehler beim Löschen im Store:", error);
             }
+        },
+
+        /**
+         * Hinzufügen von Punkten zu den bereits vorhandenen.
+         * 
+         * @param punkte die neu hinzuzufügenden Punkte
+         */
+        async addPunkteZuKonto(punkte: number) {
+            if(!this.aktuellesKonto?.id) return;
+            if(punkte <= 0) return;
+            if (this.punkteSchonGespeichert) return;
+
+            const aktuellePunkte = this.aktuellesKonto.punkte ?? 0
+            const neuePunkte = aktuellePunkte + punkte
+
+            await this.updateKontoData({
+                punkte: neuePunkte
+            });
+
+            this.punkteSchonGespeichert = true;
         },
 
         /** 

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { useVkStore } from '@/stores/vokabelKontoStore';
-import { computed, defineAsyncComponent, onMounted, ref, shallowRef } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { computed, defineAsyncComponent, onMounted, ref, shallowRef, watch } from 'vue';
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
 import Button from '@/components/ui/button/Button.vue';
 import type { Vokabeln } from '@/models/Vokabeln';
 import { useVokabelnStore } from '@/stores/vokabelnStore';
+import { usePunkteStore } from '@/stores/punkteStore';
+import { useKontoStore } from '@/stores/kontoStore';
 
 /** Maximale Anzahl, nach der MCQ nicht mehr ausgewählt wird */
 const MAX_GELERNT = 4
@@ -14,6 +16,8 @@ const route = useRoute()
 const router = useRouter()
 const vkStore = useVkStore()
 const vokabelnStore = useVokabelnStore()
+const punkteStore = usePunkteStore()
+const kontoStore = useKontoStore()
 const lernsetId = String(route.params.id)
 const choosing = ref(false)
 const spielLoading = ref(true)
@@ -57,8 +61,34 @@ const emit = defineEmits<{
   (e: 'update:progress', value: number): void
 }>()
 
+// Beobachtet, ob eine Runde fertig ist und berechnet ggf. dann die endgültigen
+// Punkte der Runde und aktualisiert diese im Konto (dabei werden Basis-Punkte zur 
+// Rundenbeendigung erhalten)
+watch(isRundeFertig, async (fertig) => {
+  if(!fertig) return;
+  
+  const punkte = punkteStore.rundeBeenden(true);
+  
+  if(punkte && punkte > 0) {
+    await kontoStore.addPunkteZuKonto(punkte);
+  }
+})
+
+// Wenn die Seite verlassen wird, werden die endgültigen
+// Punkte der Runde berechnet und im Konto aktualisiert
+onBeforeRouteLeave(async () => {
+  const punkte = punkteStore.rundeBeenden(false);
+
+  if(punkte && punkte > 0) {
+    await kontoStore.addPunkteZuKonto(punkte);
+  }
+})
+
 /** Beim Mount die Vokabeln laden und erste Frage auswählen */
 onMounted(async () => {
+    punkteStore.resetRunde();
+    kontoStore.punkteSchonGespeichert = false;
+
     vkStore.resetRunde()
 
     await vokabelnStore.loadByLernsetId(lernsetId)
@@ -208,6 +238,8 @@ async function next() {
  * dass die Frage beantwortet wurde. 
  * Es wird entsprechend ein Feedback über richtig oder falsch und ggf. die Lösung
  * bzw. Übersetzung dazu angezeigt.
+ * Außerdem werden die Punkte und der Streak bei richtiger Antwort erhöht bzw. der
+ * Streak bei falscher Antwort zurückgesetzt.
  * 
  * Der Button wird dann in den Next-Button umgewandelt.
  * 
@@ -215,6 +247,16 @@ async function next() {
  */
 function onAnswered(result: boolean) {
   feedbackRichtig.value = result;
+
+  // Punkte bei richtiger Antwort erhöhen und Streak erhöhen oder zurücksetzen
+  const streakEvent = punkteStore.frageBeantwortet(
+    result,
+    aktuelleFrage.value!.isWort
+  );
+
+  if(streakEvent > 0) {
+    // TODO: 5er/10er-Streak anzeigen
+  }
 
   if(!result) {
     const spiel = currentSpielRef.value;
@@ -238,6 +280,8 @@ function onAnswered(result: boolean) {
  * Starte einer neuen Runde.
  */
 async function nextRunde() {
+  punkteStore.resetRunde();
+  kontoStore.punkteSchonGespeichert = false;
   activeComponent.value = null
   vkStore.resetRunde()
   await vkStore.ladeVokabeln(lernsetId)
@@ -263,7 +307,13 @@ function buttonClicked() {
     // Falls die Komponente eine manuelle Prüfen-Funktion hat
     if (currentSpielRef.value?.pruefen) {
       const result = currentSpielRef.value.pruefen()
-      onAnswered(result)
+
+      // bei Paaren gibt es pro richtigem Paar einen Punkt (+1 Punkt später wenn alles richtig war)
+      if(result?.richtigePaare && result.richtigePaare > 0) {
+        punkteStore.addPunkte(result.richtigePaare);
+      }
+
+      onAnswered(result.richtig)
     }
   } else {
     next()
@@ -319,7 +369,7 @@ const buttonClass = computed(() => {
 </script>
 
 <template>
-  <!-- wenn Runde fertig ist -->
+  <!-- wenn Runde fertig ist --> <!-- TODO: erzielte Punkte in der Runde anzeigen-->
   <div v-if="isRundeFertig" class="flex h-full w-full flex-col items-center justify-center text-center space-y-4">
     <p class="font-black text-foreground tracking-tight leading-tight mx-auto text-2xl sm:text-4xl max-w-3xl">Runde geschafft - weiter geht's!</p>
     <Button @click="nextRunde" class="mt-2 bg-[var(--success)] text-white">Runde starten</Button>

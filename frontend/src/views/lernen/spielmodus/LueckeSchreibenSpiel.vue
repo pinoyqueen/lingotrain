@@ -101,14 +101,14 @@ function replaceRandomVorkommen(sentence: string, word: string, placeholder: str
  * 
  * Wird über defineExpose des Parent-Buttons aufgerufen.
  */
-function pruefen(): boolean {
-  if (checked.value) return richtig.value;
+function pruefen(): { richtig: boolean } {
+  if (checked.value) return { richtig: richtig.value };
 
   const input = userInput.value.trim();
   richtig.value = (input === korrektesWort.value);
 
   checked.value = true;
-  return richtig.value;
+  return { richtig: richtig.value };
 }
 
 /**

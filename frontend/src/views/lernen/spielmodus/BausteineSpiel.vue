@@ -41,7 +41,7 @@ watch(() =>
  * @param {string} sentence der zu normalisierende Satz
  * @return {string} der normalisierte Satz
  */
-function normalize(sentence: string) {
+function normalize(sentence: string): string {
   return sentence.replace(/[,.!?;:…]/g, '').trim()
 }
 
@@ -145,8 +145,8 @@ function isUsed(baustein: {id: number, word: string}) {
  * 
  * Wird über defineExpose des Parent-Buttons aufgerufen.
  */
-function pruefen(): boolean {
-  if (checked.value) return richtig.value
+function pruefen(): { richtig: boolean } {
+  if (checked.value) return { richtig: richtig.value }
 
   const eingabe = ausgewaehlt.value.map(w => w.word).join(' ').trim()
   const loesung = normalize(props.vokabel.vokabel)
@@ -154,7 +154,7 @@ function pruefen(): boolean {
   richtig.value = (eingabe === loesung)
 
   checked.value = true
-  return richtig.value
+  return { richtig: richtig.value }
 }
 
 // die Parent-Komponente kann die pruefen-Funktion nutzen und erhält die Lösung

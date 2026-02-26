@@ -33,8 +33,8 @@ watch(() => props.vokabel?.id, () => {
  * 
  * Wird über defineExpose des Parent-Buttons aufgerufen.
  */
-function pruefen(): boolean {
-  if (checked.value) return richtig.value
+function pruefen(): { richtig: boolean } {
+  if (checked.value) return { richtig: richtig.value }
 
   // Es werden alle Arten von Whitespace durch ein einzelnes Leerzeichen ersetzt
   const cleanInput = userInput.value.trim().replace(/\s+/g, ' ')
@@ -43,7 +43,7 @@ function pruefen(): boolean {
   richtig.value = (cleanInput === cleanSolution)
 
   checked.value = true
-  return richtig.value
+  return { richtig: richtig.value }
 }
 
 // die Parent-Komponente kann die pruefen-Funktion nutzen und erhält die Lösung

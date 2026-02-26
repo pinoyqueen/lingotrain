@@ -115,11 +115,13 @@ function undo(right: Vokabeln) {
  * Zuordnungen werden in resultMap richtig/falsch markiert.
  * Status werden über vkStore aktualisiert.
  * 
- * @returns true, wenn alle korrekt
+ * @returns True, wenn alles richtig und die Anzahl richtiger Paare
  */
-function pruefen(): boolean {
+function pruefen(): { richtig: boolean, richtigePaare: number} {
   let allesRichtig = true
   checked.value = true
+
+  let richtigePaare = 0;
 
   for(const left of leftList.value) {
     if (!left.id) continue
@@ -133,12 +135,13 @@ function pruefen(): boolean {
     // Status aktualisieren
     if(richtig) {
       vkStore.updateStatus(left.id, VOKABELN_STATUS.RICHTIG)
+      richtigePaare++;
     } else {
       vkStore.updateStatus(left.id, VOKABELN_STATUS.FALSCH)
     }
   }
 
-  return allesRichtig
+  return { richtig: allesRichtig, richtigePaare }
 }
 
 /** Watch auf props.vokabel.id: Wenn die Vokabel wechselt, wird neue Paare geladen */
