@@ -24,7 +24,22 @@ export const useVokabelnStore = defineStore('vokabeln', {
         /** Text für Fehlermeldung */
         fehler: "" as String
     }),
-
+    getters: {
+        /**
+         * Teilt alle Vokabeln des Lernsets in Wörter auf und gibt diese 
+         * als Liste zurück.
+         * 
+         * @returns Liste aller Wörter eines Lernsets
+         */
+        wortPool(): string[] {
+            return this.liste.flatMap(v =>
+            v.vokabel
+                .replace(/[,.!?;:…]/g, '')
+                .trim()
+                .split(/\s+/)
+            )
+        }
+    },
     actions: {
        
         /**

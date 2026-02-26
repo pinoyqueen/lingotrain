@@ -4,6 +4,7 @@ import { computed, defineAsyncComponent, onMounted, ref, shallowRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import Button from '@/components/ui/button/Button.vue';
 import type { Vokabeln } from '@/models/Vokabeln';
+import { useVokabelnStore } from '@/stores/vokabelnStore';
 
 /** Maximale Anzahl, nach der MCQ nicht mehr ausgewählt wird */
 const MAX_GELERNT = 4
@@ -12,6 +13,7 @@ const MAX_GELERNT = 4
 const route = useRoute()
 const router = useRouter()
 const vkStore = useVkStore()
+const vokabelnStore = useVokabelnStore()
 const lernsetId = String(route.params.id)
 const choosing = ref(false)
 const spielLoading = ref(true)
@@ -25,6 +27,7 @@ const MCQSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/MC
 const PaareSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/PaareSpiel.vue'))
 const SchreibenSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/SchreibenSpiel.vue'))
 const LueckeSchreibenSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/LueckeSchreibenSpiel.vue'))
+const BausteineSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/BausteineSpiel.vue'))
 
 // --- Spiel-Pools für Wörter und Sätze ---
 const WORT_SPIELE = [
@@ -35,7 +38,8 @@ const WORT_SPIELE = [
 
 const SATZ_SPIELE = [
   { key: 'schreiben', comp: SchreibenSpiel },
-  { key: 'lueckeschreiben', comp: LueckeSchreibenSpiel }
+  { key: 'lueckeschreiben', comp: LueckeSchreibenSpiel },
+  { key: 'bausteine', comp: BausteineSpiel }
 ]
 
 // --- State: aktive Kind-Komponente ---
@@ -56,6 +60,8 @@ const emit = defineEmits<{
 /** Beim Mount die Vokabeln laden und erste Frage auswählen */
 onMounted(async () => {
     vkStore.resetRunde()
+
+    await vokabelnStore.loadByLernsetId(lernsetId)
     await vkStore.ladeVokabeln(lernsetId)
     
     if (vkStore.aktuelleFrage) {
@@ -63,7 +69,6 @@ onMounted(async () => {
     } else {
       next()
     }
-
 })
 
 /**
@@ -321,10 +326,10 @@ const buttonClass = computed(() => {
     <Button @click="() => router.push(`/meinevokabeln/${route.params.id}/${route.params.slug}`)"  class="bg-[var(--warning)] text-white">Zurück zur Vokabeln</Button>
   </div>
 
-  <div v-else class="flex flex-col h-full w-full overflow-y-auto">
+  <div v-else class="flex flex-col h-full w-full overflow-y-auto custom-scrollbar p-6">
 
     <!-- Kind-Komponenten Container -->
-    <div class="flex-1 w-full overflow-y-auto p-6 sm:p-10 flex flex-col justify-center">
+    <div class="flex-1 w-full overflow-y-auto custom-scrollbar p-6 sm:p-10 flex flex-col justify-center">
       
       <div class="w-full max-w-2xl mx-auto animate-in fade-in zoom-in duration-300">
         <component
@@ -382,3 +387,34 @@ const buttonClass = computed(() => {
 
   </div>
 </template>
+
+<style scoped>
+/* Die Scrollbar soll nur im Kind-Teil sichtbar sein, wenn wirklich gescrollt wird */
+.custom-scrollbar {
+  scrollbar-gutter: stable; 
+  scrollbar-width: thin;    
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+/* Chrome, Edge, Safari */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+/* Kein Hintergrund, damit sie nicht mitten drin aussieht */
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent; 
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 20px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+  background-clip: content-box;
+}
+</style>
