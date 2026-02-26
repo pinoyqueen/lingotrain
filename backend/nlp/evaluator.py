@@ -1,5 +1,11 @@
 import spacy
 from llm.llm import (evaluate_with_llm)
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+import re
+
+# Sentence-Embedding-Modell laden für Ähnlichkeitsberechnungen der Sätzen
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
 # ----------------------------------------------------------------------
 # Laden der SpaCy-Modelle für unterstützte Sprachen des Vokabeltrainers
@@ -200,4 +206,86 @@ def evaluate_answer_combined(user_answer, original_sentence, target_word, target
         result["hint"] = llm_eval.get("hint", "")
 
     return result
+
+# Normalisiert einen Text für Vergleichszwecke.
+#
+# Argumente:
+#   - text (str): Ein Satz (kann der Eingabetext oder die in DB gespeicherten Übersetzung)
+#
+# Return: (str): Der normalisierte text
+def normalize(text: str) -> str:
+    text = text.lower().strip()
+    text = re.sub(r"[^\w\s]", "", text)
+    return text
+
+# Berechnet die semantische Ähnlichkeit zwischen zwei Sätzen mithilfe eines SBERT-Modells.
+# Die Sätze werden duech das Modell in Embeddings umgewandelt und deren Cosinus-Ähnlichkeit werden berechnet.
+#
+# Argumente:
+#   - a (str): Der Eingabetext
+#   - b (str): Der Referenzsatz
+#
+# Return: (float): Ähnlichkeitswert zwischen 0 (keine Ähnlichkeit) und 1 (identisch)
+def compute_similarity(a: str, b: str) -> float:
+    emb = model.encode([a, b])
+    return float(cosine_similarity([emb[0]], [emb[1]])[0][0])
+
+# Bewertet die Antwort eines Nutzer im Satzmodus.
+# Zunächst werden geprüft, ob der Eingabetext exakt mit der Übersetzung übereinstimmt.
+# Wenn ja, wird es als richtig bewertet.
+# Ansonsten werden die semantische Ähnlichkeit mit SBERT geprüft.
+#   similarity >= 0.85: TODO: als richtig bewertet
+#   similarity >= 0.65: teilweise korrekt, kleine Unterschiede
+#   similarity < 0.65: falsch
+#   
+# Argumente:
+#   - user_answer: Vom Nutzer eingegebener Satz
+#   - original_sentence: Referenzsatz, der in DB gespeichert ist
+#   - target_word: nicht nötig
+#   - target_language: nicht nötig
+#
+# Return: (dict) die Bewertung der Eingabe
+def evaluate_sentence_similarity(user_answer, original_sentence, target_word, target_language):
+
+    user_norm = normalize(user_answer)
+    original_norm = normalize(original_sentence)
+
+    if user_norm == original_norm:
+        return {
+            "correct": True,
+            "rating": "correct",
+            "feedback": "Perfekt! Exakt richtig.",
+            "comment": "",
+            "suggestion": ""
+        }
+
+    similarity = compute_similarity(user_answer, original_sentence)
+
+    # TODO: sollen das als richtig bewertet?
+    if similarity >= 0.85:
+        return {
+            "correct": True,
+            "rating": "almost_correct",
+            "feedback": "Sehr gut! Sinngleich.",
+            "comment": f"Ähnlichkeit: {round(similarity, 2)}",
+            "suggestion": original_sentence
+        }
+
+    elif similarity >= 0.65:
+        return {
+            "correct": False,
+            "rating": "almost_correct",
+            "feedback": "Fast richtig.",
+            "comment": f"Ähnlichkeit: {round(similarity, 2)}",
+            "suggestion": original_sentence
+        }
+
+    else:
+        return {
+            "correct": False,
+            "rating": "wrong",
+            "feedback": "Leider nicht korrekt.",
+            "comment": f"Ähnlichkeit: {round(similarity, 2)}",
+            "suggestion": original_sentence
+        }
 

@@ -13,3 +13,15 @@ class EvalRequest(BaseModel):
     original_sentence: str    # Generierten Satz
     target_word: str          # Die Vokabel, die bewertet werden soll
     target_language: str      # Sprache, in der die Bewertung erfolgen soll
+
+# --- Modelle für die Start im Konversationsmodus ---
+class StartRequest(BaseModel):
+    target_word: str         # Das Wort, das in der Konversation trainiert werden soll
+    target_language: str     # Die Sprache, in der die Konversation stattfinden soll
+    translation: str         # Die Übersetzung der Vokabel
+
+# --- Modell für nächsten Schritt im Konversationsmodus ---
+class NextRequest(BaseModel):
+    state: dict              # Der aktuelle Zustand der Konversation (inkl. aller bisherigen Nachrichten und Zähler)
+    user_input: str          # Die aktuelle Eingabe des Nutzers
+    target_language: str     # Die Sprache, in der die Konversation stattfinden soll

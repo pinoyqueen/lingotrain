@@ -98,30 +98,52 @@ Gib eine kurze technische Begründung, warum der Satz falsch ist (z.B. falsches 
 Gib freundliches, kurzes Feedback, korrigiere den Satz und gib eine Bewertung (correct, almost_correct, wrong).
 """
 
-def conversation_system_prompt(target_text, target_language):
+# Generiert den Prompt für das LLM, um einen natürliche Konversation zu erzeugen.
+# 
+# Argumente: 
+#   - target_text (str): Das Wort, das im Gespräch verwendet werden soll.
+#   - target_language (str): Die Sprache, in der die Konversation geführt wird.
+#   - translation (str): Die Bedeutung des Fokusobjekts, um eine korrekte Verwendung zu gewährleisten.
+#
+# Return: (str) der fertige Prompt-Text für das LLM
+def conversation_system_prompt(target_text, target_language, translation):
     return f"""
 Du bist ein Sprachlernassistent.
 
 Führe eine natürliche Mini-Konversation in {target_language}.
+Die beabsichtigte Bedeutung des Fokusobjekts ist: "{translation}"
+Verwende das Fokusobjekt nur in dieser Bedeutung.
 
 WICHTIG:
-- Das Fokusobjekt ist: "{target_text}" (das kann ein einzelnes Wort oder ein ganzer Satz sein).
+- Das Fokusobjekt ist: "{target_text}".
 Ziel: Der Lernende soll das Fokusobjekt selbst in seiner Antwort verwenden.
 
 Regeln:
-- Wenn das Fokusobjekt ein normaler Satz ist:
-    - Überlege dir eine realistische Situation, in der der Benutzer diesen Satz verwenden könnte.
-    - Reagiere auf den Inhalt des Satzes, ohne ihn selbst komplett zu wiederholen.
-    - Stelle offene Fragen, die den Lernenden motivieren, den Fokus-Satz oder dessen Inhalt selbst zu formulieren.
-- Wenn das Fokusobjekt eine Frage ist:
-    - Überlege dir eine Situation, in der der Benutzer diese Frage verwenden könnte.
-    - Stelle eine Folgefrage, die den Lernenden ermutigen soll, die Fokusfrage selbst zu wiederholen oder zu paraphrasieren.
-- Wenn das Fokusobjekt ein einzelnes Wort ist:
-    - Verwende das Wort mindestens einmal in deiner Antwort.
-    - Stelle offene Fragen, die das Wort aktiv einbeziehen.
+- Überlege dir eine realistische Situation, in der der Benutzer diesen Satz verwenden könnte.
+- Stelle offene Fragen, die das Wort aktiv einbeziehen.
 - Motiviere den Lernenden, aktiv zu antworten.
 - Antworte maximal in 2 Sätzen.
 - Korrigiere nicht direkt, gib nur Feedback am Ende der Konversation falls nötig.
+"""
+
+# Generiert den Prompt für das LLM, um zu prüfen, ob die Nutzerantwort relevant ist.
+# 
+# Argumente: 
+#   - assistant_question (str): Die vom Assistenten gestellte Frage.
+#   - user_input (str): Die vom Lernenden gegebene Antwort.
+#   - target_language (str): Die Sprache der Konversation.
+#
+# Return: (str) der fertige Prompt-Text, der an das LLM übergeben wird.
+#         Das LLM soll nur mit "YES" oder "NO" antworten.
+def answer_relevant_prompt(assistant_question, user_input, target_language):
+    return f"""
+Die Konversation ist in "{target_language}"
+Der Assistent hat gefragt: "{assistant_question}"
+Der Lernende antwortet: "{user_input}"
+
+Beantworte nur mit:
+YES - wenn die Antwort inhaltlich zur Frage passt
+NO - wenn sie nicht zur Frage passt
 """
 
 def conversation_feedback_prompt(target_word, target_language, conversation_history):

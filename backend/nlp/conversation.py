@@ -1,8 +1,20 @@
-from nlp.evaluator import contains_target_word, get_nlp_for_language
+from nlp.evaluator import contains_target_word, get_nlp_for_language, is_sentence_plausible
 from llm.llm import conversation_turn
-from llm.prompts import conversation_system_prompt
+from llm.prompts import conversation_system_prompt, answer_relevant_prompt
 
-# TODO: prüfen ob der Zielsatz richtig verwendet/überhaupt in der Eingabe vorkommt
+def is_relevant_answer(user_input, assistant_question, target_language):
+
+    prompt = answer_relevant_prompt(
+        assistant_question,
+        user_input,
+        target_language
+    )
+
+    result = conversation_turn([
+        {"role": "system", "content": prompt}
+    ])
+
+    return result.strip().upper().startswith("YES")
 
 def count_word_usage(messages, target_word, target_language):
     count = 0
@@ -22,7 +34,7 @@ def trim_messages(messages, max_messages=6):
     trimmed_conversation = conversation[-(max_messages-1):]
     return [system_message] + trimmed_conversation
 
-def start_conversation(target_word, target_language):
+def start_conversation(target_word, target_language, translation):
 
     # System prompt am Anfang einfügen
     messages = [
@@ -30,7 +42,8 @@ def start_conversation(target_word, target_language):
             "role": "system",
             "content": conversation_system_prompt(
                 target_word,
-                target_language
+                target_language,
+                translation
             )
         }
     ]
@@ -52,6 +65,30 @@ def start_conversation(target_word, target_language):
 
 def next_turn(state, user_input, target_language):
 
+    nlp = get_nlp_for_language(target_language)
+    if not nlp:
+        return "Sprachmodell nicht verfügbar.", state, False
+
+    doc = nlp(user_input)
+
+    # Plausibilitätsprüfung
+    if not is_sentence_plausible(doc):
+        reply = "Bitte bilde einen vollständigen Satz mit einem Verb."
+        return reply, state, False
+
+    # letzte Assistentfrage holen
+    last_assistant_message = None
+    for m in reversed(state["messages"]):
+        if m["role"] == "assistant":
+            last_assistant_message = m["content"]
+            break
+    
+    # Relevanzprüfung: Ist die Nutzerantwort relevant zu der Frage?
+    if last_assistant_message:
+        if not is_relevant_answer(user_input, last_assistant_message, target_language):
+            return "Bitte beantworte meine letzte Frage inhaltlich.", state, False
+
+    # Eingabe akzeptiert und speichern
     state["messages"].append({
         "role": "user",
         "content": user_input
@@ -71,18 +108,19 @@ def next_turn(state, user_input, target_language):
         finished = True
         # TODO: Gespräche evaluieren und Feedback geben
         reply = "Du hast die Vokabeln gut trainiert!"
-    else:
-        # Nur letzte 6 Nachrichten an LLM schicken (Kosten sparen)
-        trimmed = trim_messages(state["messages"])
+        return reply, state, finished
+    
+    # Nur letzte 6 Nachrichten an LLM schicken (Kosten sparen)
+    trimmed = trim_messages(state["messages"])
+    # Konversation fortsetzen
+    reply = conversation_turn(trimmed)
 
-        reply = conversation_turn(trimmed)
+    state["messages"].append({
+        "role": "assistant",
+        "content": reply
+    })
 
-        state["messages"].append({
-            "role": "assistant",
-            "content": reply
-        })
-
-        finished = False
+    finished = False
 
     return reply, state, finished
 

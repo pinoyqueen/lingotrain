@@ -15,12 +15,14 @@ import { useKontoStore } from "@/stores/kontoStore"
 import type { Vokabeln } from "@/models/Vokabeln"
 import type { ChatMessage } from "@/models/ChatMessage"
 import { useLernsetStore } from "@/stores/lernsetStore"
+import { useVokabelnStore } from "@/stores/vokabelnStore"
 
 
 // --- Stores initialisieren ---
 const vkStore = useVkStore()
 const kontoStore = useKontoStore()
 const lernsetStore = useLernsetStore()
+const vokabelnStore = useVokabelnStore();
 
 // --- Reaktive State-Variablen ---
 /** Vom Backend generierter Satz */
@@ -49,6 +51,10 @@ const searchQuery = ref("")
 const selectedLernsetId = ref<string | null | undefined>(null)
 /** Referenz auf das DOM-Element des Chat-Containers (zum automatischen Scrollen bei neuen Nachrichten) */
 const chatContainer = ref<HTMLElement | null>(null)
+/** Vokabeln für die Konversationsmodus (Sätze sind ausgeschlossen) */
+const conversationVocabulary = ref<Vokabeln[]>([])
+/** Der aktuelle Zustand der Konversation */
+const conversationState = ref<any>(null)
 
 // --- Computed Properties ---
 /** ID des aktuellen Kontos */
@@ -102,14 +108,22 @@ async function startTraining(setId: string, gewaehlterModus: "satz" | "konversat
   modus.value = gewaehlterModus
   
   loading.value = true
-  vkStore.resetRunde()
-  await vkStore.ladeVokabeln(setId)
   
   if (modus.value === 'satz') {
+    vkStore.resetRunde()
+    await vkStore.ladeVokabeln(setId)
     await loadSentence()
   } else {
-    // TODO: durch Aufruf von Konversation laden ersetzen
+    await vokabelnStore.loadByLernsetId(setId)
+    // im Konversationsmodus sollen nur Wörter als Vokabeln geladen werden, damit Sätze ausgeschlossen sind
+    if (vokabelnStore.liste.length === 0) {
+      saveMessage("assistant", "Keine Vokabeln in diesem Lernset gefunden. Bitte wähle ein anderes Lernset aus.", "feedback")
+      loading.value = false
+      return
+    }
+    conversationVocabulary.value = vokabelnStore.liste.filter(v => v.isWort)
     saveMessage("assistant", "Hallo! Lass uns eine Unterhaltung beginnen. Ich fange an...", "feedback")
+    await startConversation()
   }
 
   loading.value = false
@@ -119,6 +133,53 @@ async function startTraining(setId: string, gewaehlterModus: "satz" | "konversat
 watch(messages, (newVal) => {
   sessionStorage.setItem("chatHistory", JSON.stringify(newVal))
 }, { deep: true })
+
+/**
+ * Startet ene neue Konversation mit Fokus auf eine zufällige Vokabel.
+ * 
+ * Prüft zunächst ob noch Vokabeln vorhanden sind. Wenn nicht, gibt Feedback und bricht ab.
+ * Wählt zufällig eine Vokabel aus der Vokabelnliste aus.
+ * Sendet die Vokabel, die Zielsprache und die Übersetzung an das Backend, um die Konversation zu starten.
+ * Speichert den Konversationszustand und zeigt die erste Bot-Nachricht an.
+ * Entfernt die verwendete Vokabel aus der Liste, damir sie nicht erneut verwendet wird.
+ */
+async function startConversation() {
+  if (conversationVocabulary.value.length === 0) {
+    // TODO: hier die Anzeige anpassen, dass keine Vokabeln mehr für die Konversation vorhanden sind und zurück zur Auswahl springen
+    saveMessage("assistant", "Keine Wörter für die Konversation gefunden.", "feedback")
+    return
+  }
+
+  // Zufälliges Fokusobjekt wählen
+  const random = conversationVocabulary.value[Math.floor(Math.random() * conversationVocabulary.value.length)]
+
+  if (!random) {
+    saveMessage("assistant", "Keine weiteren Wörter für die Konversation gefunden.", "feedback")
+    return
+  }
+  
+  const res = await fetch("http://localhost:8000/conversation/start", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      target_word: random.vokabel,
+      target_language: languageMap[aktuelleSprache.value?.sprache || "Deutsch"],
+      translation: random.uebersetzung
+    })
+  })
+
+  const data = await res.json()
+  conversationState.value = data
+  // TODO: hier könnte die Übersetzung in der UI angezeigt werden, damit der Nutzer weiß, welches Wort er in der Konversation üben soll
+  console.log("Konversation gestartet mit Fokus auf: " + random.vokabel)
+  // Nur Assistant anzeigen, system-nachricht ignorieren
+  const firstAssistantMessage = data.messages.find((m: any) => m.role === "assistant")
+
+  saveMessage("assistant", firstAssistantMessage.content, "sentence")
+
+  // verwendeten Vokabel aus der Liste entfernen, damit er nicht nochmal in der Konversation auftaucht
+  conversationVocabulary.value = conversationVocabulary.value.filter(v => v.vokabel !== random.vokabel)
+}
 
 /**
  * Lädt einen Satz für die aktuelle Vokabel.
@@ -143,7 +204,9 @@ async function loadSentence() {
   // wenn Vokabel ein Satz ist, nächste Vokabel holen
   while (!isRundeFertig.value && !vokabel.value?.isWort) {
     console.log("KEIN WORT --- Konto: " + kontoId.value + "; Sprache: " + aktuelleSprache.value?.sprache + "; Vokabel: " + vokabel.value?.vokabel)
-    vkStore.nextFrage()
+    saveMessage("assistant", "Übersetzen Sie diesen Satz: " + vokabel.value?.uebersetzung, "sentence")
+    return
+    // vkStore.nextFrage()
   }
 
    // Runde nach Überspringen prüfen
@@ -213,23 +276,42 @@ async function nextVokabel() {
  * 
  */
 async function checkAnswer() {
+  if (modus.value === "konversation") {
+    await sendConversationMessage()
+    return
+  }
   if (!vokabel.value || !userInput.value) return
   loading.value = true
 
   // Benutereingabe in Chatverlauf speichern
   saveMessage("user", userInput.value, "answer")
 
-  const res = await fetch("http://localhost:8000/evaluate-answer", {
+  let res
+
+  if(!vokabel.value.isWort) {
+    res = await fetch("http://localhost:8000/evaluate-sentence", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_answer: userInput.value,
+        original_sentence: vokabel.value.vokabel,
+        target_word: vokabel.value.vokabel,
+        target_language: languageMap[aktuelleSprache.value?.sprache]
+      })
+    })
+
+  } else {
+    res = await fetch("http://localhost:8000/evaluate-answer", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      user_answer: userInput.value,
-      original_sentence: sentence.value,
-      target_word: vokabel.value.vokabel,
-      target_language: languageMap[aktuelleSprache.value?.sprache]
+        user_answer: userInput.value,
+        original_sentence: sentence.value,
+        target_word: vokabel.value.vokabel,
+        target_language: languageMap[aktuelleSprache.value?.sprache]
+      })
     })
-  })
-
+  }
   const data = await res.json()
 
   // erster Versuch entscheidet über den Status der Vokabel, der in der DB gesetzt werden soll
@@ -267,6 +349,51 @@ async function checkAnswer() {
   }
 
   loading.value = false
+}
+
+/**
+ * Sendet die Benutzereingabe an das Backend, um die Konversation fortzusetzen.
+ * 
+ * Speichert die Benutzereingabe im Chatverlauf.
+ * Sendet die aktuelle Konversation, Benutzereingabe und Zielsprach an das Backend.
+ * Aktualisiert den Konversationszustand mit der Antwort vom Backend und speichert die Antwort
+ * des Bots im Chatverlauf.
+ * 
+ * Wenn die Konversation abgeschlossen ist, startet automatisch eine neue Konversation
+ * mit der nächsten Vokabel.
+ */
+async function sendConversationMessage() {
+  if (!conversationState.value || !userInput.value) {
+    console.log("Fehler: Kein Konversationszustand oder keine Benutzereingabe vorhanden.")
+    return
+  }
+  loading.value = true
+
+  // Benutereingabe in Chatverlauf speichern
+  saveMessage("user", userInput.value, "answer")
+
+  const res = await fetch("http://localhost:8000/conversation/next", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      state: conversationState.value,
+      user_input: userInput.value,
+      target_language: languageMap[aktuelleSprache.value?.sprache]
+    })
+  })
+
+  const data = await res.json()
+  conversationState.value = data.state
+
+  // Antwort des Bots in Chatverlauf speichern
+  saveMessage("assistant", data.reply, "sentence")
+
+  userInput.value = ""
+  loading.value = false
+
+  if(data.finished) {
+    startConversation() // direkt neue Konversation mit der nächsten Vokabel starten
+  }
 }
 
 /**
@@ -498,14 +625,14 @@ async function resetSession() {
               <Input 
                 v-model="userInput"
                 @keyup.enter="checkAnswer"
-                :disabled="loading || vkStore.rundeFertig"
+                :disabled="loading || (modus === 'satz' && vkStore.rundeFertig)"
                 placeholder="Antwort tippen..."
                 class="h-12 text-sm pl-4 pr-32 rounded-xl border-2 focus-visible:ring-[var(--primary)]/60 shadow-sm transition-all"
               />
               <Button 
                 variant="primary"
                 @click="checkAnswer" 
-                :disabled="loading || !userInput || vkStore.rundeFertig"
+                :disabled="loading || !userInput || (modus === 'satz' && vkStore.rundeFertig)"
                 class="absolute right-1.5 h-9 px-4 text-xs rounded-lg shadow-md font-bold"
               > 
                 Überprüfen
