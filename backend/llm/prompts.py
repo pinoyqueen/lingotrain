@@ -125,3 +125,14 @@ Regeln:
 - Antworte maximal in 2 Sätzen.
 - Korrigiere nicht direkt, gib nur Feedback am Ende der Konversation falls nötig.
 """
+
+def answer_relevant_prompt(assistant_question, user_input, target_language):
+    return f"""
+Die Konversation ist in "{target_language}"
+Der Assistent hat gefragt: "{assistant_question}"
+Der Lernende antwortet: "{user_input}"
+
+Beantworte nur mit:
+YES - wenn die Antwort inhaltlich zur Frage passt
+NO - wenn sie nicht zur Frage passt
+"""
