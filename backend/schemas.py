@@ -18,6 +18,7 @@ class EvalRequest(BaseModel):
 class StartRequest(BaseModel):
     target_word: str         # Das Wort, das in der Konversation trainiert werden soll
     target_language: str     # Die Sprache, in der die Konversation stattfinden soll
+    translation: str         # Die Übersetzung der Vokabel
 
 # --- Modell für nächsten Schritt im Konversationsmodus ---
 class NextRequest(BaseModel):

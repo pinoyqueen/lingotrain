@@ -118,6 +118,11 @@ async function startTraining(setId: string, gewaehlterModus: "satz" | "konversat
   } else {
     await vokabelnStore.loadByLernsetId(setId)
     // im Konversationsmodus sollen nur Wörter als Vokabeln geladen werden, damit Sätze ausgeschlossen sind
+    if (vokabelnStore.liste.length === 0) {
+      saveMessage("assistant", "Keine Vokabeln in diesem Lernset gefunden. Bitte wähle ein anderes Lernset aus.", "feedback")
+      loading.value = false
+      return
+    }
     conversationVocabulary.value = vokabelnStore.liste.filter(v => v.isWort)
     saveMessage("assistant", "Hallo! Lass uns eine Unterhaltung beginnen. Ich fange an...", "feedback")
     await startConversation()
