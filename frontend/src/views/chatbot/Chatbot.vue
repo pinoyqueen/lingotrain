@@ -357,8 +357,8 @@ async function checkAnswer() {
  * Aktualisiert den Konversationszustand mit der Antwort vom Backend und speichert die Antwort
  * des Bots im Chatverlauf.
  * 
- * Wenn die Konversation abgeschlossen ist, startet automatisch eine neue Konversation
- * mit der nächsten Vokabel.
+ * Wenn die Konversation abgeschlossen ist, wird zunächst ein Feedback zur Konversation gegeben und
+ * dann automatisch eine neue Konversation mit der nächsten Vokabel gestartet.
  */
 async function sendConversationMessage() {
   if (!conversationState.value || !userInput.value) {
@@ -367,7 +367,7 @@ async function sendConversationMessage() {
   }
   loading.value = true
 
-  // Benutereingabe in Chatverlauf speichern
+  // Benutzereingabe im Chatverlauf speichern
   saveMessage("user", userInput.value, "answer")
 
   const res = await fetch("http://localhost:8000/conversation/next", {
@@ -383,14 +383,33 @@ async function sendConversationMessage() {
   const data = await res.json()
   conversationState.value = data.state
 
-  // Antwort des Bots in Chatverlauf speichern
-  saveMessage("assistant", data.reply, "sentence")
+  // Antwort des Bots prüfen, ob es ein Feedback-Objekt ist
+  if (typeof data.reply === "object" && data.reply.feedback) {
+
+    // Feedback wie bei normalem Satzmodus speichern (damit es in der UI gleich angezeigt werden kann)
+    saveMessage("assistant", data.reply.feedback, "feedback", {
+      suggestion: data.reply.suggestion,
+      rating: data.reply.rating,
+      comment: data.reply.comment
+    })
+
+    // die UI-Variablen aktualisieren
+    feedback.value = data.reply.feedback
+    comment.value = data.reply.comment
+    suggestion.value = data.reply.suggestion
+    rating.value = data.reply.rating
+
+  } else {
+    // normale Bot-Nachricht
+    saveMessage("assistant", data.reply, "sentence")
+  }
 
   userInput.value = ""
   loading.value = false
 
-  if(data.finished) {
-    startConversation() // direkt neue Konversation mit der nächsten Vokabel starten
+  // Wenn Konversation abgeschlossen, neue starten
+  if (data.finished) {
+    startConversation()
   }
 }
 

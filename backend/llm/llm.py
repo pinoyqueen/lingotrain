@@ -3,7 +3,7 @@ import re
 import os
 import random
 from litellm import completion
-from .prompts import evaluation_prompt
+from .prompts import evaluation_prompt, conversation_feedback_prompt
 
 os.environ["OPENAI_API_KEY"] = "sk-_Pmm8MuGJr5ExE_7BP-wgw"
 
@@ -124,3 +124,53 @@ def conversation_turn(messages):
     )
 
     return response["choices"][0]["message"]["content"].strip()
+
+# Diese Funktion bewertet eine geführte Konversation mithilfe eines LLMs.
+# Dabei wird geprüft, ob der Nutzer das Zielwort korrekt und sinnvoll verwendet hat
+# und was ihm für häufige Fehler während der Konversation passiert sind.
+#
+# Argumente: 
+#   - messages (list[dict]): die geführte Konversation mit den Keys "role" (user/assistant) und "content" (Text)
+#   - target_word (str): Die Zielvokabel, die der Nutzer verwenden soll
+#   - target_language (str): Die Zielsprache, in der die Konversation geführt sein soll
+#
+# Return: (dict) enthält rating, feedback, comment und hint
+def get_llm_conversation_feedback(messages, target_word, target_language):
+    
+    prompt = conversation_feedback_prompt(target_word, target_language, messages)
+
+    response = completion(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+        api_base=LITELLM_BASE_URL,
+        temperature=0
+    )
+
+    # JSON aus der Modellantwort extrahieren, Text davor / danach wird nicht benötigt
+    text = response["choices"][0]["message"]["content"].strip()
+    match = re.search(r'\{.*\}', text, re.DOTALL)
+
+    if match:
+        try:
+            result = json.loads(match.group())
+
+            # Falls das LLM ein Feld bei der Rückgabe vergisst, würde ein Standardwert gesetzt (für mehr Robustheit)
+            return {
+                "rating": result.get("rating", "wrong"),
+                "feedback": result.get("feedback", ""),
+                "comment": result.get("comment", ""),
+                "hint": result.get("hint", "")
+            }
+        
+        except json.JSONDecodeError:
+            return {
+                "feedback": "Es ist ein Fehler aufgetreten.",
+                "comment": "JSON konnte nicht geparst werden.",
+                "hint": ""
+            }
+
+    return {
+        "feedback": "Es ist ein Fehler aufgetreten.",
+        "comment": "Keine JSON-Antwort vom LLM.",
+        "hint": ""
+    }

@@ -1,5 +1,5 @@
 from nlp.evaluator import contains_target_word, get_nlp_for_language, is_sentence_plausible
-from llm.llm import conversation_turn
+from llm.llm import conversation_turn, get_llm_conversation_feedback
 from llm.prompts import conversation_system_prompt, answer_relevant_prompt
 
 def is_relevant_answer(user_input, assistant_question, target_language):
@@ -106,15 +106,18 @@ def next_turn(state, user_input, target_language):
     # Abbruchbedingung 2: User hat mindestens 10mal der Bot beantwortet
     if state["turn_count"] >= 10:
         finished = True
-        # TODO: Gespräche evaluieren und Feedback geben
-        reply = "10Du hast die Vokabeln gut trainiert!"
-        return reply, state, finished
+
+        # Feedback zur Konversation geben
+        feedback = evaluate_conversation(state, target_language)
+        return feedback, state, finished
+    
     # Abbruchbedingung 2: Wort muss mindestens zweimal vom User verwendet und User muss mindestens dreimal der Bot beantwortet
     if state["usage_count"] >= 2 and state["turn_count"] >= 3:
         finished = True
-        # TODO: Gespräche evaluieren und Feedback geben
-        reply = "Du hast die Vokabeln gut trainiert!"
-        return reply, state, finished
+
+        # Feedback zur Konversation geben
+        feedback = evaluate_conversation(state, target_language)
+        return feedback, state, finished
     
     # Nur letzte 6 Nachrichten an LLM schicken (Kosten sparen)
     trimmed = trim_messages(state["messages"])
@@ -130,11 +133,21 @@ def next_turn(state, user_input, target_language):
 
     return reply, state, finished
 
-def evaluate_conversation(state):
-    usage = state["usage_count"]
-    turns = state["turn_count"]
+def evaluate_conversation(state, target_language):
 
-    if(usage >= 2):
-        return {
-            ""
-        }
+    llm_feedback = get_llm_conversation_feedback(
+        state["messages"],
+        state["target_word"],
+        target_language
+    )
+
+    rating = llm_feedback.get("rating", "wrong")
+
+    return {
+        "correct": rating == "correct",
+        "rating": rating,
+        "feedback": llm_feedback["feedback"],
+        "comment": llm_feedback["comment"],
+        "suggestion": "",
+        "hint": llm_feedback["hint"]
+    }

@@ -163,6 +163,19 @@ YES - wenn die Antwort inhaltlich zur Frage passt
 NO - wenn sie nicht zur Frage passt
 """
 
+# Generiert den Prompt für das LLM, um eine Konversation zu bewerten und dem Nutzer
+# Feedback zu der geführten Konversation geben zu können.
+#
+# Dabei wird darauf geachtet, ob die Zielvokabel korrekt und sinnvoll verwendet wurde und
+# was dem Nutzer für häufige Fehler während der Konversation passiert sind. Außerdem soll
+# dem Nutzer konstruktiv und motivierend Feedback gegeben werden.
+#
+# Argumente: 
+#   - target_word (str): Die Zielvokabel, die der Nutzer verwenden soll
+#   - target_language (str): Die Zielsprache, in der die Konversation geführt sein soll
+#   - conversation_history (list[dict]): die geführte Konversation mit den Keys "role" (user/assistant) und "content" (Text)
+#
+# Return: (str) der fertige Prompt-Text für das LLM
 def conversation_feedback_prompt(target_word, target_language, conversation_history):
     
     messages_text = "\n".join([f"{m['role']}: {m['content']}" for m in conversation_history])
@@ -173,11 +186,16 @@ Du bist ein Sprachlernassistent.
 Analysiere die folgende Mini-Konversation mit Fokus auf die Vokabel "{target_word}" in der Zielsprache {target_language}.
 
 WICHTIG:
-- Erkenne, ob der Lernende die Zielvokabel korrekt verwendet hat.
+- Antworte IMMER auf Deutsch, unabhängig von der Zielsprache.
+- Erkenne, ob der Lernende die Zielvokabel korrekt und sinnvoll verwendet hat.
 - Gib Hinweise auf die häufigsten Fehler oder typische Stolperfallen.
 - Formuliere freundliche Tipps, worauf der Nutzer beim nächsten Mal achten sollte.
-- Gib die Ausgabe ausschließlich im JSON-Format:
+- Sei konstruktiv und motivierend.
+- Gib dem Nutzer in der Du-Form Feedback und Kommentare.
+
+Gib die Ausgabe ausschließlich im JSON-Format:
 {{
+    "rating": "correct | almost_correct | wrong",
     "feedback": "max 2 kurze Sätze für Lernende, freundlich formuliert, direkt im UI nutzbar, basierend auf der technischen Begründung",
     "comment": "technische Begründung, z.B. häufige Fehler",
     "hint": "kurzer Hinweis für das nächste Mal"
