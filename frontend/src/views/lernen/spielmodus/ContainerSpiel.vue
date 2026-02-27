@@ -8,6 +8,8 @@ import type { Vokabeln } from '@/models/Vokabeln';
 import { useVokabelnStore } from '@/stores/vokabelnStore';
 import { usePunkteStore } from '@/stores/punkteStore';
 import { useKontoStore } from '@/stores/kontoStore';
+import streak5Img from '@/assets/streaks_bilder/streak_5.png';
+import streak10Img from '@/assets/streaks_bilder/streak_10.png';
 
 /** Maximale Anzahl, nach der MCQ nicht mehr ausgewählt wird */
 const MAX_GELERNT = 4
@@ -25,6 +27,12 @@ const spielLoading = ref(true)
 
 /** Reaktiver State für die animierte Anzeige der Punkte am Ende einer Lernrunde */
 const anzeigepunkte = ref(0)
+
+/** Steuert die Sichtbarkeit des Streak-Overlays (z.B. bei 5 oder 10 richtigen Antworten in Folge) */
+const showStreakOverlay = ref(false);
+
+/** Enthält den Pfad zum Bild für den aktuellen Streak */
+const currentStreakImg = ref('');
 
 // --- Reaktive Computed Properties ---
 const aktuelleFrage = computed<Vokabeln | null>(() => vkStore.aktuelleFrage ?? null)
@@ -274,7 +282,7 @@ function onAnswered(result: boolean) {
   );
 
   if(streakEvent > 0) {
-    // TODO: 5er/10er-Streak anzeigen
+    triggerStreak(streakEvent);
   }
 
   if(!result) {
@@ -415,120 +423,162 @@ function animatePunkte(zielWert: number) {
   requestAnimationFrame(step)
 }
 
+/** 
+ * Methode, um den Streak für ca. 2 Sekunden anzuzeigen.
+ */
+function triggerStreak(level: number) {
+  currentStreakImg.value = level === 10 ? streak10Img : streak5Img;
+  showStreakOverlay.value = true;
+  
+  // Nach 2,2 Sekunden automatisch ausblenden (0,2s Puffer für die Animation)
+  setTimeout(() => {
+    showStreakOverlay.value = false;
+  }, 2200);
+}
+
 </script>
 
 <template>
-  <!-- wenn Runde fertig ist --> 
-  <div v-if="isRundeFertig" class="flex h-full w-full items-center justify-center bg-gradient-to-b from-background to-muted/30 p-6">
-    
-    <div class="mb-8 w-full max-w-md bg-card border shadow-2xl rounded-[2.5rem] p-8 text-center animate-in zoom-in fade-in duration-500 relative z-10">
+  <div class="relative h-full w-full overflow-hidden">
+    <!-- wenn Runde fertig ist --> 
+    <div v-if="isRundeFertig" class="flex h-full w-full items-center justify-center bg-gradient-to-b from-background to-muted/30 p-6">
       
-      <div class="relative mx-auto w-24 h-24 flex items-center justify-center">
-        <div class="absolute inset-0 bg-primary/20 rounded-full blur-2xl opacity-40"></div>
-        <div class="relative bg-primary/10 text-primary w-20 h-20 rounded-full flex items-center justify-center shadow-inner border border-primary/20 overflow-hidden group">
-          <Trophy :size="40" stroke-width="2.2" class="relative z-10" />
-          <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shine"></div>
-        </div>
-      </div>
-
-      <h2 class="text-3xl font-extrabold tracking-tight mb-2 text-foreground">
-        Super gemacht!
-      </h2>
-      <p class="text-muted-foreground mb-8 font-medium">
-        Du hast diese Runde erfolgreich beendet.
-      </p>
-
-      <div class="bg-secondary/30 border border-border rounded-3xl p-6 mb-10 relative overflow-hidden">
-        <span class="block text-xs uppercase tracking-[0.2em] font-bold text-muted-foreground mb-1 relative z-10">
-          Erhaltene Punkte
-        </span>
-        <div class="text-6xl font-black text-primary tabular-nums tracking-tighter relative z-10">
-          +{{ anzeigepunkte }}
-        </div>
-        <Trophy :size="100" class="absolute -right-6 -bottom-6 text-primary opacity-[0.04] -rotate-12" />
-      </div>
-
-      <div class="flex flex-col gap-3">
-        <Button 
-          @click="nextRunde" 
-          class="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
-        >
-          <span>Nächste Runde starten</span>
-          <ArrowRight :size="20" stroke-width="3" />
-        </Button>
+      <div class="mb-8 w-full max-w-md bg-card border shadow-2xl rounded-[2.5rem] p-8 text-center animate-in zoom-in fade-in duration-500 relative z-10">
         
-        <Button 
-          variant="ghost"
-          @click="() => router.push(`/meinevokabeln/${route.params.id}/${route.params.slug}`)" 
-          class="w-full h-12 text-muted-foreground hover:text-foreground font-semibold transition-all flex items-center justify-center gap-2"
-        >
-          <LayoutDashboard :size="18" />
-          <span>Zurück zur Übersicht</span>
-        </Button>
-      </div>
-    </div>
-  </div>
+        <div class="relative mx-auto w-24 h-24 flex items-center justify-center">
+          <div class="absolute inset-0 bg-primary/20 rounded-full blur-2xl opacity-40"></div>
+          <div class="relative bg-primary/10 text-primary w-20 h-20 rounded-full flex items-center justify-center shadow-inner border border-primary/20 overflow-hidden group">
+            <Trophy :size="40" stroke-width="2.2" class="relative z-10" />
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shine"></div>
+          </div>
+        </div>
 
-  <div v-else class="flex flex-col h-full w-full overflow-y-auto custom-scrollbar p-6">
+        <h2 class="text-3xl font-extrabold tracking-tight mb-2 text-foreground">
+          Super gemacht!
+        </h2>
+        <p class="text-muted-foreground mb-8 font-medium">
+          Du hast diese Runde erfolgreich beendet.
+        </p>
 
-    <!-- Kind-Komponenten Container -->
-    <div class="flex-1 w-full overflow-y-auto custom-scrollbar p-6 sm:p-10 flex flex-col justify-center">
-      
-      <div class="w-full max-w-2xl mx-auto animate-in fade-in zoom-in duration-300">
-        <component
-          v-if="activeComponent && aktuelleFrage"
-          :is="activeComponent"
-          :vokabel="aktuelleFrage"
-          :key="aktuelleFrage.id"
-          ref="currentSpielRef"
-          @answered="onAnswered" 
-        />
-      </div>
-      
-    </div>
+        <div class="bg-secondary/30 border border-border rounded-3xl p-6 mb-10 relative overflow-hidden">
+          <span class="block text-xs uppercase tracking-[0.2em] font-bold text-muted-foreground mb-1 relative z-10">
+            Erhaltene Punkte
+          </span>
+          <div class="text-6xl font-black text-primary tabular-nums tracking-tighter relative z-10">
+            +{{ anzeigepunkte }}
+          </div>
+          <Trophy :size="100" class="absolute -right-6 -bottom-6 text-primary opacity-[0.04] -rotate-12" />
+        </div>
 
-    <!-- Feedback und Prüfen/Next Button Container -->
-    <div class="w-full p-4 sm:p-6 shrink-0 mt-auto">
-      <footer 
-        class="transition-all duration-300 py-6 px-6 sm:px-10 rounded-2xl shadow-lg border"
-        :style="footerStyle"
-      >
-        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div class="flex flex-col gap-3">
+          <Button 
+            @click="nextRunde" 
+            class="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
+          >
+            <span>Nächste Runde starten</span>
+            <ArrowRight :size="20" stroke-width="3" />
+          </Button>
           
-          <div class="flex-1 w-full min-w-0">
-            <div v-if="showFeedback" class="flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2">
-              <div 
-                class="hidden md:flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-sm"
-                :class="feedbackRichtig ? 'bg-white text-[var(--success)]' : 'bg-white text-[var(--warning)]'"
-              >
-                <span class="text-2xl font-bold">{{ feedbackRichtig ? '✓' : '✕' }}</span>
-              </div>
+          <Button 
+            variant="ghost"
+            @click="() => router.push(`/meinevokabeln/${route.params.id}/${route.params.slug}`)" 
+            class="w-full h-12 text-muted-foreground hover:text-foreground font-semibold transition-all flex items-center justify-center gap-2"
+          >
+            <LayoutDashboard :size="18" />
+            <span>Zurück zur Übersicht</span>
+          </Button>
+        </div>
+      </div>
+    </div>
 
-              <div class="flex flex-col min-w-0 text-white">
-                <h3 class="text-lg font-bold mb-1 leading-none">
-                  {{ feedbackRichtig ? 'Richtig!' : 'Leider falsch!' }}
-                </h3>
-                <p class="text-base leading-relaxed break-all opacity-95 font-medium">
-                  {{ feedbackRichtig ? 'Hervorragende Arbeit.' : (feedbackTitle + ' ' + feedbackLoesung) }}
-                </p>
+    <div v-else class="flex flex-col h-full w-full overflow-y-auto custom-scrollbar p-6">
+
+      <!-- Kind-Komponenten Container -->
+      <div class="flex-1 w-full overflow-y-auto custom-scrollbar p-6 sm:p-10 flex flex-col justify-center">
+        
+        <div class="w-full max-w-2xl mx-auto animate-in fade-in zoom-in duration-300">
+          <component
+            v-if="activeComponent && aktuelleFrage"
+            :is="activeComponent"
+            :vokabel="aktuelleFrage"
+            :key="aktuelleFrage.id"
+            ref="currentSpielRef"
+            @answered="onAnswered" 
+          />
+        </div>
+        
+      </div>
+
+      <!-- Feedback und Prüfen/Next Button Container -->
+      <div class="w-full p-4 sm:p-6 shrink-0 mt-auto">
+        <footer 
+          class="transition-all duration-300 py-6 px-6 sm:px-10 rounded-2xl shadow-lg border"
+          :style="footerStyle"
+        >
+          <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+            
+            <div class="flex-1 w-full min-w-0">
+              <div v-if="showFeedback" class="flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2">
+                <div 
+                  class="hidden md:flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-sm"
+                  :class="feedbackRichtig ? 'bg-white text-[var(--success)]' : 'bg-white text-[var(--warning)]'"
+                >
+                  <span class="text-2xl font-bold">{{ feedbackRichtig ? '✓' : '✕' }}</span>
+                </div>
+
+                <div class="flex flex-col min-w-0 text-white">
+                  <h3 class="text-lg font-bold mb-1 leading-none">
+                    {{ feedbackRichtig ? 'Richtig!' : 'Leider falsch!' }}
+                  </h3>
+                  <p class="text-base leading-relaxed break-all opacity-95 font-medium">
+                    {{ feedbackRichtig ? 'Hervorragende Arbeit.' : (feedbackTitle + ' ' + feedbackLoesung) }}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div v-if="!spielLoading" :class="!showFeedback ? 'w-full flex justify-end' : 'w-full sm:w-auto'">
-            <Button
-              @click="buttonClicked"
-              class="w-full sm:w-auto px-12 h-12 rounded-xl font-bold text-white transition-all active:scale-95 shadow-md shrink-0"
-              :class="buttonClass"
-            >
-              {{ buttonText }}
-            </Button>
+            <div v-if="!spielLoading" :class="!showFeedback ? 'w-full flex justify-end' : 'w-full sm:w-auto'">
+              <Button
+                @click="buttonClicked"
+                class="w-full sm:w-auto px-12 h-12 rounded-xl font-bold text-white transition-all active:scale-95 shadow-md shrink-0"
+                :class="buttonClass"
+              >
+                {{ buttonText }}
+              </Button>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
 
+    <!-- Transition um 5er- bzw. 10er-Streaks einblenden zu können -->
+    <Transition
+      enter-active-class="transition duration-500 ease-out"
+      enter-from-class="opacity-0 scale-50 rotate-12"
+      enter-to-class="opacity-100 scale-100 rotate-0"
+      leave-active-class="transition duration-300 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-110"
+    >
+      <div 
+        v-if="showStreakOverlay" 
+        class="absolute inset-0 z-[100] flex items-center justify-center pointer-events-none rounded-xl overflow-hidden"
+      >
+        <div class="absolute inset-0 backdrop-blur-md bg-white/5"></div>
+        
+        <div class="relative">
+          <img 
+            :src="currentStreakImg" 
+            alt="Streak!" 
+            class="w-56 h-56 sm:w-72 sm:h-72 object-contain drop-shadow-[0_15px_40px_rgba(255,165,0,0.4)]"
+          />
+          
+          <div class="absolute inset-0 bg-orange-400/20 rounded-full blur-[70px] -z-10 animate-pulse"></div>
+        </div>
+      </div>
+    </Transition>
   </div>
+
 </template>
 
 <style scoped>
