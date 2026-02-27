@@ -138,9 +138,9 @@ function toggleDirection() {
           :class="{ 'rotate-y-180': isFlipped }"
         >
           <!-- Vorderseite -->
-          <Card class="absolute inset-0 shadow-xl p-6 backface-hidden flex items-center justify-center" v-show="!isFlipped">
+          <Card class="absolute inset-0 shadow-xl p-6 backface-hidden flex flex-col items-center justify-center" v-show="!isFlipped">
             <h2 class="text-xl font-semibold"> {{ vokabelVorne ? curr?.vokabel : curr?.uebersetzung}} </h2>
-            <p> {{ curr?.beschreibung }} </p>
+            <p class="mt-2"> {{ curr?.beschreibung }} </p>
           </Card>
 
           <!-- Rückseite -->

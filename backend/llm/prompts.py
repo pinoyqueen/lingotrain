@@ -99,6 +99,8 @@ Gib freundliches, kurzes Feedback, korrigiere den Satz und gib eine Bewertung (c
 """
 
 # Generiert den Prompt für das LLM, um einen natürliche Konversation zu erzeugen.
+# Dabei wird berücksichtigt, ob das Zielwort ein Nomen, Verb oder Adjektiv ist, 
+# damit passende Fragen formuliert werden können.
 # 
 # Argumente: 
 #   - target_text (str): Das Wort, das im Gespräch verwendet werden soll.
@@ -117,6 +119,21 @@ Verwende das Fokusobjekt nur in dieser Bedeutung.
 WICHTIG:
 - Das Fokusobjekt ist: "{target_text}".
 Ziel: Der Lernende soll das Fokusobjekt selbst in seiner Antwort verwenden.
+
+WORTART-REGEL:
+- Falls das Fokusobjekt ein VERB ist:
+  - Stelle Fragen nach Handlungen oder Aktivitäten.
+  - Frage nach persönlichen Erfahrungen oder Gewohnheiten.
+  - Beispiel: "Wann machst du das?" oder "Warum machst du das?"
+
+- Falls das Fokusobjekt ein NOMEN ist:
+  - Stelle Fragen, bei denen der Lernende das Nomen natürlich als Objekt benutzen kann.
+  - Frage nach Meinungen, Besitz, Beschreibung oder Erfahrungen.
+  - Beispiel: "Hast du so etwas?" oder "Was denkst du über das?"
+
+- Falls das Fokusobjekt ein ADJEKTIV ist:
+  - Stelle Fragen nach Meinungen oder Beschreibungen.
+  - Beispiel: "Findest du das auch so?" oder "Wann ist etwas so?"
 
 Regeln:
 - Überlege dir eine realistische Situation, in der der Benutzer diesen Satz verwenden könnte.

@@ -201,14 +201,6 @@ async function loadSentence() {
     return
   }
 
-  // wenn Vokabel ein Satz ist, nächste Vokabel holen
-  while (!isRundeFertig.value && !vokabel.value?.isWort) {
-    console.log("KEIN WORT --- Konto: " + kontoId.value + "; Sprache: " + aktuelleSprache.value?.sprache + "; Vokabel: " + vokabel.value?.vokabel)
-    saveMessage("assistant", "Übersetzen Sie diesen Satz: " + vokabel.value?.uebersetzung, "sentence")
-    return
-    // vkStore.nextFrage()
-  }
-
    // Runde nach Überspringen prüfen
   if (isRundeFertig.value) {
     saveMessage("assistant", "Lernrunde fertig", "feedback")
@@ -225,23 +217,29 @@ async function loadSentence() {
   const schwierigkeitsgrad = await vkStore.getSchwierigkeitsgrad(vokabel.value.id);
 
   loading.value = true
-  const res = await fetch("http://localhost:8000/generate-sentence", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      word: vokabel.value?.uebersetzung,          // vokabel.uebersetzung ist der deutsche Begriff also hier als Wort gewollt
-      uebersetzung: vokabel.value?.vokabel,       // vokabel.vokabel ist der fremdsprachige Begriff also hier als Übersetzung des deutschen Wortes gewollt
-      language: aktuelleSprache.value?.sprache,
-      schwierigkeitsgrad: schwierigkeitsgrad
+
+  // wenn Vokabel ein Satz ist, einfach ausgeben
+  if (!vokabel.value?.isWort) {
+    sentence.value = "Übersetzen Sie diesen Satz: " +  vokabel.value?.uebersetzung
+  } else {
+    const res = await fetch("http://localhost:8000/generate-sentence", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        word: vokabel.value?.uebersetzung,          // vokabel.uebersetzung ist der deutsche Begriff also hier als Wort gewollt
+        uebersetzung: vokabel.value?.vokabel,       // vokabel.vokabel ist der fremdsprachige Begriff also hier als Übersetzung des deutschen Wortes gewollt
+        language: aktuelleSprache.value?.sprache,
+        schwierigkeitsgrad: schwierigkeitsgrad
+      })
     })
-  })
 
-  
-  const data = await res.json()
+    const data = await res.json()
 
-  sentence.value = "Übersetzen Sie diesen Satz: " +  data.sentence
+    sentence.value = "Übersetzen Sie diesen Satz: " +  data.sentence
+  }
+
   loading.value = false
   firstAttempt.value = true
   feedback.value = ""

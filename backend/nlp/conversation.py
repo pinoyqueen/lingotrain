@@ -103,7 +103,13 @@ def next_turn(state, user_input, target_language):
         target_language
     )
 
-    # Abbruchbedingung: Wort muss mindestens zweimal vom User verwendet und User muss mindestens dreimal der Bot beantwortet
+    # Abbruchbedingung 2: User hat mindestens 10mal der Bot beantwortet
+    if state["turn_count"] >= 10:
+        finished = True
+        # TODO: Gespräche evaluieren und Feedback geben
+        reply = "10Du hast die Vokabeln gut trainiert!"
+        return reply, state, finished
+    # Abbruchbedingung 2: Wort muss mindestens zweimal vom User verwendet und User muss mindestens dreimal der Bot beantwortet
     if state["usage_count"] >= 2 and state["turn_count"] >= 3:
         finished = True
         # TODO: Gespräche evaluieren und Feedback geben

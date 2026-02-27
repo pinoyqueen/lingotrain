@@ -24,7 +24,11 @@ export const useVkStore = defineStore('vokabelKonto', {
         /** Aktuell gestellte Frage */
         aktuelleFrage: null as Vokabeln | null,
         /** Anzahl der bisherigen Lernvorgänge für die aktuelle Vokabel */
-        anzahlGelerntFuerAktuelleVokabel: 0
+        anzahlGelerntFuerAktuelleVokabel: 0,
+        /** Anzahl der bereits beantworteten Fragen */
+        beantwortet: 0,
+        /** Anzahl der Vokabel am Anfang der Runde */
+        startAnzahl: 0
     }),
     actions: {
         /**
@@ -56,6 +60,8 @@ export const useVkStore = defineStore('vokabelKonto', {
             }
 
             this.index = 0
+            this.beantwortet = 0
+            this.startAnzahl = this.alleVokabeln.length
             this.rundeFertig = this.alleVokabeln.length === 0
             if (!this.rundeFertig) this.nextFrage()
         },
@@ -88,6 +94,7 @@ export const useVkStore = defineStore('vokabelKonto', {
             var status = isRichtig ? VOKABELN_STATUS.RICHTIG : VOKABELN_STATUS.FALSCH
             if (this.aktuelleFrage?.id) {
                 this.updateStatus(this.aktuelleFrage?.id, status)
+                this.beantwortet += 1
             }
         },
 
@@ -234,6 +241,8 @@ export const useVkStore = defineStore('vokabelKonto', {
                     result.length
                 )
             }
+
+            this.beantwortet += result.length
 
             return result
         }

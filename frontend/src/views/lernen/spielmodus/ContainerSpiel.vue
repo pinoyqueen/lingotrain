@@ -25,6 +25,12 @@ const spielLoading = ref(true)
 // --- Reaktive Computed Properties ---
 const aktuelleFrage = computed<Vokabeln | null>(() => vkStore.aktuelleFrage ?? null)
 const isRundeFertig = computed<boolean>(() => vkStore.rundeFertig)
+const progress = computed(() => {
+  if (vkStore.startAnzahl === 0) return 0
+  return Math.round(
+    (vkStore.beantwortet / vkStore.startAnzahl) * 100
+  )
+})
 
 // --- Lazy-loaded Spielkomponenten ---
 const MCQSpiel = defineAsyncComponent(() => import('@/views/lernen/spielmodus/MCQSpiel.vue'))
@@ -73,6 +79,8 @@ watch(isRundeFertig, async (fertig) => {
     await kontoStore.addPunkteZuKonto(punkte);
   }
 })
+// Beobachtet den Fortschritt der aktuellen Runde
+watch(progress, val => emit('update:progress', val))
 
 // Wenn die Seite verlassen wird, werden die endgültigen
 // Punkte der Runde berechnet und im Konto aktualisiert
@@ -116,10 +124,10 @@ function pickRandom<T>(arr: T[]): T {
 /**
  * Berechnet den Fortschritt in Prozent und sendet an Parent via emit.
  */
-function updateProgress() {
-  const value =  Math.round(((vkStore.index + 1) / vkStore.alleVokabeln.length) * 100)
-  emit('update:progress', value)
-}
+// function updateProgress() {
+//   const value =  Math.round(((vkStore.index + 1) / vkStore.alleVokabeln.length) * 100)
+//   emit('update:progress', value)
+// }
 
 /**
  * Wählt den Spielmodus für die aktuelle Frage aus.
@@ -220,7 +228,7 @@ async function next() {
   activeComponent.value = null
   spielLoading.value = true
   
-  updateProgress()
+  // updateProgress()
   vkStore.nextFrage()
 
   if(!vkStore.aktuelleFrage) {
@@ -280,13 +288,14 @@ function onAnswered(result: boolean) {
  * Starte einer neuen Runde.
  */
 async function nextRunde() {
+  // emit('update:progress', 0)
   punkteStore.resetRunde();
   kontoStore.punkteSchonGespeichert = false;
   activeComponent.value = null
   vkStore.resetRunde()
+  // updateProgress()
   await vkStore.ladeVokabeln(lernsetId)
   chooseSpiel()
-  updateProgress()
 }
 
 /**
