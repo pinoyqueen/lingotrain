@@ -32,9 +32,9 @@ const activeComponent = computed(() => {
     <!-- Container -->
     <Card class="w-full h-full flex flex-col rounded-xl shadow-xl overflow-hidden">
         <!-- Fortschrittsanzeige oben -->
-        <Progress :model-value="progress" class="w-full" />
+        <Progress :model-value="progress" class="w-full h-2 shrink-0" />
         <!-- dynamische Kind-Komponente -->
-        <component v-if="activeComponent" :is="activeComponent" :lernsetId="lernsetId" :slug="slug" v-model:progress="progress"/>
+        <component v-if="activeComponent" :is="activeComponent" :lernsetId="lernsetId" :slug="slug" v-model:progress="progress" class="flex-1"/>
         <!-- Fallback für unbekannten Modus -->
         <p v-else>Unbekannter Modus: {{ modus }}</p>
     </Card>

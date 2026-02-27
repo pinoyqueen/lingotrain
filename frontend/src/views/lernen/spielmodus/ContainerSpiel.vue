@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Trophy, ArrowRight, LayoutDashboard } from 'lucide-vue-next';
 import { useVkStore } from '@/stores/vokabelKontoStore';
 import { computed, defineAsyncComponent, onMounted, ref, shallowRef, watch } from 'vue';
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
@@ -21,6 +22,9 @@ const kontoStore = useKontoStore()
 const lernsetId = String(route.params.id)
 const choosing = ref(false)
 const spielLoading = ref(true)
+
+/** Reaktiver State für die animierte Anzeige der Punkte am Ende einer Lernrunde */
+const anzeigepunkte = ref(0)
 
 // --- Reaktive Computed Properties ---
 const aktuelleFrage = computed<Vokabeln | null>(() => vkStore.aktuelleFrage ?? null)
@@ -67,9 +71,12 @@ const emit = defineEmits<{
   (e: 'update:progress', value: number): void
 }>()
 
-// Beobachtet, ob eine Runde fertig ist und berechnet ggf. dann die endgültigen
-// Punkte der Runde und aktualisiert diese im Konto (dabei werden Basis-Punkte zur 
-// Rundenbeendigung erhalten)
+/* 
+ * Beobachtet, ob eine Runde fertig ist und berechnet ggf. dann die engültigen
+ * Punkte der Runde und aktualisiert diese im Konto (dabei werden Basis-Punkte zur
+ * Rundenbeendigung erhalten) und die Animation gestartet, um die Punkte per Animation
+ * hochzählen zu lassen
+ */
 watch(isRundeFertig, async (fertig) => {
   if(!fertig) return;
   
@@ -77,8 +84,12 @@ watch(isRundeFertig, async (fertig) => {
   
   if(punkte && punkte > 0) {
     await kontoStore.addPunkteZuKonto(punkte);
+
+    // Startet die Animation mit den erhaltenen Punkten
+    animatePunkte(punkte);
   }
 })
+
 // Beobachtet den Fortschritt der aktuellen Runde
 watch(progress, val => emit('update:progress', val))
 
@@ -375,14 +386,87 @@ const buttonClass = computed(() => {
   if (!showFeedback.value) return 'bg-primary hover:bg-primary/80'
   return 'bg-black/20 hover:bg-black/30 border border-white/20'
 })
+
+/**
+ * Methode zum animierten Hochzählen der Punkte.
+ * 
+ * Diese Methode zählt die Punkte von 0 bis zu einem Endwert hoch und zeigt
+ * dies animiert in der UI an. Dabei wird eine insgesamte Dauer von 1,5 Sekunden
+ * verwendet und am Ende (kurz vor dem Endwert) wird die Animation etwas langsamer.
+ * 
+ * @param zielWert 
+ */
+function animatePunkte(zielWert: number) {
+  anzeigepunkte.value = 0
+  const dauer = 1500
+  const startZeit = performance.now()
+
+  const step = (jetzt: number) => {
+    const progress = Math.min((jetzt - startZeit) / dauer, 1)
+
+    // Gegen Ende langsamer werden
+    const easeOut = 1 - Math.pow(1 - progress, 3)
+    anzeigepunkte.value = Math.floor(easeOut * zielWert)
+
+    if (progress < 1) {
+      requestAnimationFrame(step)
+    }
+  }
+  requestAnimationFrame(step)
+}
+
 </script>
 
 <template>
-  <!-- wenn Runde fertig ist --> <!-- TODO: erzielte Punkte in der Runde anzeigen-->
-  <div v-if="isRundeFertig" class="flex h-full w-full flex-col items-center justify-center text-center space-y-4">
-    <p class="font-black text-foreground tracking-tight leading-tight mx-auto text-2xl sm:text-4xl max-w-3xl">Runde geschafft - weiter geht's!</p>
-    <Button @click="nextRunde" class="mt-2 bg-[var(--success)] text-white">Runde starten</Button>
-    <Button @click="() => router.push(`/meinevokabeln/${route.params.id}/${route.params.slug}`)"  class="bg-[var(--warning)] text-white">Zurück zur Vokabeln</Button>
+  <!-- wenn Runde fertig ist --> 
+  <div v-if="isRundeFertig" class="flex h-full w-full items-center justify-center bg-gradient-to-b from-background to-muted/30 p-6">
+    
+    <div class="mb-8 w-full max-w-md bg-card border shadow-2xl rounded-[2.5rem] p-8 text-center animate-in zoom-in fade-in duration-500 relative z-10">
+      
+      <div class="relative mx-auto w-24 h-24 flex items-center justify-center">
+        <div class="absolute inset-0 bg-primary/20 rounded-full blur-2xl opacity-40"></div>
+        <div class="relative bg-primary/10 text-primary w-20 h-20 rounded-full flex items-center justify-center shadow-inner border border-primary/20 overflow-hidden group">
+          <Trophy :size="40" stroke-width="2.2" class="relative z-10" />
+          <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shine"></div>
+        </div>
+      </div>
+
+      <h2 class="text-3xl font-extrabold tracking-tight mb-2 text-foreground">
+        Super gemacht!
+      </h2>
+      <p class="text-muted-foreground mb-8 font-medium">
+        Du hast diese Runde erfolgreich beendet.
+      </p>
+
+      <div class="bg-secondary/30 border border-border rounded-3xl p-6 mb-10 relative overflow-hidden">
+        <span class="block text-xs uppercase tracking-[0.2em] font-bold text-muted-foreground mb-1 relative z-10">
+          Erhaltene Punkte
+        </span>
+        <div class="text-6xl font-black text-primary tabular-nums tracking-tighter relative z-10">
+          +{{ anzeigepunkte }}
+        </div>
+        <Trophy :size="100" class="absolute -right-6 -bottom-6 text-primary opacity-[0.04] -rotate-12" />
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <Button 
+          @click="nextRunde" 
+          class="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
+        >
+          <span>Nächste Runde starten</span>
+          <ArrowRight :size="20" stroke-width="3" />
+        </Button>
+        
+        <Button 
+          variant="ghost"
+          @click="() => router.push(`/meinevokabeln/${route.params.id}/${route.params.slug}`)" 
+          class="w-full h-12 text-muted-foreground hover:text-foreground font-semibold transition-all flex items-center justify-center gap-2"
+        >
+          <LayoutDashboard :size="18" />
+          <span>Zurück zur Übersicht</span>
+        </Button>
+      </div>
+    </div>
   </div>
 
   <div v-else class="flex flex-col h-full w-full overflow-y-auto custom-scrollbar p-6">
