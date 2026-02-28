@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Flame, Trophy } from 'lucide-vue-next'
 
@@ -27,7 +27,13 @@ const calculator = new LevelCalculator()
 const punkte = computed(() => kontoStore.aktuellesKonto?.punkte || 0);
 const level = computed(() => calculator.level(punkte.value));
 const progress = computed(() => calculator.progress(punkte.value));
+const flamme = computed(() =>  kontoStore.aktuellesKonto?.anzTage);
 const punkteBisNaechstesLevel = computed(() => calculator.punkteBisNaechstesLevel(punkte.value));
+
+/** Beim Mount Flamme prüfen */
+onMounted(async () => {
+    kontoStore.updateFlamme()
+})
 
 /** 
  * Lernset-Shortcuts erstellen
@@ -119,7 +125,7 @@ function navigateToLernset(id: string, name: string) {
         <div class="flex flex-col items-center gap-1">
           <span class="text-xs font-bold uppercase text-secondary-foreground/70">Lernserie</span>
           <div class="flex items-center gap-2">
-            <span class="text-2xl font-black text-secondary-foreground">{{ kontoStore.aktuellesKonto?.anzTage }} </span>
+            <span class="text-2xl font-black text-secondary-foreground">{{flamme }} </span>
             <Flame class="w-6 h-6 text-secondary-foreground fill-secondary-foreground" />
           </div>
         </div>

@@ -300,6 +300,9 @@ function onAnswered(result: boolean) {
 
   vkStore.frageBeantwortet(result)
 
+  // Flamme prüfen und aktualisieren
+  kontoStore.updateFlamme()
+
   buttonText.value = 'Next'
 }
 

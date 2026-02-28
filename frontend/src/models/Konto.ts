@@ -44,5 +44,8 @@ export interface Konto {
   abzeichen: any[];   
   
   /** Alle vom User erstellten Lernsets */
-  lernsets: Lernset[];                
+  lernsets: Lernset[];            
+  
+  /** Datum des letzten Lernens */
+  letztesLernen: Date;
 }

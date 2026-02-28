@@ -9,7 +9,9 @@ import {
   getDoc, 
   arrayUnion,
   arrayRemove,
-  deleteDoc
+  deleteDoc,
+  serverTimestamp,
+  increment
 } from "firebase/firestore";
 import { db } from "./firebase"; 
 import type { Konto } from "@/models/Konto";
@@ -35,14 +37,15 @@ export async function createKonto(konto: Konto): Promise<string> {
     vorname: konto.vorname,
     nachname: konto.nachname,
     email: konto.email,
-    anzTage: konto.anzTage ?? 0,
+    anzTage: 0,
     punkte: konto.punkte ?? 0,
     benachrichtigung: konto.benachrichtigung ?? false,
     profilbild_id: konto.profilbild_id ?? "",  // TODO: Standardbild setzen
     sprachenIds: konto.sprachenIds ?? [],
     aktuelleSpracheId: konto.aktuelleSpracheId ?? konto.sprachenIds?.[0] ?? "",
     abzeichen: konto.abzeichen ?? [],
-    lernsets: konto.lernsets ?? []
+    lernsets: konto.lernsets ?? [],
+    letztesLernes: konto.letztesLernen ?? null
   };
 
   await setDoc(docRef, data);
@@ -200,5 +203,55 @@ export async function deleteKonto(id: string): Promise<void> {
   } catch (error) {
     console.error("Fehler beim Löschen des Kontos: ", error);
     throw error; 
+  }
+}
+
+/**
+ * Aktualisiert die Anzahl der gelernten Tage (anzTage) und das letzte Lern-Datum (letztesLernen).
+ * 
+ * @param kontoId - ID des Kontos
+ * @param reset - true: setzt anzTage auf 0, false: increment um 1
+ */
+export async function updateFlammeAndLetztesLernen(kontoId: string, reset: boolean): Promise<void> {
+  const docRef = doc(db, KONTO_COLLECTION, kontoId);
+
+  const updates: any = {
+    letztesLernen: serverTimestamp()
+  };
+
+  if (reset) {
+    updates.anzTage = 0;
+  } else {
+    updates.anzTage = increment(1);
+  }
+
+  try {
+    await updateDoc(docRef, updates);
+  } catch (error) {
+    console.error("Fehler beim Aktualisieren von anzTage/letztesLernen:", error);
+    throw error;
+  }
+}
+
+/**
+ * Liefert das Datum des letzten Lernens zurück.
+ * 
+ * @param kontoId - ID des Kontos
+ * @returns Datum des letzten Lernens oder null, falls nicht vorhanden
+ */
+export async function getLetztesLernenById(kontoId: string): Promise<Date | null> {
+  const docRef = doc(db, KONTO_COLLECTION, kontoId);
+
+  try {
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) return null;
+
+    // Falls letztesLernen noch nicht gesetzt ist → null zurückgeben
+    const lastLearning: any = snap.data()?.letztesLernen;
+    return lastLearning ? lastLearning.toDate() : null;
+
+  } catch (error) {
+    console.error("Fehler beim Laden von letztesLernen:", error);
+    throw error;
   }
 }

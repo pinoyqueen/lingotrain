@@ -1,6 +1,6 @@
 import { defineStore, storeToRefs } from "pinia";
 import { useAuthStore } from "./authStore";
-import { addSprache, deleteKonto, editAktuelleSprache, findKontoByUsername, removeSprache, updateKonto } from "@/repositories/KontoRepository";
+import { addSprache, deleteKonto, editAktuelleSprache, findKontoByUsername, getLetztesLernenById, removeSprache, updateFlammeAndLetztesLernen, updateKonto } from "@/repositories/KontoRepository";
 import type { Konto } from "@/models/Konto";
 import { deleteLernset, findAllIdsByKonto, findAllIdsByKontoAndSprache } from "@/repositories/LernsetRepository";
 import { getSpracheById, getSprachenByIds } from "@/repositories/SprachenRepository";
@@ -263,6 +263,49 @@ export const useKontoStore = defineStore('konto', {
             } catch (error) {
                 throw error;
             }
+        },
+
+        /**
+         * Prüft, ob das Konto heute schon gelernt hat, und aktualisiert die Flamme (anzTage) entsprechend.
+         */
+        async updateFlamme() {
+            if (!this.aktuellesKonto || !this.aktuellesKonto.id) return;
+
+            const kontoId = this.aktuellesKonto.id;
+            const jetzt = new Date();
+
+            try {
+                const letztesLernen = await getLetztesLernenById(kontoId);
+
+                // Noch nie gelernt -> Flamme starten
+                if (!letztesLernen) {
+                    await updateFlammeAndLetztesLernen(kontoId, false);
+                    this.aktuellesKonto.anzTage = 1;
+                    return;
+                }
+
+                // Tagesberechnung
+                const differenzMillis = jetzt.getTime() - letztesLernen.getTime();
+                const einTagMillis = 24 * 60 * 60 * 1000;
+
+                if (differenzMillis >= einTagMillis && differenzMillis < 2 * einTagMillis) {
+                    // Gestern gelernt -> Flamme +1
+                    await updateFlammeAndLetztesLernen(kontoId, false);
+                    this.aktuellesKonto.anzTage = (this.aktuellesKonto.anzTage ?? 0) + 1;
+
+                } else if (differenzMillis >= 2 * einTagMillis) {
+                    // Mehr als 1 Tag Pause -> Reset auf 1
+                    await updateFlammeAndLetztesLernen(kontoId, true);
+                    this.aktuellesKonto.anzTage = 0;
+
+                } else {
+                    // Heute schon gelernt -> nichts machen
+                }
+
+            } catch (error) {
+                console.error("Fehler beim Aktualisieren der Flamme:", error);
+            }
         }
+
     }
 });

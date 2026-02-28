@@ -6,6 +6,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import type { Vokabeln } from '@/models/Vokabeln'
+import { useKontoStore } from '@/stores/kontoStore'
 import { useVokabelnStore } from '@/stores/vokabelnStore'
 import { ArrowLeftIcon, ArrowRightIcon, RefreshCcwIcon, RotateCcwIcon, ShuffleIcon } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
@@ -13,6 +14,7 @@ import { useRoute } from 'vue-router'
 
 // --- Stores und Route ---
 const vokabelnStore = useVokabelnStore()
+const kontoStore = useKontoStore()
 const route = useRoute()
 const lernsetId = String(route.params.id)
 
@@ -50,6 +52,7 @@ onMounted(async () => {
     originalList.value = [...vokabelnStore.liste] // Original sichern
     totalCards.value = vokabelnStore.liste.length
     updateCard() // erste Karte setzen
+    kontoStore.updateFlamme() // Flamme prüfen und aktualisieren
 });
 
 /**
