@@ -1,5 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem
+} from '@/components/ui/select'
 import { useKontoStore } from "@/stores/kontoStore";
 import { LevelCalculator } from "@/models/LevelCalculator";
 import { Flame, Trophy } from "lucide-vue-next";
@@ -21,12 +27,11 @@ const aktuellesProfilbild = computed(() => {
   const gefunden = bilder.find(p => p.id === id)
   return gefunden?.bildlink || null;
 })
+
 const profilName = computed(() => kontoStore.aktuellesKonto?.vorname + " " + kontoStore.aktuellesKonto?.nachname)
 const level = computed(() => calculator.level(kontoStore.aktuellesKonto?.punkte!))
 const flamme = computed(() =>  kontoStore.aktuellesKonto?.anzTage)
-const aktuelleSprache = ref<{ id: string; name: string } | null>(null)
 const abzeichen = ref<{ id: string; bildlink: string }[]>([])
-
 
 </script>
 
@@ -35,6 +40,7 @@ const abzeichen = ref<{ id: string; bildlink: string }[]>([])
 
     <!-- Profil Container -->
     <div class="flex flex-col p-4 bg-white rounded-lg shadow-md">
+      
       <!-- Oberer Bereich: Profilbild + Name + Level -->
       <div class="flex items-center space-x-4 mb-4">
         <img 
@@ -53,33 +59,73 @@ const abzeichen = ref<{ id: string; bildlink: string }[]>([])
 
       <!-- Sprache + Flamme -->
       <div class="flex items-center space-x-4">
-        <span>Sprache: {{ aktuelleSprache?.name || 'Unbekannt' }}</span>
+        
+        <!-- Auswahl der aktuellen Sprache aus allen Sprachen, die der Nutzer seinem Konto hinzugefügt hat -->
+        <div class="space-y-1 w-full sm:w-[240px]">
+          <Label class="mb-1.5 px-1 text-xs font-bold text-muted-foreground uppercase">Sprache</Label>
+          
+          <Select 
+            :model-value="kontoStore.aktuellesKonto?.aktuelleSpracheId" 
+            :disabled="!kontoStore.aktuelleSprache || kontoStore.ausgewaehlteSprachen.length === 0"
+            @update:model-value="(val) => kontoStore.updateAktuelleSprache(String(val))"
+          >
+            <SelectTrigger class="w-full bg-background border-2 shadow-sm">
+              <div class="flex items-center gap-4">
+                  <template v-if="kontoStore.aktuelleSprache">
+                    <img :src="kontoStore.aktuelleSprache.flagge" class="h-4 w-auto" />
+                    <span class="font-medium">{{ kontoStore.aktuelleSprache.sprache }}</span>
+                  </template>
+                  <span v-else>Wähle eine Sprache</span>
+              </div>
+            </SelectTrigger>
+
+            <SelectContent>
+              <SelectItem 
+                v-for="s in kontoStore.ausgewaehlteSprachen" 
+                :key="s.id" 
+                :value="s.id"
+              >
+                <div class="flex items-center gap-3">
+                  <img :src="s.flagge" class="h-4 w-auto" />
+                  <span>{{ s.sprache }}</span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+
+
         <span class="text-2xl flex items-center"> {{ flamme }} </span>
         <Flame class="w-6 h-6 text-secondary-foreground fill-secondary-foreground" />
       </div>
     </div>
 
-    <!-- Statistik Container -->
-    <div class="flex flex-col p-4 bg-secondary text-white rounded-lg shadow-md">
-      <span class="text-lg font-bold mb-2">Statistik</span>
-    </div>
+    <!-- Statistik + Abzeichen -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-    <!-- Abzeichen Container -->
-    <div class="flex flex-col p-4 bg-secondary text-white rounded-lg shadow-md">
-      <span class="text-lg font-bold mb-2">Abzeichen</span>
-      <div class="overflow-x-auto">
-        <div class="flex space-x-2">
-          <div
-            v-for="badge in abzeichen"
-            :key="badge.id"
-            class="w-20 h-20 bg-white rounded-lg flex items-center justify-center"
-          >
-            <img :src="badge.bildlink" alt="Abzeichen" class="w-16 h-16 object-contain" />
+      <!-- Statistik -->
+      <div class="flex flex-col p-4 bg-secondary text-secondary-foreground rounded-lg shadow-md">
+        <span class="text-lg font-bold mb-2">Statistik</span>
+      </div>
+
+      <!-- Abzeichen -->
+      <div class="flex flex-col p-4 bg-secondary text-secondary-foreground rounded-lg shadow-md">
+        <span class="text-lg font-bold mb-2">Abzeichen</span>
+
+        <div class="overflow-x-auto">
+          <div class="flex space-x-2">
+            <div
+              v-for="badge in abzeichen"
+              :key="badge.id"
+              class="w-20 h-20 bg-white rounded-lg flex items-center justify-center"
+            >
+              <img :src="badge.bildlink" alt="Abzeichen" class="w-16 h-16 object-contain" />
+            </div>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 </template>
 

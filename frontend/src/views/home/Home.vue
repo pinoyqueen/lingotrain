@@ -23,7 +23,7 @@ const kontoStore = useKontoStore()
 const lernsetStore = useLernsetStore()
 const calculator = new LevelCalculator()
 
-// --- Computeds für Level / Punkte ---
+// Computeds für Level / Punkte 
 const punkte = computed(() => kontoStore.aktuellesKonto?.punkte || 0);
 const level = computed(() => calculator.level(punkte.value));
 const progress = computed(() => calculator.progress(punkte.value));
