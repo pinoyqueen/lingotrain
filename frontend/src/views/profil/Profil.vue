@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectTrigger,
@@ -36,10 +37,10 @@ const abzeichen = ref<{ id: string; bildlink: string }[]>([])
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen p-4 space-y-4">
+  <div class="flex flex-col min-h-screen p-4 space-y-4 bg-background">
 
     <!-- Profil Container -->
-    <div class="flex flex-col p-4 bg-white rounded-lg shadow-md">
+    <div class="flex flex-col p-6 bg-white rounded-xl shadow-md border border-border">
       
       <!-- Oberer Bereich: Profilbild + Name + Level -->
       <div class="flex items-center space-x-4 mb-4">
@@ -57,19 +58,22 @@ const abzeichen = ref<{ id: string; bildlink: string }[]>([])
         </div>
       </div>
 
+      <div class="w-full h-px bg-border mb-6"></div>
+
       <!-- Sprache + Flamme -->
-      <div class="flex items-center space-x-4">
+      <div class="flex items-center justify-between">
         
-        <!-- Auswahl der aktuellen Sprache aus allen Sprachen, die der Nutzer seinem Konto hinzugefügt hat -->
-        <div class="space-y-1 w-full sm:w-[240px]">
-          <Label class="mb-1.5 px-1 text-xs font-bold text-muted-foreground uppercase">Sprache</Label>
+        <div class="flex-1 flex flex-col items-center gap-2">
           
+          <!-- Auswahl der aktuellen Sprache aus allen Sprachen, die der Nutzer seinem Konto hinzugefügt hat -->
+          <Label class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Lernsprache</Label>
+        
           <Select 
             :model-value="kontoStore.aktuellesKonto?.aktuelleSpracheId" 
             :disabled="!kontoStore.aktuelleSprache || kontoStore.ausgewaehlteSprachen.length === 0"
             @update:model-value="(val) => kontoStore.updateAktuelleSprache(String(val))"
           >
-            <SelectTrigger class="w-full bg-background border-2 shadow-sm">
+            <SelectTrigger class="w-full max-w-[180px] bg-background border-2 shadow-sm h-10 rounded-xl">
               <div class="flex items-center gap-4">
                   <template v-if="kontoStore.aktuelleSprache">
                     <img :src="kontoStore.aktuelleSprache.flagge" class="h-4 w-auto" />
@@ -94,33 +98,40 @@ const abzeichen = ref<{ id: string; bildlink: string }[]>([])
           </Select>
         </div>
 
+        <div class="hidden sm:block h-10 w-[1px] bg-border"></div>
 
-
-        <span class="text-2xl flex items-center"> {{ flamme }} </span>
-        <Flame class="w-6 h-6 text-secondary-foreground fill-secondary-foreground" />
+        <!-- Lernserie -->
+        <div class="flex-1 flex flex-col items-center gap-1">
+          <span class="text-[10px] font-bold uppercase text-muted-foreground tracking-widest leading-none">Lernserie</span>
+          <div class="flex items-center gap-2 text-secondary-foreground">
+            <span class="text-2xl font-black">{{ flamme }}</span>
+            <Flame class="w-6 h-6 fill-secondary-foreground" />
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Statistik + Abzeichen -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
+      
       <!-- Statistik -->
-      <div class="flex flex-col p-4 bg-secondary text-secondary-foreground rounded-lg shadow-md">
-        <span class="text-lg font-bold mb-2">Statistik</span>
+      <div class="flex flex-col p-6 bg-secondary text-secondary-foreground rounded-xl shadow-sm border border-secondary">
+        <span class="text-lg font-bold mb-4 flex items-center gap-2">
+           Statistik
+        </span>
       </div>
 
       <!-- Abzeichen -->
-      <div class="flex flex-col p-4 bg-secondary text-secondary-foreground rounded-lg shadow-md">
-        <span class="text-lg font-bold mb-2">Abzeichen</span>
-
-        <div class="overflow-x-auto">
-          <div class="flex space-x-2">
+      <div class="flex flex-col p-6 bg-secondary text-secondary-foreground rounded-xl shadow-sm border border-secondary">
+        <span class="text-lg font-bold mb-4">Abzeichen</span>
+        <div class="overflow-x-auto pb-2">
+          <div class="flex space-x-3">
             <div
               v-for="badge in abzeichen"
               :key="badge.id"
-              class="w-20 h-20 bg-white rounded-lg flex items-center justify-center"
+              class="w-20 h-20 bg-white/80 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/50 shadow-sm shrink-0"
             >
-              <img :src="badge.bildlink" alt="Abzeichen" class="w-16 h-16 object-contain" />
+              <img :src="badge.bildlink" alt="Abzeichen" class="w-14 h-14 object-contain" />
             </div>
           </div>
         </div>
