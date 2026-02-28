@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Trophy, ArrowRight, LayoutDashboard } from 'lucide-vue-next';
+import { Trophy, ArrowRight, LayoutDashboard, Sparkles, Star } from 'lucide-vue-next';
 import { useVkStore } from '@/stores/vokabelKontoStore';
 import { computed, defineAsyncComponent, onMounted, ref, shallowRef, watch } from 'vue';
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
@@ -10,6 +10,7 @@ import { usePunkteStore } from '@/stores/punkteStore';
 import { useKontoStore } from '@/stores/kontoStore';
 import streak5Img from '@/assets/streaks_bilder/streak_5.png';
 import streak10Img from '@/assets/streaks_bilder/streak_10.png';
+import { LevelCalculator } from '@/models/LevelCalculator';
 
 /** Maximale Anzahl, nach der MCQ nicht mehr ausgewählt wird */
 const MAX_GELERNT = 4
@@ -21,6 +22,7 @@ const vkStore = useVkStore()
 const vokabelnStore = useVokabelnStore()
 const punkteStore = usePunkteStore()
 const kontoStore = useKontoStore()
+const levelCalculator = new LevelCalculator()
 const lernsetId = String(route.params.id)
 const choosing = ref(false)
 const spielLoading = ref(true)
@@ -88,13 +90,19 @@ const emit = defineEmits<{
 watch(isRundeFertig, async (fertig) => {
   if(!fertig) return;
   
-  const punkte = punkteStore.rundeBeenden(true);
+  const punkteVorher = kontoStore.aktuellesKonto?.punkte || 0;
+  const punkteDazu = punkteStore.rundeBeenden(true);
   
-  if(punkte && punkte > 0) {
-    await kontoStore.addPunkteZuKonto(punkte);
+  if(punkteDazu && punkteDazu > 0) {
+    await kontoStore.addPunkteZuKonto(punkteDazu);
 
-    // Startet die Animation mit den erhaltenen Punkten
-    animatePunkte(punkte);
+    // Warten bis die Animation zum Hochzählen der Punkte fertig ist
+    await animatePunkte(punkteDazu);
+    
+    // Level-Up erst nach dem Beenden des Hochzählens der Punkte einblenden (+300ms Puffer zwischen den Animationen)
+    setTimeout(() => {
+      checkLevelUp(punkteVorher, punkteDazu);
+    }, 300);
   }
 })
 
@@ -140,6 +148,7 @@ function pickRandom<T>(arr: T[]): T {
   return arr[idx]!
 }
 
+// TODO: Entfernen?
 /**
  * Berechnet den Fortschritt in Prozent und sendet an Parent via emit.
  */
@@ -405,25 +414,33 @@ const buttonClass = computed(() => {
  * dies animiert in der UI an. Dabei wird eine insgesamte Dauer von 1,5 Sekunden
  * verwendet und am Ende (kurz vor dem Endwert) wird die Animation etwas langsamer.
  * 
- * @param zielWert 
+ * @param {number} zielWert der Endpunktestand, bei dem die Animation stoppen soll
+ * @returns {Promise<void>} Gibt ein Promise zurück, wenn die Animation fertig ist
  */
-function animatePunkte(zielWert: number) {
-  anzeigepunkte.value = 0
-  const dauer = 1500
-  const startZeit = performance.now()
+function animatePunkte(zielWert: number): Promise<void> {
+  return new Promise((resolve) => {
+    anzeigepunkte.value = 0;
+    const dauer = 1500;
+    const startZeit = performance.now();
 
-  const step = (jetzt: number) => {
-    const progress = Math.min((jetzt - startZeit) / dauer, 1)
+    const step = (jetzt: number) => {
+      const progress = Math.min((jetzt - startZeit) / dauer, 1);
 
-    // Gegen Ende langsamer werden
-    const easeOut = 1 - Math.pow(1 - progress, 3)
-    anzeigepunkte.value = Math.floor(easeOut * zielWert)
+      // Gegen Ende langsamer werden
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      anzeigepunkte.value = Math.floor(easeOut * zielWert);
 
-    if (progress < 1) {
-      requestAnimationFrame(step)
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        anzeigepunkte.value = zielWert;
+        resolve();
+      }
     }
-  }
-  requestAnimationFrame(step)
+
+    requestAnimationFrame(step);
+  })
+  
 }
 
 /** 
@@ -437,6 +454,26 @@ function triggerStreak(level: number) {
   setTimeout(() => {
     showStreakOverlay.value = false;
   }, 2200);
+}
+
+const showLevelUpOverlay = ref(false);
+const newLevel = ref(0);
+
+/** * Prüft nach der Punkte-Animation, ob ein neues Level erreicht wurde.
+ * Wir vergleichen das Level VOR der Punktevergabe mit dem Level DANACH.
+ */
+async function checkLevelUp(punkteVorher: number, punkteDazu: number) {
+  const levelVorher = levelCalculator.level(punkteVorher);
+  const levelNachher = levelCalculator.level(punkteVorher + punkteDazu);
+
+  if (levelNachher > levelVorher) {
+    newLevel.value = levelNachher;
+    // Kleiner Delay, damit die Punkte-Animation erst ganz fertig wirkt
+    setTimeout(() => {
+      showLevelUpOverlay.value = true;
+      // Sound abspielen? (Optional: if(audio) audio.play())
+    }, 500);
+  }
 }
 
 </script>
@@ -577,6 +614,53 @@ function triggerStreak(level: number) {
           />
           
           <div class="absolute inset-0 bg-orange-400/20 rounded-full blur-[70px] -z-10 animate-pulse"></div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Transition um Level-Up einblenden zu können -->
+    <Transition
+      enter-active-class="transition duration-700 ease-out"
+      enter-from-class="opacity-0 scale-75 translate-y-10"
+      enter-to-class="opacity-100 scale-100 translate-y-0"
+      leave-active-class="transition duration-300 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-90"
+    >
+      <div 
+        v-if="showLevelUpOverlay" 
+        class="absolute inset-0 z-[110] flex items-center justify-center p-6 backdrop-blur-sm"
+        @click="showLevelUpOverlay = false"
+      >
+        <div class="absolute inset-0 bg-white/5"></div>
+
+        <div class="relative bg-surface rounded-[3rem] p-10 shadow-[0_20px_60px_rgba(0,0,0,0.15)] text-center max-w-sm w-full border-4 border-primary-variant animate-in zoom-in-50">
+          
+          <div class="absolute -top-20 left-1/2 -translate-x-1/2 w-64 h-64 bg-primary/20 rounded-full blur-[80px] -z-10 animate-pulse"></div>
+
+          <div class="relative mb-6">
+            <div class="bg-gradient-to-tr from-primary to-primary-variant w-24 h-24 rounded-3xl rotate-12 mx-auto flex items-center justify-center shadow-xl border-4 border-surface">
+              <Trophy :size="50" class="text-primary-foreground -rotate-12" stroke-width="2.5" />
+            </div>
+            <Sparkles class="absolute -top-3 -right-3 text-3xl text-primary animate-bounce" />
+            <Star class="absolute top-12 -left-5 text-xl text-primary-variant animate-bounce [animation-delay:0.2s]" />
+          </div>
+
+          <h2 class="text-sm font-black uppercase tracking-[0.3em] text-primary-variant mb-2">Aufstieg!</h2>
+          <div class="text-5xl font-black text-surface-foreground mb-4 tracking-tight tabular-nums">
+            Level {{ newLevel }}
+          </div>
+          
+          <p class="text-surface-foreground/70 font-medium mb-8">
+            Unglaublich! Du hast die nächste Stufe erreicht. Dein Wissen wächst!
+          </p>
+
+          <Button 
+            @click="showLevelUpOverlay = false"
+            class="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-2xl shadow-lg shadow-primary/20 transition-transform active:scale-95"
+          >
+            WEITER
+          </Button>
         </div>
       </div>
     </Transition>
