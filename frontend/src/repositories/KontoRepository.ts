@@ -43,7 +43,7 @@ export async function createKonto(konto: Konto): Promise<string> {
     profilbild_id: konto.profilbild_id ?? "",  // TODO: Standardbild setzen
     sprachenIds: konto.sprachenIds ?? [],
     aktuelleSpracheId: konto.aktuelleSpracheId ?? konto.sprachenIds?.[0] ?? "",
-    abzeichen: konto.abzeichen ?? [],
+    abzeichenIds: konto.abzeichenIds ?? [],
     lernsets: konto.lernsets ?? [],
     letztesLernes: konto.letztesLernen ?? null
   };
@@ -252,5 +252,57 @@ export async function getLetztesLernenById(kontoId: string): Promise<Date | null
   } catch (error) {
     console.error("Fehler beim Laden von letztesLernen:", error);
     throw error;
+  }
+}
+
+/**
+ * Fügt einem Konto ein neues Abzeichen hinzu.
+ *
+ * Das Abzeichen wird per arrayUnion zur Liste hinzugefügt.
+ * Falls es bereits existiert, wird es nicht doppelt gespeichert.
+ *
+ * @param kontoId - ID des Kontos
+ * @param abzeichenId - ID des hinzuzufügenden Abzeichens
+ */
+export async function addAbzeichen(
+  kontoId: string,
+  abzeichenId: string
+): Promise<void> {
+  try {
+    const docRef = doc(kontoCollection, kontoId)
+
+    await updateDoc(docRef, {
+      abzeichenIds: arrayUnion(abzeichenId)
+    })
+
+  } catch (error) {
+    console.error("Fehler beim Hinzufügen eines Abzeichens:", error)
+    throw error
+  }
+}
+
+/**
+ * Entfernt ein Abzeichen aus einem Konto.
+ *
+ * Das Abzeichen wird per arrayRemove aus dem Array entfernt,
+ * falls es vorhanden ist.
+ *
+ * @param kontoId - ID des Kontos
+ * @param abzeichenId - ID des zu entfernenden Abzeichens
+ */
+export async function removeAbzeichen(
+  kontoId: string,
+  abzeichenId: string
+): Promise<void> {
+  try {
+    const docRef = doc(kontoCollection, kontoId)
+
+    await updateDoc(docRef, {
+      abzeichenIds: arrayRemove(abzeichenId)
+    })
+
+  } catch (error) {
+    console.error("Fehler beim Entfernen eines Abzeichens:", error)
+    throw error
   }
 }

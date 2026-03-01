@@ -1,9 +1,11 @@
 import { defineStore, storeToRefs } from "pinia";
 import { useAuthStore } from "./authStore";
-import { addSprache, deleteKonto, editAktuelleSprache, findKontoByUsername, getLetztesLernenById, removeSprache, updateFlammeAndLetztesLernen, updateKonto } from "@/repositories/KontoRepository";
+import { addAbzeichen as repoAddAbzeichen, removeAbzeichen as repoRemoveAbzeichen, addSprache, deleteKonto, editAktuelleSprache, findKontoByUsername, getLetztesLernenById, removeSprache, updateFlammeAndLetztesLernen, updateKonto } from "@/repositories/KontoRepository";
+import { findByIds, findAll } from "@/repositories/AbzeichenRepository"
 import type { Konto } from "@/models/Konto";
 import { deleteLernset, findAllIdsByKonto, findAllIdsByKontoAndSprache } from "@/repositories/LernsetRepository";
 import { getSpracheById, getSprachenByIds } from "@/repositories/SprachenRepository";
+import type { Abzeichen } from "@/models/Abzeichen";
 
 /**
  * Konto-Store.
@@ -334,7 +336,78 @@ export const useKontoStore = defineStore('konto', {
             } catch (error) {
                 console.error("Fehler beim Prüfen der Streak:", error);
             }
+        },
+
+        /**
+         * Fügt einem Konto ein Abzeichen hinzu
+         */
+        async addAbzeichen(abzeichen: Abzeichen): Promise<void> {
+
+            if (!this.aktuellesKonto || !abzeichen || !abzeichen.id) {
+                throw new Error("Konto oder Abzeichen ungültig")
+            }
+
+            if (!this.aktuellesKonto.abzeichenIds) {
+                this.aktuellesKonto.abzeichenIds = []
+            }
+            
+            if (this.aktuellesKonto.id)
+                await repoAddAbzeichen(this.aktuellesKonto.id, abzeichen.id)
+
+            // Lokal aktualisieren
+            if (!this.aktuellesKonto.abzeichenIds.includes(abzeichen.id)) {
+                this.aktuellesKonto.abzeichenIds.push(abzeichen.id)
+            }
+        },
+
+        /**
+         * Entfernt ein Abzeichen von einem Konto
+         */
+        async removeAbzeichen(abzeichen: Abzeichen): Promise<void> {
+
+            if ( !this.aktuellesKonto || !abzeichen || !abzeichen.id
+            ) {
+                throw new Error("Konto oder Abzeichen ungültig")
+            }
+
+            if (!this.aktuellesKonto.abzeichenIds) {
+             this.aktuellesKonto.abzeichenIds = []
+            }
+            
+            if (this.aktuellesKonto.id)
+                await repoRemoveAbzeichen(this.aktuellesKonto.id, abzeichen.id)
+
+            // Lokal aktualisieren
+            this.aktuellesKonto.abzeichenIds =
+            this.aktuellesKonto.abzeichenIds.filter(id => id !== abzeichen.id)
+        },
+
+        /**
+         * Lädt alle Abzeichen des aktuellen Kontos
+         */
+        async getAbzeichen(): Promise<Abzeichen[]> {
+
+            if (!this.aktuellesKonto?.abzeichenIds) {
+                return []
+            }
+
+            const ids = this.aktuellesKonto.abzeichenIds
+
+            if (ids.length === 0) {
+                return []
+            }
+
+            return await findByIds(ids)
+        },
+
+        /**
+         * Lädt alle existierenden Abzeichen aus der DB
+         */
+        async getAlleAbzeichen(): Promise<Abzeichen[]> {
+            return await findAll()
         }
+
+
 
     }
 });

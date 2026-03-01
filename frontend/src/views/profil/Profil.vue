@@ -11,6 +11,7 @@ import { useKontoStore } from "@/stores/kontoStore";
 import { LevelCalculator } from "@/models/LevelCalculator";
 import { Flame, Trophy } from "lucide-vue-next";
 import { useProfilbilderStore } from "@/stores/profilbilderStore";
+import type { Abzeichen } from "@/models/Abzeichen";
 
 const kontoStore = useKontoStore()
 const profilbilderStore = useProfilbilderStore()
@@ -18,6 +19,7 @@ const calculator = new LevelCalculator()
 
 onMounted(async () => {
   await profilbilderStore.loadVerfuegbareProfilbilder();
+  abzeichen.value = await kontoStore.getAbzeichen()
 })
 
 const aktuellesProfilbild = computed(() => {
@@ -32,7 +34,7 @@ const aktuellesProfilbild = computed(() => {
 const profilName = computed(() => kontoStore.aktuellesKonto?.vorname + " " + kontoStore.aktuellesKonto?.nachname)
 const level = computed(() => calculator.level(kontoStore.aktuellesKonto?.punkte!))
 const flamme = computed(() =>  kontoStore.aktuellesKonto?.anzTage)
-const abzeichen = ref<{ id: string; bildlink: string }[]>([])
+const abzeichen = ref<Abzeichen[]>([])
 
 </script>
 
@@ -112,26 +114,47 @@ const abzeichen = ref<{ id: string; bildlink: string }[]>([])
     </div>
 
     <!-- Statistik + Abzeichen -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="flex flex-col md:flex-row gap-4 flex-1 min-h-0">
       
       <!-- Statistik -->
-      <div class="flex flex-col p-6 bg-secondary text-secondary-foreground rounded-xl shadow-sm border border-secondary">
+      <div class="flex-1 flex flex-col p-6 bg-secondary text-secondary-foreground rounded-xl shadow-sm border border-secondary">
         <span class="text-lg font-bold mb-4 flex items-center gap-2">
            Statistik
         </span>
       </div>
 
       <!-- Abzeichen -->
-      <div class="flex flex-col p-6 bg-secondary text-secondary-foreground rounded-xl shadow-sm border border-secondary">
+      <div class="flex-1 flex flex-col p-6 bg-secondary text-secondary-foreground rounded-xl shadow-sm border border-secondary">
         <span class="text-lg font-bold mb-4">Abzeichen</span>
-        <div class="overflow-x-auto pb-2">
-          <div class="flex space-x-3">
+        <div class="flex-1 overflow-y-auto min-h-0">
+          <div class="flex space-x-2">
             <div
               v-for="badge in abzeichen"
               :key="badge.id"
-              class="w-20 h-20 bg-white/80 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/50 shadow-sm shrink-0"
+              class="bg-white/80 backdrop-blur-sm rounded-2xl inline-flex flex-col items-center p-3 border border-white/50 shadow-sm shrink-0"
             >
-              <img :src="badge.bildlink" alt="Abzeichen" class="w-14 h-14 object-contain" />
+              <!-- Badge Bild -->
+              <img
+                :src="badge.abzeichenLink"
+                alt="Abzeichen"
+                class="w-16 h-16 object-contain mb-2"
+              />
+
+              <!-- Name -->
+              <p
+                class="text-sm font-semibold text-center whitespace-nowrap"
+                :title="badge.name"
+              >
+                {{ badge.name }}
+              </p>
+
+              <!-- Beschreibung -->
+              <p
+                class="text-xs text-center text-muted-foreground mt-1"
+                :title="badge.beschreibung"
+              >
+                {{ badge.beschreibung }}
+              </p>
             </div>
           </div>
         </div>

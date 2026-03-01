@@ -1,3 +1,4 @@
+import type { Abzeichen } from "./Abzeichen";
 import type { Lernset } from "./Lernset";
 
 /**
@@ -41,7 +42,7 @@ export interface Konto {
   sprachenIds: string[];
 
   /** Liste der erhaltenen Abzeichen @todo: TYPE ZU ABZEICHEN ÄNDERN   */
-  abzeichen: any[];   
+  abzeichenIds: string[];   
   
   /** Alle vom User erstellten Lernsets */
   lernsets: Lernset[];            
