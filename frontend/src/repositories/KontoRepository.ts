@@ -215,21 +215,20 @@ export async function deleteKonto(id: string): Promise<void> {
 export async function updateFlammeAndLetztesLernen(kontoId: string, reset: boolean): Promise<void> {
   const docRef = doc(db, KONTO_COLLECTION, kontoId);
 
-  const updates: any = {
-    letztesLernen: serverTimestamp()
-  };
+  const updates: any = {}
 
   if (reset) {
     updates.anzTage = 0;
   } else {
-    updates.anzTage = increment(1);
+    updates.anzTage = increment(1)
+    updates.letztesLernen = serverTimestamp()
   }
 
   try {
-    await updateDoc(docRef, updates);
+    await updateDoc(docRef, updates)
   } catch (error) {
-    console.error("Fehler beim Aktualisieren von anzTage/letztesLernen:", error);
-    throw error;
+    console.error("Fehler beim Aktualisieren von anzTage/letztesLernen:", error)
+    throw error
   }
 }
 

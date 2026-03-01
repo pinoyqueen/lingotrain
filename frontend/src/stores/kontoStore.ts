@@ -269,41 +269,70 @@ export const useKontoStore = defineStore('konto', {
          * Prüft, ob das Konto heute schon gelernt hat, und aktualisiert die Flamme (anzTage) entsprechend.
          */
         async updateFlamme() {
-            if (!this.aktuellesKonto || !this.aktuellesKonto.id) return;
+            if (!this.aktuellesKonto || !this.aktuellesKonto.id) return
 
-            const kontoId = this.aktuellesKonto.id;
-            const jetzt = new Date();
+            const kontoId = this.aktuellesKonto.id
 
             try {
-                const letztesLernen = await getLetztesLernenById(kontoId);
+                const letztesLernen = await getLetztesLernenById(kontoId)
+
+                const heute = new Date()
+                heute.setHours(0,0,0,0) // Uhrzeit entfernen
 
                 // Noch nie gelernt -> Flamme starten
                 if (!letztesLernen) {
-                    await updateFlammeAndLetztesLernen(kontoId, false);
-                    this.aktuellesKonto.anzTage = 1;
+                    await updateFlammeAndLetztesLernen(kontoId, false)
+                    this.aktuellesKonto.anzTage = 1
                     return;
                 }
 
                 // Tagesberechnung
-                const differenzMillis = jetzt.getTime() - letztesLernen.getTime();
-                const einTagMillis = 24 * 60 * 60 * 1000;
+                const letztesDatum = new Date(letztesLernen)
+                letztesDatum.setHours(0,0,0,0) // Uhrzeit entfernen
 
-                if (differenzMillis >= einTagMillis && differenzMillis < 2 * einTagMillis) {
+                const tageDifferenz = Math.floor(
+                    (heute.getTime() - letztesDatum.getTime()) / (1000 * 60 * 60 * 24)
+                )
+
+                if (tageDifferenz >= 1) {
                     // Gestern gelernt -> Flamme +1
-                    await updateFlammeAndLetztesLernen(kontoId, false);
-                    this.aktuellesKonto.anzTage = (this.aktuellesKonto.anzTage ?? 0) + 1;
-
-                } else if (differenzMillis >= 2 * einTagMillis) {
-                    // Mehr als 1 Tag Pause -> Reset auf 1
-                    await updateFlammeAndLetztesLernen(kontoId, true);
-                    this.aktuellesKonto.anzTage = 0;
+                    await updateFlammeAndLetztesLernen(kontoId, false)
+                    this.aktuellesKonto.anzTage = (this.aktuellesKonto.anzTage ?? 0) + 1
 
                 } else {
                     // Heute schon gelernt -> nichts machen
                 }
 
             } catch (error) {
-                console.error("Fehler beim Aktualisieren der Flamme:", error);
+                console.error("Fehler beim Aktualisieren der Flamme:", error)
+            }
+        },
+
+        async checkFlamme() {
+            if (!this.aktuellesKonto?.id) return;
+
+            try {
+                const letztesLernen = await getLetztesLernenById(this.aktuellesKonto.id);
+                if (!letztesLernen) return;
+
+                const heute = new Date();
+                heute.setHours(0,0,0,0);
+
+                const letztesDatum = new Date(letztesLernen);
+                letztesDatum.setHours(0,0,0,0);
+
+                const tageDifferenz = Math.floor(
+                    (heute.getTime() - letztesDatum.getTime()) / (1000*60*60*24)
+                );
+
+                if (tageDifferenz > 1) {
+                    // Mehr als 1 Tag Pause -> Reset auf 1
+                    await updateFlammeAndLetztesLernen(this.aktuellesKonto.id, true)
+                    this.aktuellesKonto.anzTage = 0
+                }
+
+            } catch (error) {
+                console.error("Fehler beim Prüfen der Streak:", error);
             }
         }
 
