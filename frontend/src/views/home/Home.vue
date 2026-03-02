@@ -32,7 +32,7 @@ const punkteBisNaechstesLevel = computed(() => calculator.punkteBisNaechstesLeve
 
 /** Beim Mount Flamme prüfen */
 onMounted(async () => {
-    kontoStore.checkFlamme()
+    await kontoStore.checkFlamme()
 })
 
 /** 

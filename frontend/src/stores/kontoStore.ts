@@ -6,6 +6,8 @@ import type { Konto } from "@/models/Konto";
 import { deleteLernset, findAllIdsByKonto, findAllIdsByKontoAndSprache } from "@/repositories/LernsetRepository";
 import { getSpracheById, getSprachenByIds } from "@/repositories/SprachenRepository";
 import type { Abzeichen } from "@/models/Abzeichen";
+import type { AbzeichenPruefErgebnis } from "@/models/AbzeichenPruefErgebnis";
+import { useAbzeichenStore } from "./abzeichenStore";
 
 /**
  * Konto-Store.
@@ -300,6 +302,7 @@ export const useKontoStore = defineStore('konto', {
                     // Gestern gelernt -> Flamme +1
                     await updateFlammeAndLetztesLernen(kontoId, false)
                     this.aktuellesKonto.anzTage = (this.aktuellesKonto.anzTage ?? 0) + 1
+                    await this.checkAbzeichen()
 
                 } else {
                     // Heute schon gelernt -> nichts machen
@@ -331,6 +334,8 @@ export const useKontoStore = defineStore('konto', {
                     // Mehr als 1 Tag Pause -> Reset auf 1
                     await updateFlammeAndLetztesLernen(this.aktuellesKonto.id, true)
                     this.aktuellesKonto.anzTage = 0
+
+                    await this.checkAbzeichen()
                 }
 
             } catch (error) {
@@ -405,6 +410,29 @@ export const useKontoStore = defineStore('konto', {
          */
         async getAlleAbzeichen(): Promise<Abzeichen[]> {
             return await findAll()
+        },
+
+        async checkAbzeichen() {
+            if (!this.aktuellesKonto) return
+            console.log("checkAbzeichen")
+            const abzeichenStore = useAbzeichenStore()
+
+            // sicherstellen, dass Regeln geladen sind
+            await abzeichenStore.initRegeln()
+
+            const ergebnis = abzeichenStore.pruefAbzeichen(this.aktuellesKonto)
+
+            // neue Abzeichen hinzufügen
+            for (const a of ergebnis.hinzufuegen) {
+                await this.addAbzeichen(a)
+                console.log("Neues Abzeichen: " + a.name)
+            }
+
+            // Abzeichen entfernen
+            for (const a of ergebnis.entfernen) {
+                await this.removeAbzeichen(a)
+                console.log("Abzeichen entfernt: " + a.name)
+            }
         }
 
 

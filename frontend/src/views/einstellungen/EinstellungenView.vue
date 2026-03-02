@@ -95,6 +95,7 @@ const confirmRemoveLanguage = (id: string) => {
 const removeLanguage = async () => {
   if(languageToDelete.value) {
     await kontoStore.removeSpracheVonKonto(languageToDelete.value);
+    await kontoStore.checkAbzeichen()
     languageToDelete.value = null;
     showDeleteAlert.value = false;
   }
@@ -110,6 +111,7 @@ const removeLanguage = async () => {
  */
 const addLanguage = async (id: string) => {
   await kontoStore.addSpracheZuKonto(id);
+  await kontoStore.checkAbzeichen()
   showLanguagePicker.value = false;
 }
 

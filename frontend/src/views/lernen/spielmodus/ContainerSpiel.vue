@@ -98,6 +98,9 @@ watch(isRundeFertig, async (fertig) => {
 
     // Warten bis die Animation zum Hochzählen der Punkte fertig ist
     await animatePunkte(punkteDazu);
+
+    // Prüfen ob Abzeichen gesammelt werden kann
+    await kontoStore.checkAbzeichen()
     
     // Level-Up erst nach dem Beenden des Hochzählens der Punkte einblenden (+300ms Puffer zwischen den Animationen)
     setTimeout(() => {
@@ -281,7 +284,7 @@ async function next() {
  * 
  * @param result True, wenn die Frage richtig beantwortet wurde
  */
-function onAnswered(result: boolean) {
+async function onAnswered(result: boolean) {
   feedbackRichtig.value = result;
 
   // Punkte bei richtiger Antwort erhöhen und Streak erhöhen oder zurücksetzen
@@ -310,7 +313,7 @@ function onAnswered(result: boolean) {
   vkStore.frageBeantwortet(result)
 
   // Flamme prüfen und aktualisieren
-  kontoStore.updateFlamme()
+  await kontoStore.updateFlamme()
 
   buttonText.value = 'Next'
 }

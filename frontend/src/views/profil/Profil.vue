@@ -128,7 +128,9 @@ const abzeichen = ref<Abzeichen[]>([])
         <span class="text-lg font-bold mb-4">Abzeichen</span>
         <div class="flex-1 overflow-y-auto min-h-0">
           <div class="flex space-x-2">
+            <p v-if="abzeichen.length === 0">Keine Abzeichen vorhanden.</p>
             <div
+              v-else
               v-for="badge in abzeichen"
               :key="badge.id"
               class="bg-white/80 backdrop-blur-sm rounded-2xl inline-flex flex-col items-center p-3 border border-white/50 shadow-sm shrink-0"
