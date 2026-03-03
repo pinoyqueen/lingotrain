@@ -313,6 +313,10 @@ export const useKontoStore = defineStore('konto', {
             }
         },
 
+        /**
+         * Prüft, ob die Flammen (aufeinanderfolgende Lerntage) des aktuellen Kontos fortgeführt
+         * wurde oder verfallen ist.
+         */
         async checkFlamme() {
             if (!this.aktuellesKonto?.id) return;
 
@@ -412,6 +416,10 @@ export const useKontoStore = defineStore('konto', {
             return await findAll()
         },
 
+        /**
+         * Prüft und synchronisiert Abzeichen für das aktuelle Konto.
+         * 
+         */
         async checkAbzeichen() {
             if (!this.aktuellesKonto) return
             console.log("checkAbzeichen")

@@ -1,5 +1,4 @@
 import {
-  getFirestore,
   collection,
   getDocs,
   getDoc,
@@ -17,6 +16,8 @@ const abzeichenCollection = collection(db, ABZEICHEN_COLLECTIION)
 
 /**
  * Lädt mehrere Abzeichen anhand einer Liste von IDs
+ * @param ids Liste der Abzeichen-Ids, die geladen werden sollen
+ * @returns Array der gefundenen Abzeichen
  */
 export async function findByIds(ids: string[]): Promise<Abzeichen[]> {
     if (!ids || ids.length === 0) {
@@ -38,6 +39,8 @@ export async function findByIds(ids: string[]): Promise<Abzeichen[]> {
 
 /**
  * Lädt ein einzelnes Abzeichen anhand seiner ID
+ * @param id die Id des Abzeichens
+ * @returns Das Abzeichen-Objekt oder null, falls nicht vorhanden
  */
 export async function findById(id: string): Promise<Abzeichen | null> {
     const docRef = doc(abzeichenCollection, id)
@@ -54,7 +57,8 @@ export async function findById(id: string): Promise<Abzeichen | null> {
 }
 
 /**
- * Lädt alle Abzeichen
+ * Lädt alle Abzeichen aus der Firestore-DB.
+ * @returns Array aller Abzeichen-Dokumente
  */
 export async function findAll(): Promise<Abzeichen[]> {
     const snapshot = await getDocs(abzeichenCollection)

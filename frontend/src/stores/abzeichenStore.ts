@@ -8,16 +8,34 @@ import { createAbzeichenPruefErgebnis, type AbzeichenPruefErgebnis } from '@/mod
 import { SprachenAbzeichenRegel } from '@/models/SprachenAbzeichenRegel'
 import { FlammenAbzeichenRegel } from '@/models/FlammenAbzeichenRegel'
 
+/**
+ * Pinia-Store zur Verwaltung von Abzeichen und deren Vergaberegeln.
+ * 
+ * Aufgaben:
+ * - Abzeichen aus der Datenquelle laden
+ * - Aus Abzeichen die passenden Prüfregeln ableiten
+ * - Für ein Konto ermitteln, welche Abzeichen hinzugefügt/entfernt werden sollen
+ */
 export const useAbzeichenStore = defineStore('abzeichen', {
   state: () => ({
+    /** Alle geladenen Abzeichen aus der DB */
     alleAbzeichen: [] as Abzeichen[],
+    /** Abgeleitete, typ-spezifische Vergaberegeln für die geladenen Abzeichen */
     regeln: [] as AbzeichenRegel[],
+    /** Flag, ob die Regeln bereits initialisiert wurden */
     initialisiert: false
 
   }),
 
   actions: {
 
+    /**
+     * Initialisiert die Abzeichen-Regeln.
+     * 
+     * Hier werden alle aus dem Repository geladen und für jedes Abzeichen basieren auf
+     * dessen Typ werden eine passende Regel abgeleitet.
+     * @returns 
+     */
     async initRegeln() {
         if (this.initialisiert) return
 
@@ -43,6 +61,15 @@ export const useAbzeichenStore = defineStore('abzeichen', {
         
     },
 
+    /**
+     * Prüft Abzeichen für ein gegebenes Konto und liefert die erforderlichen Änderungen.
+     * 
+     * Für jede Regel wird geprüft, ob das Konto die Kriterien erfüllt.
+     * Wenn erfüllt und das Abzeichen noch nicht vorhanden ist, dann in hinzufuegen.
+     * Wenn nicht erfüllt und das Abzeichen bereits vorhanden ist, dann in entfernen.
+     * @param konto Das aktuelle Benutzerkonto
+     * @returns AbzeichenPruefErgebnis mit Listen der hinzuzufügenden zu entfernenden Abzeichen
+     */
     pruefAbzeichen(konto: Konto): AbzeichenPruefErgebnis {
         const ergebnis = createAbzeichenPruefErgebnis()
 
