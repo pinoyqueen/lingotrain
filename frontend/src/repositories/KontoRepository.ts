@@ -45,7 +45,8 @@ export async function createKonto(konto: Konto): Promise<string> {
     aktuelleSpracheId: konto.aktuelleSpracheId ?? konto.sprachenIds?.[0] ?? "",
     abzeichenIds: konto.abzeichenIds ?? [],
     lernsets: konto.lernsets ?? [],
-    letztesLernes: konto.letztesLernen ?? null
+    letztesLernes: konto.letztesLernen ?? null,
+    vokabelnProTag: {}
   };
 
   await setDoc(docRef, data);
@@ -131,6 +132,32 @@ export async function editAktuelleSprache(id: string, aktuelleSpracheId: string)
     
   } catch (error) {
     console.error("Fehler beim Aktualisieren der Sprache im Repository:", error);
+    throw error; 
+  }
+}
+
+/**
+ * Aktualisiert die gelernten Vokabeln pro Tag für ein bestehendes Konto in der Datenbank.
+ * 
+ * Neue Vokabeln werden immer unter dem Key des heutigen Datums gespeichert. Sollte das Datum
+ * schon existieren, wird der Wert erhöht.
+ * 
+ * @param {string} id die ID des Kontos, bei dem die gelernten Vokabeln pro Tag aktualisiert werden sollen
+ * @param {number} neueVokabeln die Anzahl der neu gelernten Vokabeln
+ */
+export async function updateVokabelnProTag(id: string, neueVokabeln: number): Promise<void> {
+  try{
+    const docRef = doc(kontoCollection, id);
+
+    // Das heutige Datum im Format yyyy-MM-dd erzeugen
+    const heuteKey = new Date().toISOString().slice(0, 10);
+
+    await updateDoc(docRef, {
+      [`vokabelnProTag.${heuteKey}`]: increment(neueVokabeln)
+    });
+
+  } catch (error) {
+    console.error("Fehler beim Aktualisieren der gelernten Vokabeln pro Tag im Repository:", error);
     throw error; 
   }
 }

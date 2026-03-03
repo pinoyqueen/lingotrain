@@ -1,12 +1,11 @@
 import { defineStore, storeToRefs } from "pinia";
 import { useAuthStore } from "./authStore";
-import { addAbzeichen as repoAddAbzeichen, removeAbzeichen as repoRemoveAbzeichen, addSprache, deleteKonto, editAktuelleSprache, findKontoByUsername, getLetztesLernenById, removeSprache, updateFlammeAndLetztesLernen, updateKonto } from "@/repositories/KontoRepository";
+import { addAbzeichen as repoAddAbzeichen, removeAbzeichen as repoRemoveAbzeichen, addSprache, deleteKonto, editAktuelleSprache, findKontoByUsername, getLetztesLernenById, removeSprache, updateFlammeAndLetztesLernen, updateKonto, updateVokabelnProTag } from "@/repositories/KontoRepository";
 import { findByIds, findAll } from "@/repositories/AbzeichenRepository"
 import type { Konto } from "@/models/Konto";
 import { deleteLernset, findAllIdsByKonto, findAllIdsByKontoAndSprache } from "@/repositories/LernsetRepository";
 import { getSpracheById, getSprachenByIds } from "@/repositories/SprachenRepository";
 import type { Abzeichen } from "@/models/Abzeichen";
-import type { AbzeichenPruefErgebnis } from "@/models/AbzeichenPruefErgebnis";
 import { useAbzeichenStore } from "./abzeichenStore";
 
 /**
@@ -241,6 +240,40 @@ export const useKontoStore = defineStore('konto', {
                 // Rollback: Wenn DB fehlschlägt, wird die UI zurückgesetzt
                 konto.aktuelleSpracheId = alteSpracheId;
                 this.aktuelleSprache = this.ausgewaehlteSprachen.find(s => String(s.id) === String(alteSpracheId));
+            }
+        },
+
+        /**
+         * Aktualisiert die gelernten Vokabeln pro Tag für den heutigen Tag.
+         * 
+         * Hier werden die gelernten Vokabeln pro Tag des Nutzers für den heutigen Tag lokal
+         * und in der DB aktualisiert.
+         * 
+         * @param {number} neueVokabeln die Anzahl neu gelernter Vokabeln
+         */
+        async updateVokabelnHeute(neueVokabeln: number): Promise<void> {
+            if(!this.aktuellesKonto?.id) return;
+            if(neueVokabeln <= 0) return;
+
+            try{
+                const kontoId = this.aktuellesKonto.id;
+
+                // In Firestore updaten
+                await updateVokabelnProTag(kontoId, neueVokabeln);
+
+                // heutiges Datum ermitteln, damit dann auch lokal aktualisiert werden kann
+                const heuteKey = new Date().toISOString().slice(0, 10);
+
+                if(!this.aktuellesKonto.vokabelnProTag) {
+                    this.aktuellesKonto.vokabelnProTag = {};
+                }
+
+                const bisher = this.aktuellesKonto.vokabelnProTag[heuteKey] ?? 0;
+
+                this.aktuellesKonto.vokabelnProTag[heuteKey] = bisher + neueVokabeln;
+            } catch (error) {
+                console.error("Fehler beim Aktualisieren der gelernten Vokabeln pro Tag:", error);
+                throw error;
             }
         },
 

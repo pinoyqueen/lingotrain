@@ -1,5 +1,17 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
+import { Bar } from "vue-chartjs";
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  type ChartData,
+  type ChartOptions
+} from "chart.js";
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -12,6 +24,9 @@ import { LevelCalculator } from "@/models/LevelCalculator";
 import { Flame, Trophy } from "lucide-vue-next";
 import { useProfilbilderStore } from "@/stores/profilbilderStore";
 import type { Abzeichen } from "@/models/Abzeichen";
+
+// Chart.js-Komponenten registrieren
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
 
 const kontoStore = useKontoStore()
 const profilbilderStore = useProfilbilderStore()
@@ -36,10 +51,93 @@ const level = computed(() => calculator.level(kontoStore.aktuellesKonto?.punkte!
 const flamme = computed(() =>  kontoStore.aktuellesKonto?.anzTage)
 const abzeichen = ref<Abzeichen[]>([])
 
+/**
+ * Die gelernten Vokabeln pro Tag für die letzten 7 Tage.
+ * 
+ * Hier ist ein Array von Objekten mit dem Wochentag als Label und der
+ * Anzahl der Vokabeln als Wert. Dabei wird sich allerdings nur auf die
+ * letzten 7 Tage beschränkt, da mehr nicht im Säulendiagramm angezeigt werden soll.
+ */
+const letzte7Tage = computed(() => {
+  // Vokabelanzahl pro Tag aus dem KontoStore holen
+  const daten = kontoStore.aktuellesKonto?.vokabelnProTag ?? {};
+
+  // Das Array, welches das Ergebnis später enthalten soll
+  const result: { label: string; value: number } [] = [];
+
+  for(let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+
+    // Datum im Format yyyy-MM-dd holen, wenn keins vorhanden dann ist der Wert für den Tag 0 (dann wurden keine Vokabeln gelernt)
+    const key = d.toISOString().slice(0, 10);
+    const value = daten[key] ?? 0;
+
+    // der Wochentag soll abgekürzt werden, d.h. Mo, Di, Mi etc.
+    const label = d.toLocaleDateString("de-DE", {
+      weekday: "short"
+    });
+
+    result.push({ label, value });
+  }
+
+  return result;
+});
+
+/** CSS-Farbe aus dem Tailwind-Theme für die Säulen im Diagramm */
+const primaryColor = getComputedStyle(document.documentElement)
+  .getPropertyValue('--color-primary')
+  .trim()
+
+/**
+ * Daten für das Säulendiagramm.
+ * 
+ * In chartData werden die Daten für das Säulendiagramm vorbereitet.
+ * Dabei wird ein Label, die Daten der gelernten Vokabeln pro Tag aus den
+ * letzten 7 Tagen (Werte der x-Achse), die Farbe der Säulen und der 
+ * Border-Radius für die Säulen gesetzt.
+ * Außerdem werden die Wochentage für die x-Achse gesetzt.
+ */
+const chartData = computed<ChartData<'bar'>>(() => ({
+  labels: letzte7Tage.value.map(d => d.label),
+  datasets: [
+    {
+      label: 'Vokabeln pro Tag',
+      data: letzte7Tage.value.map(d => d.value),
+      backgroundColor: primaryColor,
+      borderRadius: 6
+    }
+  ]
+}))
+
+/**
+ * Optionen für das Säulendiagramm.
+ * 
+ * Hier werden Optionen für das Säulendiagramm gesetzt. Dazu zählt, dass es
+ * responsiv sein soll und die Höhe über den Container gesteuert wird.
+ * Außerdem wird die Legende ausgeblendet, da es nur einen Datensatz gibt und
+ * die y-Achse beginnt bei 0.
+ */
+const chartOptions: ChartOptions<'bar'> = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: false,
+    }
+  },
+  scales: {
+    y: {
+      type: 'linear',
+      beginAtZero: true
+    }
+  }
+};
+
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen p-4 space-y-4 bg-background">
+  <div class="flex flex-col min-h-0 md:h-[calc(100vh-60px)] p-4 space-y-4 bg-background">
 
     <!-- Profil Container -->
     <div class="flex flex-col p-6 bg-white rounded-xl shadow-md border border-border">
@@ -118,9 +216,14 @@ const abzeichen = ref<Abzeichen[]>([])
       
       <!-- Statistik -->
       <div class="flex-1 flex flex-col p-6 bg-secondary text-secondary-foreground rounded-xl shadow-sm border border-secondary">
-        <span class="text-lg font-bold mb-4 flex items-center gap-2">
-           Statistik
-        </span>
+        <span class="text-lg font-bold mb-4">Anzahl gelernter Vokabeln pro Tag (in der letzten Woche)</span>
+        <div class="flex-1 min-h-0">
+          <Bar
+            :data="chartData"
+            :options="chartOptions"
+            class="w-full h-full"
+          />
+        </div>
       </div>
 
       <!-- Abzeichen -->

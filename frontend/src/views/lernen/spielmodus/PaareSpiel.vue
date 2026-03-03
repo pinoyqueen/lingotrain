@@ -115,9 +115,9 @@ function undo(right: Vokabeln) {
  * Zuordnungen werden in resultMap richtig/falsch markiert.
  * Status werden über vkStore aktualisiert.
  * 
- * @returns True, wenn alles richtig und die Anzahl richtiger Paare
+ * @returns True, wenn alles richtig, die Anzahl richtiger Paare und die Anzahl insgeamt gelernter Vokabeln
  */
-function pruefen(): { richtig: boolean, richtigePaare: number} {
+function pruefen(): { richtig: boolean, richtigePaare: number, gelernteVokabeln: number} {
   let allesRichtig = true
   checked.value = true
 
@@ -141,7 +141,11 @@ function pruefen(): { richtig: boolean, richtigePaare: number} {
     }
   }
 
-  return { richtig: allesRichtig, richtigePaare }
+  return { 
+    richtig: allesRichtig, 
+    richtigePaare, 
+    gelernteVokabeln: leftList.value.length 
+  }
 }
 
 /** Watch auf props.vokabel.id: Wenn die Vokabel wechselt, wird neue Paare geladen */

@@ -1,4 +1,3 @@
-import type { Abzeichen } from "./Abzeichen";
 import type { Lernset } from "./Lernset";
 
 /**
@@ -49,4 +48,7 @@ export interface Konto {
   
   /** Datum des letzten Lernens */
   letztesLernen: Date;
+
+  /** Anzahl der gelernten Vokabeln pro Tag (insgesamt, also egal ob richtig oder falsch beantwortet) */
+  vokabelnProTag?: Record<string, number>;
 }

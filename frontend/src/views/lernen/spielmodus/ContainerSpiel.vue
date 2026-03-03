@@ -27,6 +27,9 @@ const lernsetId = String(route.params.id)
 const choosing = ref(false)
 const spielLoading = ref(true)
 
+/** Anzahl der gelernten Vokabeln pro Runde (insgesamt also richtig und falsch) */
+const vokabelnDerRunde = ref(0);
+
 /** Reaktiver State für die animierte Anzeige der Punkte am Ende einer Lernrunde */
 const anzeigepunkte = ref(0)
 
@@ -89,6 +92,11 @@ const emit = defineEmits<{
  */
 watch(isRundeFertig, async (fertig) => {
   if(!fertig) return;
+
+  // gelernte Vokabeln pro Tag erhöhen (Tagesstatistik)
+  if(vokabelnDerRunde.value > 0) {
+    await kontoStore.updateVokabelnHeute(vokabelnDerRunde.value);
+  }
   
   const punkteVorher = kontoStore.aktuellesKonto?.punkte || 0;
   const punkteDazu = punkteStore.rundeBeenden(true);
@@ -119,6 +127,11 @@ onBeforeRouteLeave(async () => {
 
   if(punkte && punkte > 0) {
     await kontoStore.addPunkteZuKonto(punkte);
+  }
+
+  // gelernte Vokabeln pro Tag erhöhen (Tagesstatistik)
+  if(vokabelnDerRunde.value > 0) {
+    await kontoStore.updateVokabelnHeute(vokabelnDerRunde.value);
   }
 })
 
@@ -325,6 +338,7 @@ async function nextRunde() {
   // emit('update:progress', 0)
   punkteStore.resetRunde();
   kontoStore.punkteSchonGespeichert = false;
+  vokabelnDerRunde.value = 0;
   activeComponent.value = null
   vkStore.resetRunde()
   // updateProgress()
@@ -354,6 +368,13 @@ function buttonClicked() {
       // bei Paaren gibt es pro richtigem Paar einen Punkt (+1 Punkt später wenn alles richtig war)
       if(result?.richtigePaare && result.richtigePaare > 0) {
         punkteStore.addPunkte(result.richtigePaare);
+      }
+
+      // Anzahl der Vokabeln pro Tag erhöhen (bei Paaren pro Paar, ansonsten +1)
+      if(result?.gelernteVokabeln) {
+        vokabelnDerRunde.value += result.gelernteVokabeln;
+      } else {
+        vokabelnDerRunde.value++;
       }
 
       onAnswered(result.richtig)
