@@ -287,10 +287,9 @@ def evaluate_sentence_similarity(user_answer, original_sentence, target_word, ta
 
     similarity = compute_similarity(user_answer, original_sentence)
 
-    # TODO: sollen das als richtig bewertet?
     if similarity >= 0.85:
         return {
-            "correct": True,
+            "correct": False,
             "rating": "almost_correct",
             "feedback": "Sehr gut! Sinngleich.",
             "comment": f"Ähnlichkeit: {round(similarity, 2)}",
