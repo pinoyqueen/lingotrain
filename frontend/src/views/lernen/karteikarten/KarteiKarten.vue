@@ -10,7 +10,7 @@ import { useKontoStore } from '@/stores/kontoStore'
 import { useVokabelnStore } from '@/stores/vokabelnStore'
 import { ArrowLeftIcon, ArrowRightIcon, RefreshCcwIcon, RotateCcwIcon, ShuffleIcon } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { onBeforeRouteLeave, useRoute } from 'vue-router'
 
 // --- Stores und Route ---
 const vokabelnStore = useVokabelnStore()
@@ -36,6 +36,9 @@ const currIndex = ref(0)
 /** Anzahl gesamten Vokabeln (für Progressbar verwendet) */
 const totalCards = ref(0)
 
+/** gelernten Vokabeln in der Runde (insgesamt also richtig und falsch) */
+const gelernteIds = ref(new Set<string>());
+
 /** Karte umdrehen */
 const flipCard = () => {
   isFlipped.value = !isFlipped.value
@@ -55,16 +58,31 @@ onMounted(async () => {
     kontoStore.updateFlamme() // Flamme prüfen und aktualisieren
 });
 
+// Wenn die Seite verlassen wird, wird die Anzahl der gelernten Vokabeln 
+// pro Tag (für die Tagesstatistik) aktualisiert
+onBeforeRouteLeave(async () => {
+
+    const vokabelnDerRunde = gelernteIds.value.size;
+    if(vokabelnDerRunde > 0) {
+        await kontoStore.updateVokabelnHeute(vokabelnDerRunde);
+    }
+})
+
 /**
  * Setzt die aktuelle Karte und berechnet Fortschritt.
  */
 function updateCard() {
     curr.value = vokabelnStore.liste[currIndex.value]
     isFlipped.value = false // Karte zurückdrehen
+
+    // Karte wird angezeigt, also zählt es zu gelernten Vokabeln der Runde
+    if (curr.value?.id) {
+        gelernteIds.value.add(curr.value.id)
+    }
+
     // Fortschritt berechnen
     const p = Math.round(((currIndex.value + 1) / totalCards.value) * 100)
     emit('update:progress', p)
-  
 }
 
 /**
@@ -92,6 +110,7 @@ function prevCard() {
  */
 function restart() {
     currIndex.value = 0
+    gelernteIds.value.clear();
     updateCard()
 }
 
@@ -110,6 +129,7 @@ function toggleShuffle() {
     vokabelnStore.liste = [...originalList.value]
     }
     currIndex.value = 0
+    gelernteIds.value.clear();
     updateCard()
 }
 

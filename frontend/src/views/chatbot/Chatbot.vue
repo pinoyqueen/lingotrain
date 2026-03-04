@@ -56,6 +56,8 @@ const chatContainer = ref<HTMLElement | null>(null)
 const conversationVocabulary = ref<Vokabeln[]>([])
 /** Der aktuelle Zustand der Konversation */
 const conversationState = ref<any>(null)
+/** Anzahl der gelernten Vokabeln pro Runde (insgesamt also richtig und falsch) */
+const vokabelnDerRunde = ref(0);
 
 // --- Computed Properties ---
 /** ID des aktuellen Kontos */
@@ -100,11 +102,11 @@ onMounted(async () => {
 })
 
 /** beim Verlassen der Seite wird der Chat zurückgesetzt */
-onBeforeRouteLeave((_to, _from, next) => {
-  resetSession()
+onBeforeRouteLeave(async (_to, _from, next) => {
 
-  // Navigation zulassen
-  next()
+  // Sitzung zurücksetzen und Navigation zu anderer Seite zulassen
+  resetSession();
+  next(); 
 })
 
 /**
@@ -325,6 +327,11 @@ async function checkAnswer() {
   // da der Nutzer ansonsten Hinweise hatte und es nicht alleine richtig hatte
   if(firstAttempt.value) {
     vkStore.frageBeantwortet(data.correct);
+  } 
+
+  // Im normalen Satzmodus wird nach dem ersten Versuch die Anzahl gelernter Vokabeln erhöht (egal ob richtig oder falsch, aber es wurde versucht)
+  if(firstAttempt.value && modus.value === "satz") {
+    vokabelnDerRunde.value++;
   }
   
   // Logik für zweite Chance
@@ -466,6 +473,13 @@ watch([messages, loading], () => {
  * Zurücksetzen der aktuellen Session.
  */
 async function resetSession() {
+
+  // gelernte Vokabeln pro Tag speichern (Tagesstatistik) und danach die lokale Variable zurücksetzen
+  if(vokabelnDerRunde.value > 0) {
+    await kontoStore.updateVokabelnHeute(vokabelnDerRunde.value);
+  }
+  vokabelnDerRunde.value = 0;
+  
   // Chat-Historie leeren
   messages.value = []
 
