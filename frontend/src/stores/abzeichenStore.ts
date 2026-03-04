@@ -4,7 +4,6 @@ import { ABZEICHEN_TYP, type Abzeichen } from '@/models/Abzeichen'
 import { findAll } from '@/repositories/AbzeichenRepository'
 import { PunkteAbzeichenRegel } from '@/models/PunkteAbzeichenRegel'
 import type { Konto } from '@/models/Konto'
-import { createAbzeichenPruefErgebnis, type AbzeichenPruefErgebnis } from '@/models/AbzeichenPruefErgebnis'
 import { SprachenAbzeichenRegel } from '@/models/SprachenAbzeichenRegel'
 import { FlammenAbzeichenRegel } from '@/models/FlammenAbzeichenRegel'
 
@@ -68,10 +67,10 @@ export const useAbzeichenStore = defineStore('abzeichen', {
      * Wenn erfüllt und das Abzeichen noch nicht vorhanden ist, dann in hinzufuegen.
      * Wenn nicht erfüllt und das Abzeichen bereits vorhanden ist, dann in entfernen.
      * @param konto Das aktuelle Benutzerkonto
-     * @returns AbzeichenPruefErgebnis mit Listen der hinzuzufügenden zu entfernenden Abzeichen
+     * @returns Liste der Abzeichen, die hinzugefügt werden sollen
      */
-    pruefAbzeichen(konto: Konto): AbzeichenPruefErgebnis {
-        const ergebnis = createAbzeichenPruefErgebnis()
+    pruefAbzeichen(konto: Konto): Abzeichen[] {
+        let neueAbzeichen: Abzeichen[] = []
 
         const vorhandeneIds = new Set(konto.abzeichenIds ?? [])
 
@@ -83,13 +82,10 @@ export const useAbzeichenStore = defineStore('abzeichen', {
             const istBereitsVorhanden = vorhandeneIds.has(id)
 
             if (regelErfuellt && !istBereitsVorhanden)
-                ergebnis.hinzufuegen.push(badge)
-
-            if (!regelErfuellt && istBereitsVorhanden)
-                ergebnis.entfernen.push(badge)
+                neueAbzeichen.push(badge)
         }
 
-        return ergebnis
+        return neueAbzeichen
     }
 
   }

@@ -371,8 +371,6 @@ export const useKontoStore = defineStore('konto', {
                     // Mehr als 1 Tag Pause -> Reset auf 1
                     await updateFlammeAndLetztesLernen(this.aktuellesKonto.id, true)
                     this.aktuellesKonto.anzTage = 0
-
-                    await this.checkAbzeichen()
                 }
 
             } catch (error) {
@@ -464,15 +462,9 @@ export const useKontoStore = defineStore('konto', {
             const ergebnis = abzeichenStore.pruefAbzeichen(this.aktuellesKonto)
 
             // neue Abzeichen hinzufügen
-            for (const a of ergebnis.hinzufuegen) {
+            for (const a of ergebnis) {
                 await this.addAbzeichen(a)
                 console.log("Neues Abzeichen: " + a.name)
-            }
-
-            // Abzeichen entfernen
-            for (const a of ergebnis.entfernen) {
-                await this.removeAbzeichen(a)
-                console.log("Abzeichen entfernt: " + a.name)
             }
         }
 
