@@ -142,6 +142,13 @@ def test():
             "lang": "en",
             "description": "falsches Komma nach Adverbial"
         },
+        {
+            "original_sentence": "Obwohl ich müde bin, gehe ich joggen.",
+            "word": "run",
+            "user_answer": "Although I am tired I will go for a run.",
+            "lang": "en",
+            "description": "fehlendes Komma im Nebensatz"
+        },
 
         # ----------------------------------------------------------------------
         # Französische Sätze
@@ -230,6 +237,13 @@ def test():
             "lang": "fr",
             "description": "fehlendes Komma im Nebensatz"
         },
+        {
+            "original_sentence": "Obwohl ich müde bin, gehe ich joggen.",
+            "word": "courir",
+            "user_answer": "Bien que je sois fatigué je vais courir.",
+            "lang": "fr",
+            "description": "fehlendes Komma im Nebensatz"
+        },
 
         # ----------------------------------------------------------------------
         # Spanische Sätze
@@ -305,9 +319,16 @@ def test():
             "description": "korrektes Fragezeichen"
         },
         {
+            "original_sentence": "Esse ich eine Birne?",
+            "word": "pera",
+            "user_answer": "Como una pera?", 
+            "lang": "es",
+            "description": "fehlendes Fragezeichen am Anfang"
+        },
+        {
             "original_sentence": "Obwohl ich keinen Hunger habe, esse ich eine Birne.",
             "word": "pera",
-            "user_answer": "Aunque no tengo hambre como una pera",  
+            "user_answer": "Aunque no tengo hambre como una pera.",  
             "lang": "es",
             "description": "fehlendes Komma im Nebensatz"
         },
@@ -324,6 +345,13 @@ def test():
             "user_answer": "Manana iré a España y soñaré con el mar.",
             "lang": "es",
             "description": "falsch, spanischer Akzent fehlt"
+        },
+        {
+            "original_sentence": "Obwohl ich müde bin, gehe ich joggen.",
+            "word": "correr",
+            "user_answer": "Aunque estoy cansado voy a correr.",
+            "lang": "es",
+            "description": "fehlendes Komma im Nebensatz"
         }
     ]
 

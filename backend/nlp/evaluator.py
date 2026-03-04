@@ -78,6 +78,18 @@ def contains_target_word(doc, target_word, target_language):
 
     return False
 
+# Prüft, ob der Satz mit einem Satzzeichen endet.
+#
+# Argumente:
+#   - user_sentence (str): der Satz, den der Nutzer eingegeben hat
+#
+# Return: True, wenn ein Satzzeichen vorhanden ist; ansonsten False
+def check_sentence_end(user_sentence):
+    user_sentence = user_sentence.strip()
+    if not user_sentence:
+        return False
+    return user_sentence[-1] in [".", "!", "?"]
+
 # Prüft, ob der Satz plausibel ist.
 # Ein Satz gilt als plausibel, wenn er mehr als ein Token enthält und mindestens
 # ein Verb oder Hilfsverb enthält. Sollte ein Wort die Wurzel eines Satzes sein, so 
@@ -115,6 +127,9 @@ def is_sentence_plausible(doc):
 def build_rule_feedback(errors, target_word):
     if "target_word_missing" in errors:
         return f"Das Wort '{target_word}' fehlt in deinem Satz."
+    
+    if "missing_end_punctuation" in errors:
+        return f"Das Satzzeichen am Ende fehlt oder ist falsch."
     
     if "sentence_not_plausible" in errors:
         return "Dein Satz ist nicht vollständig oder enthält kein Verb."
@@ -171,14 +186,25 @@ def evaluate_answer_combined(user_answer, original_sentence, target_word, target
         result["word_correct"] = True
     else:
         result["correct"] = False
+        result["hint"] = "Achte darauf, das richtige Wort zu verwenden."
         result["errors"].append("target_word_missing")
         result["feedback"] = build_rule_feedback(result["errors"], target_word)
         result["rating"] = "wrong"
         return result  # LLM nicht aufrufen, Satz sowieso falsch
+    
+    # Überprüfung, ob der Satz mit einem Satzzeichen endet
+    if not check_sentence_end(user_answer):
+        result["correct"] = False
+        result["hint"] = "Achte auf fehlende Satzzeichen."
+        result["errors"].append("missing_end_punctuation")
+        result["feedback"] = build_rule_feedback(result["errors"], target_word)
+        result["rating"] = "wrong"
+        return result # LLM nicht aufrufen
 
     # Überprüfen, ob der Satz plausibel ist
     if not is_sentence_plausible(doc):
         result["correct"] = False
+        result["hint"] = "Achte darauf, einen vollständigen Satz zu schreiben."
         result["errors"].append("sentence_not_plausible")
         result["feedback"] = build_rule_feedback(result["errors"], target_word)
         result["rating"] = "wrong"

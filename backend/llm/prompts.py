@@ -81,12 +81,13 @@ Bewerte den folgenden Satz eines Lerners im Vergleich zu einem Referenzsatz:
 Bewertungsregeln:
 1. Die Handlung und Bedeutung muss exakt mit dem Referenzsatz übereinstimmen.
 2. Grammatik muss korrekt sein.
-3. Zeichensetzung am Satzende muss korrekt sein:
-   - Aussagesätze → Punkt
-   - Fragesätze → Fragezeichen
-   - Ausrufesätze → Ausrufezeichen
-   Fehlendes oder falsches Satzzeichen gilt als **Fehler**.
-4. Rechtschreibung muss korrekt sein.
+3. Prüfe das vorhandene Satzzeichen am Ende des Satzes:
+    - Aussagesätze -> Punkt (.)
+    - Fragesätze -> Fragezeichen (?)
+    - Ausrufesätze -> Ausrufezeichen (!)
+    - Ignoriere führende oder folgende Leerzeichen.
+    - Fehlendes Satzzeichen muss NICHT überprüft werden.
+4. Rechtschreibung, Akzente und Kommasetzung müssen korrekt sein.
 5. Die Bedeutung des Fokuswortes muss zum Referenzsatz passen, auch wenn die Sprachen unterschiedlich sind.
 
 Bewertungsskala: 
