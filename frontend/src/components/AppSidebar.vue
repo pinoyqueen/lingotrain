@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import {Home, Settings} from 'lucide-vue-next'
+import {Bot, Home, Settings} from 'lucide-vue-next'
 import { useRoute } from 'vue-router';
 import ProfileIcon from '@/assets/icons/ProfileIcon.vue'
 import MeineVokabelnIcon from '@/assets/icons/MeineVokabelnIcon.vue';
-import CommnityIcon from '@/assets/icons/CommnityIcon.vue';
 
 import {
   Sidebar,
@@ -31,7 +30,7 @@ const items = [
   {
     title: 'Chatbot',
     name: 'chatbot',
-    icon: CommnityIcon,
+    icon: Bot,
   },
   {
     title: 'Profil',
