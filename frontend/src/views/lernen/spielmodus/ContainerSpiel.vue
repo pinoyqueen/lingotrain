@@ -164,15 +164,6 @@ function pickRandom<T>(arr: T[]): T {
   return arr[idx]!
 }
 
-// TODO: Entfernen?
-/**
- * Berechnet den Fortschritt in Prozent und sendet an Parent via emit.
- */
-// function updateProgress() {
-//   const value =  Math.round(((vkStore.index + 1) / vkStore.alleVokabeln.length) * 100)
-//   emit('update:progress', value)
-// }
-
 /**
  * Wählt den Spielmodus für die aktuelle Frage aus.
  * 
@@ -272,7 +263,6 @@ async function next() {
   activeComponent.value = null
   spielLoading.value = true
   
-  // updateProgress()
   vkStore.nextFrage()
 
   if(!vkStore.aktuelleFrage) {
@@ -335,13 +325,11 @@ async function onAnswered(result: boolean) {
  * Starte einer neuen Runde.
  */
 async function nextRunde() {
-  // emit('update:progress', 0)
   punkteStore.resetRunde();
   kontoStore.punkteSchonGespeichert = false;
   vokabelnDerRunde.value = 0;
   activeComponent.value = null
   vkStore.resetRunde()
-  // updateProgress()
   await vkStore.ladeVokabeln(lernsetId)
   chooseSpiel()
 }
