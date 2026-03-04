@@ -16,6 +16,7 @@ import type { Vokabeln } from "@/models/Vokabeln"
 import type { ChatMessage } from "@/models/ChatMessage"
 import { useLernsetStore } from "@/stores/lernsetStore"
 import { useVokabelnStore } from "@/stores/vokabelnStore"
+import { onBeforeRouteLeave } from "vue-router"
 
 
 // --- Stores initialisieren ---
@@ -96,6 +97,14 @@ onMounted(async () => {
   if (saved) {
     messages.value = JSON.parse(saved)
   }
+})
+
+/** beim Verlassen der Seite wird der Chat zurückgesetzt */
+onBeforeRouteLeave((_to, _from, next) => {
+  resetSession()
+
+  // Navigation zulassen
+  next()
 })
 
 /**
