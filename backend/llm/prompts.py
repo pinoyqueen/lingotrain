@@ -23,25 +23,35 @@ Beachte dabei folgende Regeln:
 - Der Satz muss grammatikalisch korrekt sein.
 - Der Satz soll korrekt mit einem Punkt, Ausrufezeichen oder Fragezeichen enden.
 - Achte darauf, dass nur ein Satzzeichen am Ende steht.
-- Benutze natürliche Alltagssprache.
+- Benutze natürliche Alltagssprache (kein poetischer oder literarischer Stil).
 - Variiere den Satzstil, z.B. mit verschiedenen Verben oder Satzanfängen und vermeide identische Wiederholungen.
 - Keine Erklärungen, Übersetzungen oder zusätzlichen Sätze.
+- Klar und gut verständlich für Sprachlernende.
+- Komplexität bedeutet Satzstruktur, NICHT gehobene Wortwahl.
 
 Regeln nach Schwierigkeitsgrad:
 - einfach:
-    - Kurzer Hauptsatz
+    - 5 bis 9 Wörter
+    - Ein kurzer Hauptsatz
     - Präsens
     - Kein Nebensatz
-    - Ein Verb
+    - Genau ein konjugiertes Verb
+    - Kein Adjektiv
 - mittel: 
-    - Hauptsatz mit mindestens einem Nebensatz oder zwei zusammenhängenden Handlungen
+    - 8 bis 14 Wörter
+    - Genau ein Nebensatz mit "weil", "wenn" oder "dass" 
+      ODER zwei Hauptsätze mit "und" oder "aber"
     - Präsens oder Perfekt
-    - Zwei Verben möglich
+    - Maximal zwei konjugierte Verben 
+    - Keine Schachtelung
+    - Höchstens ein Adjektiv
 - schwer:
-    - mindestens zwei Nebensätze oder maximal ein verschachtelter Nebensatz
+    - 12 bis 18 Wörter
+    - Genau ein Nebensatz (auch mit "obwohl", "nachdem" oder "während" erlaubt)
+    - Keine verschachtelten Nebensätze
+    - Maximal drei konjugierte Verben
+    - Höchstens zwei Adjektive
     - Zeitform darf variieren
-    - Adverbien und Konjunktionen erlaubt, Satz soll noch gut lesbar sein
-    - Pronomen und Rückbezüge verwenden
 
 Erzeuge mehrere sinnvolle Versionen des Satzes und wähle eine zufällige aus.
 Gib NUR den einen Satz aus. 
