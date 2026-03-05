@@ -27,3 +27,18 @@ lerna-debug.log*
 **/__pycache__/
 **/venv/
 **/.env
+
+# Allgemeine LaTeX Hilfsdateien
+*.aux
+*.log
+*.toc
+*.bcf
+*.run.xml
+*.synctex.gz
+*.out
+*.fls
+*.fdb_latexmk
+*.lof
+*.lot
+*.bbl
+*.blg

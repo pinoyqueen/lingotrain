@@ -1,0 +1,52 @@
+\documentclass[a4paper, numbers=withenddot, 11pt]{scrartcl}
+
+% Vorlage fuer Ausarbeitungen
+% Getestet mit pdfTeX; Kodierung: UTF8
+% Version 2024-09-26
+
+% Hier Daten eintragen:
+\newcommand{\name}{Andreleene Prado und Ronja Rüther}
+\newcommand{\modulname}{Mobile Applikationen}
+\newcommand{\thema}{Vokabeltrainer als native App}
+\newcommand{\hochschule}{Fachhochschule Südwestfalen}
+\newcommand{\datum}{\today}
+% Ende der Daten
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[ngerman]{babel}
+\usepackage{csquotes}
+\usepackage[style=ieee, backend=biber, bibencoding=utf8]{biblatex}
+\addbibresource{literatur.bib}
+\usepackage{csquotes}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{graphicx}
+% \usepackage{scrhack}
+\usepackage{setspace}\setstretch{1.1}
+\usepackage[table]{xcolor}  % Für Farben
+\usepackage{tabularx}       % Für Tabellenbreite anpassen
+\usepackage{geometry}       % Seitenränder
+\geometry{margin=2.5cm}     % Standardseitenränder
+\usepackage{colortbl}
+\usepackage{float}
+\parindent0pt\parskip6pt
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
+
+\usepackage{listings}
+\renewcommand{\lstlistingname}{Listing}
+\lstset{basicstyle=\small\ttfamily, breaklines=true, keepspaces=true, columns=fixed}
+
+\title{\thema}
+\author{\name\\ \hochschule \\[5mm] Schriftliche Ausarbeitung im Modul\\ „\modulname“}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\input{mainmatter}
+\printbibliography
+\include{erklaerung}
+\end{document}
