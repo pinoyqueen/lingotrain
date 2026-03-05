@@ -39,6 +39,12 @@ const showStreakOverlay = ref(false);
 /** Enthält den Pfad zum Bild für den aktuellen Streak */
 const currentStreakImg = ref('');
 
+/** Steuert die Sichtbarkeit des Level-Overlays */
+const showLevelUpOverlay = ref(false);
+
+/** gibt das neue Level an */
+const newLevel = ref(0);
+
 // --- Reaktive Computed Properties ---
 const aktuelleFrage = computed<Vokabeln | null>(() => vkStore.aktuelleFrage ?? null)
 const isRundeFertig = computed<boolean>(() => vkStore.rundeFertig)
@@ -468,11 +474,12 @@ function triggerStreak(level: number) {
   }, 2200);
 }
 
-const showLevelUpOverlay = ref(false);
-const newLevel = ref(0);
-
-/** * Prüft nach der Punkte-Animation, ob ein neues Level erreicht wurde.
- * Wir vergleichen das Level VOR der Punktevergabe mit dem Level DANACH.
+/**
+ * Prüft nach der Punkte-Animation, ob ein neues Level erreicht wurde.
+ * Dabei wird das Level vor der Punktevergabe mit dem Level danach verglichen.
+ * 
+ * @param {number} punkteVorher die Punkte vor der Runde
+ * @param {number} punkteDazu die gesammelten Punkte in der Runde
  */
 async function checkLevelUp(punkteVorher: number, punkteDazu: number) {
   const levelVorher = levelCalculator.level(punkteVorher);
@@ -480,10 +487,9 @@ async function checkLevelUp(punkteVorher: number, punkteDazu: number) {
 
   if (levelNachher > levelVorher) {
     newLevel.value = levelNachher;
-    // Kleiner Delay, damit die Punkte-Animation erst ganz fertig wirkt
+
     setTimeout(() => {
       showLevelUpOverlay.value = true;
-      // Sound abspielen? (Optional: if(audio) audio.play())
     }, 500);
   }
 }
