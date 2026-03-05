@@ -1,7 +1,51 @@
 \newpage
 \section{Einleitung}
+\subsection{Hintergrund (Ronja Rüther)}
+In den letzten Jahren sind Chatbots, die auf Large Language Models (LLMs) basieren, wie etwa ChatGPT oder Google Gemini, 
+immer beliebter geworden und verzeichnen stetig wachsende Nutzerzahlen. Für viele Personen sind Chatbots zu einem festen 
+Bestandteil im Alltag geworden und werden herkömmlichen Suchmaschinen bei der Informationsbeschaffung oft vorgezogen. 
+Der Hauptvorteil liegt darin, dass Nutzer schneller eine direkte Antwort auf spezifische Fragestellungen erhalten und 
+die eigenständige Suche nach Information auf verschiedenen Webseiten dadurch weitgehend entfällt. \parencite{AIPunk2025}
 
+Diese technologische Entwicklung hat auch im Bereich der Bildung große Veränderungen mit sich gebracht.
+Während traditionelle Sprachlern-Apps oft auf statischen Übungen und vorgegebenen Antwortmöglichkeiten basieren,
+ermöglichen LLMs die dynamische Generierung von Lerninhalten. Da diese Modelle die natürliche Sprache nicht nur erkennen, 
+sondern ebenfalls die Rechtschreibung und Grammatik bewerten können, können sie die Rolle eines digitalen Sprachlehrers 
+übernehmen. \parencite{Vorteile_KI_Bildung} 
+Dabei erhält der Nutzer individuelles Feedback auf seine Eingaben und kann gezielt auf typische Fehlerquellen
+hingewiesen werden. Da diese Interaktion zwischen dem Nutzer und der Künstlichen Intelligenz (KI) in Echtzeit erfolgt, erhält der Nutzer das Gefühl, 
+als würde er mit einer realen Person digital kommunizieren. \parencite{Vorteile_KI_Bildung}
 
+Trotz dieser Fortschritte gibt es immer noch Herausforderungen, die diese Modelle mit sich bringen. \parencite{Vorteile_KI_Bildung}
+Dazu zählen beispielsweise die individuelle Anpassung der Satzgenerierung an das Sprachniveau des Nutzers sowie die Generierung von 
+hilfreichem und nachvollziehbarem Feedback.
+
+\subsection{Stand der Technik}
+
+\subsection{Zielsetzung (Ronja Rüther)}
+Das Ziel dieses Projekts ist die Entwicklung einer webbasierten Sprachlern-Applikation namens \enquote{Lingotrain AI}, die
+die Möglichkeiten von Large Language Models nutzt, um ein individuelles Sprachtraining zu ermöglichen. Die Anwendung 
+unterstützt die Zielsprachen Englisch, Französisch und Spanisch, wobei Deutsch immer als Ausgangssprache dient. 
+Die Schwerpunkte der Entwicklung liegen dabei auf der dynamischen Satzgenerierung und der Evaluation der Nutzereingaben.
+
+Ein zentraler Aspekt ist die Implementierung einer Logik, die zu einer gegebenen Vokabel dynamisch Beispielsätze generiert.
+Dabei ist besonders darauf zu achten, dass die Sätze inhaltlich passend und grammatikalisch korrekt sind.
+Außerdem wird ein Schwierigkeitsgrad gegeben (einfach, mittel, schwer), an den der Satz angepasst werden soll. Dieser basiert auf 
+der Anzahl, wie oft der Nutzer die gegebene Vokabel bereits gelernt hat. 
+
+Des Weiteren soll das System die Antwort des Nutzers evaluieren. Um die Lernmotivation zu steigern, ist ein zweistufiges Feedback-System
+geplant. Dabei soll der Nutzer bei falschen Eingaben zunächst einen hilfreichen Hinweis erhalten, um einen zweiten Lösungsversuch zu ermöglichen.
+Anschließend soll ihm detailliert Feedback gegeben werden, in dem ein Korrekturvorschlag und eine Erklärung des Fehlers enthalten ist.
+Auch bei korrekten Antworten wird eine Bestätigung mit kurzem Feedback ausgegeben.
+
+Zusätzlich zum Training mit einzelnen Sätzen ist auch ein Konversationsmodus vorgesehen. In diesem Modus soll eine vorgegebene Vokabel
+aktiv in die Konversation eingebunden werden. Das Modell generiert hierfür passende Sätze, die für eine Konversation mit 
+dem Nutzer geeignet sind. Auf diese Sätze muss der Nutzer reagieren, sodass ein interaktives Gespräch entsteht.
+Diese Konversation findet statt, bis der Nutzer das Zielwort mehrfach erfolgreich angewendet hat oder eine maximale
+Anzahl an Interaktionen erreicht ist. Abschließend analysiert das Modell die Konversation und erstellt detailliertes Feedback,
+um dem Nutzer Verbesserungen sowie häufige Fehlerquellen nennen zu können.
+
+\section{}
 Eine Aufzählung:
 
 \begin{itemize}
