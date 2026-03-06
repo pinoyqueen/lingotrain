@@ -230,7 +230,7 @@ const chartOptions: ChartOptions<'bar'> = {
       <div class="flex-1 flex flex-col p-6 bg-secondary text-secondary-foreground rounded-xl shadow-sm border border-secondary">
         <span class="text-lg font-bold mb-4">Abzeichen</span>
         <div class="flex-1 overflow-y-auto min-h-0">
-          <div class="flex space-x-2">
+          <div class="grid grid-cols-2 gap-3">
             <p v-if="abzeichen.length === 0">Keine Abzeichen vorhanden.</p>
             <div
               v-else
