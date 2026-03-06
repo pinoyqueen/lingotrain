@@ -32,69 +32,78 @@ kann.
 
 \section{Verwendete Bibliotheken und Werkzeuge}
 
-\section{Aufbau der Webanwendung}
+\section{Aufbau der Webanwendung (Ronja Rüther)}
+Die Struktur der Webanwendung folgt einem modularen Aufbau und bietet eine übersichtliche
+Gruppierung der Kernfunktionen. Da \textit{Lingotrain} als \textit{Single-Page-Application} (SPA) umgesetzt
+wurde, erfolgt der Übergang zwischen den einzelnen Modulen ohne spürbare Neulade-Vorgänge. 
+Die Benutzeroberfläche gliedert sich dabei in die folgenden fünf Hauptbereiche: \textit{Home}, 
+\textit{Meine Vokabeln}, \textit{Chatbot}, \textit{Profil} und \textit{Einstellungen}.
+
+\subsection{Authentifizierung und Nutzerzugang (Ronja Rüther)}
+Der Zugang zur Webanwendung wird durch einen Authentifizierungsprozess geschützt, der die Registrierung und
+Anmeldung mittels E-Mail-Adresse und Passwort umfasst. Beim initialen Aufruf der Anwendung bildet die 
+Login-Seite den zentralen Einstiegspunkt, von der aus auch zur Registrierung weitergeleitet werden kann, 
+sollte der Nutzer noch kein Konto besitzen.
+
+Nach erfolgreicher Authentifizierung erfolgt in beiden Fällen eine automatische Weiterleitung auf das Dashboard (Home).
+Beim Login hat der Nutzer außerdem die Wahl, ob er für zukünftige Sitzungen angemeldet bleiben möchte oder 
+nicht. Dies soll die Nutzerfreundlichkeit erhöhen, da ein vermehrter Anmeldeprozess häufig als störend empfunden wird.
+Durch die Speicherung der Sitzungsdaten wird bei zukünftigen Aufrufen der Anwendung der Anmeldeprozess übersprungen und
+direkt zum Dashboard weitergeleitet.
+
+Der Authentifizierungsprozess ist hier besonders wichtig, damit die individuell angelegten Lernsets und Vokabeln sowie die 
+erreichten Fortschritte einem Benutzerkonto zugeordnet werden können. Durch diese eindeutige Identifizierung ist es möglich,
+die personalisierten Daten aus der Datenbank zu laden und dem Benutzer auf verschiedenen Endgeräten zur Verfügung stellen 
+zu können.
+
+\subsection{Dashboard (Ronja Rüther)}
+Das Dashboard (Home) bildet den Einstiegspunkt für angemeldete Benutzer und dient zur Motivation sowie dem schnellen Einstieg in die Lerneinheiten. 
+Direkt nach dem Login wird der Nutzer hier namentlich begrüßt und erhält eine Übersicht über seinen aktuellen Lernfortschritt. Hierzu zählen:
+
+\begin{itemize}
+\item \textbf{Gamification-Elemente:} Durch die Anzeige von Punkten, dem Level und der \enquote{Lernserie} (Streak) soll der Nutzer zum regelmäßigen Lernen animiert werden.
+\item \textbf{Sprachauswahl:} Über ein Auswahlmenü kann der Nutzer zwischen den Sprachen, die er seinem Konto hinzugefügt hat, die aktuelle Lernsprache auswählen.
+\item \textbf{Quick-Access (Shortcuts):} Das Dashboard bietet einen Zugriff auf die drei zuletzt hinzugefügten Lernsets. Durch diese Shortcuts kann der Nutzer eine Lernrunde schneller starten und muss nicht den Umweg über den Tab \textit{Meine Vokabeln} nehmen.
+\end{itemize}
+
+\subsection{Vokabelverwaltung}
+
+\subsection{Interaktive Lernmodule}
+\subsubsection{Wortbasierte Lernmodi}
+
+\subsubsection{Satzbasierte Lernmodi (Ronja Rüther)}
+Um neben Wörtern auch Sätze gut trainieren zu können, umfasst die Anwendung drei verschiedene Übungstypen:
+
+\begin{itemize}
+\item \textbf{Lückentext:} Bei dieser Übung fehlt lediglich ein beliebiges Wort im Satz, welches der Nutzer in ein Textfeld eintippen muss. Da diese Übung sich nur auf ein Wort beschränkt und daher eher einfach ist, wird sie nur bei den ersten paar Lernrunden verwendet.
+\item \textbf{Wort-Bausteine:} Der Nutzer setzt den Satz aus vorgegebenen Wort-Fragmenten per Klick zusammen. Dabei sind zusätzliche Wörter, die nicht zum Satz gehören, als Bausteine gegeben, damit es nicht nur ein Puzzle ist. Dadurch wird die Satzstellung geübt, ohne auf die Rechtschreibung achten zu müssen.
+\item \textbf{Freies Schreiben:} Diese Übung ist für Wörter sowie Sätze möglich und ist am anspruchsvollsten, da der gesamte Satz selbstständig in einem Textfeld übersetzt werden muss.
+\end{itemize}
+
+\subsection{Chatbot}
+
+\subsection{Profil (Ronja Rüther)}
+Das Profil dient als persönliche Leistungsübersicht für den Nutzer. Hier werden alle relevanten Informationen zum Konto sowie die bisherigen Erfolge zusammengefasst:
+
+\begin{itemize}
+\item \textbf{Nutzerdaten:} Neben dem gewählten Profilbild und dem Namen wird auch das aktuelle Level und die Lernserie angezeigt. Wie im Dashboard kann auch hier die Lernsprache über ein Auswahlmenü jederzeit gewechselt werden.
+\item \textbf{Lernstatistik:} Um den Fortschritt des Lernens für den Nutzer sichtbar zu machen, zeigt ein Säulendiagramm die Anzahl der gelernten Vokabeln pro Tag aus den letzten sieben Tagen. Dabei werden nicht nur die richtig beantworteten Vokabeln gezählt, sondern alle insgesamt. Neben den klassischen Lernmodi (wie Paare oder Bausteine) fließen auch das Üben mit Karteikarten oder das Üben im Satzmodus mit dem Chatbot hier rein. Dies soll dem Nutzer helfen, sein Lernverhalten über die Woche hinweg kontrollieren und verfolgen zu können.
+\item \textbf{Abzeichen:} Der Nutzer erhält beim Erreichen bestimmter Ziele Abzeichen, die als zusätzliche Motivation dienen sollen. Wurde ein Abzeichen einmal erhalten, bleibt es für immer bestehen und der Nutzer kann es in diesem Tab immer wieder einsehen.
+\end{itemize}
+
+\subsection{Einstellungen (Ronja Rüther)}
+Mithilfe der Einstellungen kann der Nutzer sein Profil personalisieren. Er kann dort aus einem der 12 vorgefertigten Profilbilder auswählen und Sprachen zu seinem Profil 
+hinzufügen sowie entfernen. Auch wenn aktuell nur die drei Zielsprachen Englisch, Französisch und Spanisch zur Auswahl stehen, werden nicht alle automatisch zum Profil 
+hinzugefügt, um den Nutzer nicht mit irrelevanten Inhalten zu überladen, sodass er im Dashboard oder dem Profil stets zwischen den hinzugefügten 
+Sprachen seine aktuelle Lernsprache auswählen muss.
+
+Zudem bieten die Einstellungen die Möglichkeit, den Nutzer abzumelden und das Profil dadurch vor unbefugtem Zugriff zu schützen. Ebenfalls können die persönlichen Daten aktualisiert werden. 
+Dazu kann der Nutzer über eine Schaltfläche zu einer separaten Ansicht gelangen,
+in welcher die Aktualisierung des Namens, E-Mail-Adresse und Passworts möglich ist. Hier besteht auch die Möglichkeit, das Benutzerkonto mit allen damit verknüpften Daten
+und Lernfortschritten unwiderruflich zu löschen.
 
 \section{Architektur}
 
 \section{Aufgetretene Probleme}
 
 \section{Ergebnisse und Fazit}
-
-Eine Aufzählung:
-
-\begin{itemize}
-\item Lorem ipsum
-\item dolor sit amet
-\item consetetur sadipscing elitr
-\item sed diam nonumy
-\end{itemize}
-Eine nummerierte Aufzählung:
-
-\begin{enumerate}
-\item Erster Punkt
-\item Zweiter Punkt
-\item Dritter Punkt
-\end{enumerate}
-Es folgt Tabelle \ref{beispieltabelle}.
-
-\begin{table}[htbp]
-\centering
-\begin{tabular}{lrc}
-\toprule
-Linksbündig & Rechtsbündig & Zentriert \\
-\midrule
-Lorem &  13 & amet \\ \addlinespace
-ipsum & 104 & consetetur \\ \addlinespace
-dolor &   7 & sadipscing \\ \addlinespace
-sit   &  -5 & elitr \\
-\bottomrule
-\end{tabular}
-\caption{Beschreibung der Tabelle.}
-\label{beispieltabelle}
-\end{table}
-
-Programmcode im Fließtext: \lstinline{printf("Hello, world!\n");}.
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-Es folgt Programmlisting \ref{beispiellisting}.
-
-\begin{lstlisting}[caption={Beschreibung des Listings.}, label=beispiellisting, frame=tblr, numbers=left]
-#include <stdio.h>
-
-int main(void)
-{
-    printf("Hello, world!\n");
-}
-\end{lstlisting}
-Ein Listing ohne Titel, welches nicht im Listingverzeichnis aufgefühert wird:
-
-\begin{lstlisting}
-#include <stdio.h>
-
-int main(void)
-{
-    printf("Hello, world\n");
-}
-\end{lstlisting}
-
-Text kann \emph{kursiv} oder \textbf{fett} gesetzt werden.
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
