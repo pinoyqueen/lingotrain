@@ -102,7 +102,27 @@ Dazu kann der Nutzer über eine Schaltfläche zu einer separaten Ansicht gelange
 in welcher die Aktualisierung des Namens, E-Mail-Adresse und Passworts möglich ist. Hier besteht auch die Möglichkeit, das Benutzerkonto mit allen damit verknüpften Daten
 und Lernfortschritten unwiderruflich zu löschen.
 
-\section{Architektur}
+\section{Architektur und Implementierung (Ronja Rüther)}
+In diesem Kapitel wird die technische Umsetzung von \textit{Lingotrain} erläutert. Dabei wird zunächst die grundlegende Systemarchitektur sowie die Schichtentrennung vorgestellt und anschließend mit der 
+Implementierung der Hauptmodule fortgefahren.
+
+\subsection{Systemarchitektur (Ronja Rüther)}
+Die technische Architektur der Webanwendung basiert auf einer Schichtenarchitektur, um die Benutzeroberfläche von der Geschäftslogik und der Modellhaltung zu trennen.
+Da die Anwendung mit \textit{Vue.js} umgesetzt wurde, folgt sie einem komponentenbasierten Ansatz mit der Erweiterung um eine zentrale Datenhaltung.
+
+Die Architektur gliedert sich dabei in die folgenden Elemente:
+
+\begin{itemize}
+\item \textbf{View-Layer (Komponenten):} Hierzu zählen die einzelnen Seiten (Views) sowie wiederverwendbare UI-Elemente. Sie sind für die Darstellung von Elementen sowie die Entgegennahme von Nutzerinteraktionen zuständig.
+\item \textbf{Store-Layer:} Dieser Layer dient als zentrale Instanz für die Verwaltung des Anwendungszustands (\textit{State Management}). Er stellt sicher, dass Daten, die komponentenübergreifend benötigt werden, konsistent und reaktiv überall zur Verfügung stehen. Änderungen im Store werden dann direkt an alle betroffenen Komponenten weitergegeben und können so überall gleich angezeigt werden. 
+\item \textbf{Repository-Layer:} In den Repositories werden die Datenbankzugriffe auf die Datenbank \textit{Firebase Firestore} gekapselt. Sie enthalten also die einzelnen CRUD-Operationen (Create, Read, Update, Delete), um Daten aus der Datenbank zu lesen und zu aktualisieren. Durch diese Kapselung greifen die Komponenten nie direkt auf die Datenbank zu, sondern nutzen die Methoden der Repositories. Dadurch ist ein einfacher Austausch der Datenbank theoretisch möglich.
+\item \textbf{Model-Layer:} Der Model-Layer umfasst die definierten Datenstrukturen (Interfaces), durch die sichergestellt wird, dass die Objekte über die gesamte Anwendung hinweg dieselbe Struktur besitzen. Dadurch wird für Typsicherheit innerhalb der Anwendung gesorgt und es kann z.B. jedes Konto oder jede Vokabel einheitlich angelegt werden.
+\end{itemize}
+
+Neben der Datenhaltung über \textit{Firebase} verfügt die Architektur ebenfalls über eine externe Schnittstelle zu einem separaten Chatbot-Backend. Da dies ausschließlich für die Verarbeitung von Anfragen an ein Sprachmodell 
+(\textit{Large Language Model}) verwendet wird, erfolgt die Kommunikation hierbei über asynchrone \textit{HTTP}-Anfragen direkt aus der Logik der jeweiligen Vue-Komponente heraus.
+
+\subsection{Authentifizierung (Ronja Rüther)}
 
 \section{Aufgetretene Probleme}
 
