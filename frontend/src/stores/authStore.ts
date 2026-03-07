@@ -263,7 +263,8 @@ export const useAuthStore = defineStore("auth", () => {
         sprachenIds: [registerForm.sprache],
         aktuelleSpracheId: registerForm.sprache,
         lernsets: [],
-        abzeichen: []
+        abzeichenIds: [],
+        letztesLernen: undefined
       };
 
       // Konto in DB erstellen

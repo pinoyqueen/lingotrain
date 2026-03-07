@@ -122,8 +122,29 @@ Die Architektur gliedert sich dabei in die folgenden Elemente:
 Neben der Datenhaltung über \textit{Firebase} verfügt die Architektur ebenfalls über eine externe Schnittstelle zu einem separaten Chatbot-Backend. Da dies ausschließlich für die Verarbeitung von Anfragen an ein Sprachmodell 
 (\textit{Large Language Model}) verwendet wird, erfolgt die Kommunikation hierbei über asynchrone \textit{HTTP}-Anfragen direkt aus der Logik der jeweiligen Vue-Komponente heraus.
 
-\subsection{Authentifizierung (Ronja Rüther)}
+\subsection{Implementierung der Benutzerverwaltung (Ronja Rüther)}
+Die Benutzerverwaltung wird durch zwei separate Stores realisiert, die eine klare Trennung zwischen der Identität und den Anwendungsdaten sicherstellen.
+
+\subsubsection{Authentifizierung}
+Der \textit{authStore} ist für die Authentifizierung zuständig und wird mithilfe von \textit{Firebase Auth} umgesetzt. Diese externe Schnittstelle bietet bereits Funktionen zum Anlegen eines Benutzerkontos mit der E-Mail-Adresse und Passwort.
+Dabei wird das Passwort bereits sicher gespeichert und der Datenbankadministrator erhält keinen Einblick in das verschlüsselte Passwort. Des Weiteren werden Funktionen zum Einloggen eines Nutzers sowie zum Ändern von E-Mail und Passwort
+bereitgestellt, sodass auf eine bewährte und sicherheitsgeprüfte Implementierung zurückgegriffen werden konnte. Durch die explizite Re-Authentifizierung des Nutzers mittels Passwort können auch diese kritischen Aktionen geschützt werden.
+
+Da \textit{Firebase Auth} ein Konto nur mit E-Mail-Adresse und Passwort anlegt, müssen die zusätzlichen Benutzerdaten und Lernfortschritte zusätzlich in einer Datenbank gespeichert werden. Sollten während der Registrierung Fehler beim Anlegen eines 
+Kontos in der Datenbank \textit{Firebase Firestore} auftreten, wird durch einen Rollback-Mechanismus auch der zugehörige Eintrag in \textit{Firebase Auth} automatisch gelöscht, damit ein konsistenter Datenbestand sichergestellt ist.
+
+Durch reaktive Flags wie \texttt{aktuellesKonto} wird das aktuell eingeloggte Konto global bereitgestellt.
+
+\subsubsection{Profil-Logik}
+Der \textit{kontoStore} hingegen verwaltet das Konto mit den personalisierten Daten und Lernfortschritten. 
+Er lädt beim Login automatisch die zugehörigen Daten, wie die Sprachobjekte und Abzeichen, aus den entsprechenden Repositories und aktualisiert bei Änderungen diese Daten entsprechend im Repository. 
+Außerdem berechnet er basierend auf den Zeitstempeln, ob die tägliche Lernserie fortgesetzt oder aufgrund einer Pause von mehr als einem Tag zurückgesetzt werden muss.
+
+Das Löschen einer Sprache oder eines Kontos wird hier ebenfalls angestoßen. Da die Lernsets und Vokabeln in unterschiedlichen Collections in \textit{Firestore} gespeichert sind, müssen alle Lernsets und Vokabeln,
+die mit der Sprache des Kontos bzw. dem gesamten Konto verknüpft sind, rekursiv aus der Datenbank entfernt werden. Dadurch bleibt die Datenintegrität auch beim Löschen von Sprachen oder Konten gewährleistet.
 
 \section{Aufgetretene Probleme}
+
+\subsection{E-Mail-Änderung mit Firebase (Ronja Rüther)}
 
 \section{Ergebnisse und Fazit}

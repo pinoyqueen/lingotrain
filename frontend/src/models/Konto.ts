@@ -47,7 +47,7 @@ export interface Konto {
   lernsets: Lernset[];            
   
   /** Datum des letzten Lernens */
-  letztesLernen: Date;
+  letztesLernen?: Date;
 
   /** Anzahl der gelernten Vokabeln pro Tag (insgesamt, also egal ob richtig oder falsch beantwortet) */
   vokabelnProTag?: Record<string, number>;
