@@ -113,7 +113,7 @@ Da die Anwendung mit \textit{Vue.js} umgesetzt wurde, folgt sie einem komponente
 Die Architektur gliedert sich dabei in die folgenden Elemente:
 
 \begin{itemize}
-\item \textbf{View-Layer (Komponenten):} Hierzu zählen die einzelnen Seiten (Views) sowie wiederverwendbare UI-Elemente. Sie sind für die Darstellung von Elementen sowie die Entgegennahme von Nutzerinteraktionen zuständig.
+\item \textbf{View-Layer (Komponenten):} Hierzu zählen die einzelnen Seiten (Views) sowie wiederverwendbare UI-Elemente. Sie sind für die Darstellung von Elementen sowie die Entgegennahme von Nutzerinteraktionen zuständig. Den Einstiegspunkt bildet dabei die \texttt{App.vue}, welche das Grundgerüst der Anwendung definiert. Sie steuert den Wechsel der aktuellen Route basierend auf den Metadaten dynamisch zwischen dem \textit{MainLayout} für angemeldete Benutzer und dem \textit{AuthLayout} für Login und Registrierung.
 \item \textbf{Store-Layer:} Dieser Layer dient als zentrale Instanz für die Verwaltung des Anwendungszustands (\textit{State Management}). Er stellt sicher, dass Daten, die komponentenübergreifend benötigt werden, konsistent und reaktiv überall zur Verfügung stehen. Änderungen im Store werden dann direkt an alle betroffenen Komponenten weitergegeben und können so überall gleich angezeigt werden. 
 \item \textbf{Repository-Layer:} In den Repositories werden die Datenbankzugriffe auf die Datenbank \textit{Firebase Firestore} gekapselt. Sie enthalten also die einzelnen CRUD-Operationen (Create, Read, Update, Delete), um Daten aus der Datenbank zu lesen und zu aktualisieren. Durch diese Kapselung greifen die Komponenten nie direkt auf die Datenbank zu, sondern nutzen die Methoden der Repositories. Dadurch ist ein einfacher Austausch der Datenbank theoretisch möglich.
 \item \textbf{Model-Layer:} Der Model-Layer umfasst die definierten Datenstrukturen (Interfaces), durch die sichergestellt wird, dass die Objekte über die gesamte Anwendung hinweg dieselbe Struktur besitzen. Dadurch wird für Typsicherheit innerhalb der Anwendung gesorgt und es kann z.B. jedes Konto oder jede Vokabel einheitlich angelegt werden.
@@ -146,5 +146,34 @@ die mit der Sprache des Kontos bzw. dem gesamten Konto verknüpft sind, rekursiv
 \section{Aufgetretene Probleme}
 
 \subsection{E-Mail-Änderung mit Firebase (Ronja Rüther)}
+Die Änderung der E-Mail-Adresse brachte aufgrund der Sicherheitsvorgaben von \textit{Firebase Auth} und der gewählten Datenbankstruktur mehrere Probleme mit sich.
+
+Ein Problem bestand darin, dass \textit{Firebase Auth} für sensible Aktionen, wie das Ändern der E-Mail-Adresse, einen erneuten Login verlangt. Wenn die Sitzung des Nutzers bereits längere Zeit aktiv war, schlug die Änderung 
+daher ohne explizite Fehlermeldung fehl. Nach erfolgreicher Ermittlung dieser Problemursache, wurde die Implementierung so abgeändert, dass der Nutzer nun immer zur erneuten Eingabe seines Passworts aufgefordert wird. Durch die Methode 
+\texttt{reauthenticateWithCredential(...)} wird sichergestellt, dass der Auth-Token aktuell ist und der Nutzer re-authentifiziert wird.
+
+Zusätzlich erschwert die Sicherheits-Logik von \textit{Firebase Auth} das Feedback an den Nutzer. Da aus Datenschutzgründen bei einer E-Mail-Änderung mit \texttt{verifyBeforeUpdateEmail(...)} nicht direkt geprüft werden kann, ob eine E-Mail bereits bei einem 
+anderen Konto existiert, erhält der Nutzer in dem Fall keine E-Mail zur Bestätigung.
+
+Des Weiteren wird die E-Mail-Adresse sowohl in \textit{Firebase Auth} als auch in der Datenbank im \textit{Firestore}-Dokument des Kontos gespeichert. 
+Da die Änderung der E-Mail-Adresse erst nach erfolgreicher Verifizierung der neuen E-Mail in \textit{Firebase Auth} aktualisiert wird, kann die Änderung der E-Mail nicht zuvor schon 
+in der \textit{Firestore}-Datenbank vorgenommen werden. Um dies zu lösen, wird der Nutzer nach einer E-Mail-Änderung zunächst automatisch ausgeloggt. 
+Beim nächsten Login wird dann geprüft, ob die neue E-Mail-Adresse verifiziert wurde, um sie dann entsprechend in der Datenbank zu aktualisieren.
+Durch dieses Vorgehen wird eine verzögerte Synchronisation sichergestellt, sodass spätestens beim nächsten Login die Datenkonsistenz zwischen dem Authentifizierungssystem und der Datenbank wiederhergestellt ist.
+
+\subsection{Globales Laden von Lernsets (Ronja Rüther)}
+Eine weitere Herausforderung bei der Entwicklung war die Bereitstellung der nutzer- sowie sprachenspezifischen Lernsets. Nach dem Start oder Neuladen der Anwendung, aber auch nach dem Wechsel der aktuellen Lernsprache wurden 
+zunächst nicht die korrekten Lernsets in den verschiedenen Tabs geladen.
+
+Anfangs wurden die Sprachen eines Kontos über den Aufruf von \texttt{loadSprachenZuKonto(...)} des \textit{kontoStores} lokal in der Komponente \texttt{Home.vue} geladen. 
+Im Dashboard waren daher die Shortcuts zu den Lernsets an die ausgewählte Sprache angepasst. 
+Wurde die Anwendung über eine direkte URL einer Unterseite gestartet oder die Unterseiten aktualisiert, blieb der Datenbestand leer. 
+Zudem wurden nach einem Sprachwechsel teilweise noch die Lernsets der vorherigen Sprache angezeigt, da der lokale State nicht zuverlässig aktualisiert wurde.
+
+Um dieses Problem zu lösen und die Lernsets konsistent über alle Komponenten verfügbar zu stellen, wurde die Lade-Logik zentralisiert. 
+In der \texttt{App.vue} wurde ein globaler Watcher implementiert, der die Zustände der aktuellen Konto-ID, der aktuellen Lernsprache und der Liste der hinzugefügten Sprachen überwacht. 
+Durch die Konfiguration \texttt{immediate: true} ist sichergestellt, dass der Watcher direkt beim Start der Anwendung reagiert und die Sprachen und Lernsets nach der Authentifizierung 
+automatisch geladen werden. 
+Dadurch entstehen keine leeren Datenbestände beim direkten Aufruf von Unterseiten und auch beim Sprachwechsel werden die entsprechenden Lernsets synchronisiert.
 
 \section{Ergebnisse und Fazit}
