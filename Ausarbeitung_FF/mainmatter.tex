@@ -630,6 +630,22 @@ Nach jeder abgeschlossenen Aufgabe wird die Anzahl der beantworteten Vokabeln en
 Der Fortschritt der Progressbar wird anschließend anhand diese Werte in Prozent berechnet.
 Durch diese Anpassung bleibt die Fortschrittsanzeige stabil und korrekt, unabhängig davon, welcher Lernmodus verwendet wird oder wie viele Vokabeln innerhalb einer Spielrunde verarbeitet werden.
 
+\subsection{Anzeige des Level-Up-Overlays (Ronja Rüther)}
+Ein weiteres Problem ergab sich bei der Anzeige des Level-Up-Overlays nach dem Abschluss einer Lernrunde.
+Erreicht ein Nutzer durch die in der Runde gesammelten Punkte ein neues Level, soll ein visuelles Overlay den Levelaufstieg anzeigen.
+
+Wird die Lernrunde regulär beendet, kann das Overlay problemlos dargestellt werden. 
+Verlässt der Nutzer die Lernrunde jedoch vorzeitig, z.B. durch eine Navigation zu einer anderen Seite, wird die aktuelle Komponente durch den Routenwechsel zerstört.
+Die Punkte der Runde werden in diesem Fall zwar weiterhin korrekt im Store berechnet und dem Konto hinzugefügt, aber das Overlay kann nicht mehr angezeigt werden, da die dafür zuständige Komponente nicht mehr aktiv ist.
+
+Als möglicher Lösungsansatz wurde versucht, den Seitenwechsel mit dem \textit{Vue-Router-Navigation-Guards} \texttt{onBeforeRouteLeave} abzufangen und das Overlay vor dem Wechsel der Navigationsroute anzuzeigen.
+Dabei sollte der Wechsel der Route verzögert werden. 
+Dieser Ansatz konnte jedoch nicht erfolgreich umgesetzt werden, da der ursprünglich ausgelöste Seitenwechsel nach dem Schließen des Level-Up-Overlays nicht mehr ausgeführt wurde.
+Der Nutzer blieb stattdessen auf der aktuellen Seite.
+
+Da die erreichten Punkte trotzdem korrekt gespeichert werden und daher auch das Level entsprechend aktualisiert wird, wurde auf eine weitergehende Lösung verzichtet. 
+Da das Problem zudem nur auftritt, wenn die Lernrunde vorzeitig verlassen wird, wird dieses Verhalten als akzeptabel eingestuft.
+
 \section{Ergebnisse und Fazit (Andreleene Prado)}
 
 Zusammenfassend kann festgestellt werden, dass die Implementierung des Vokabeltrainers erfolgreich umgesetzt wurde. 
