@@ -30,7 +30,39 @@ Im Rahmen dieser Ausarbeitung wird daher dokumentiert, wie die Anforderungen mit
 komponentenorientierten Frameworks umgesetzt wurden, damit der Anwender die Webanwendung performant nutzen 
 kann.
 
-\section{Verwendete Bibliotheken und Werkzeuge}
+\section{Verwendete Bibliotheken und Werkzeuge (Andreleene Prado)}
+Für die Entwicklung des Frontends der Web-Applikation wurde das Framework \textbf{Vue.js} verwendet.
+Diese Framework bietet eine komponentenbasierte Architektur, die eine strukturierte und wartbare Entwicklung ermöglicht.
+Zudem erleichtert das Framework durch seine reaktive Datenbindung die Implementierung dynamischer Benutzeroberflächen.
+
+Für die Navigation zwischen den einzelnen Seiten der Anwendung wurde der \textbf{Vue Router} eingesetzt.
+Dieser ermöglicht die Verwaltung verschiedener Routen innerhalb einer Single-Page-Application und sorgt dafür, 
+dass Benutzer nahtlos zwischen den unterschiedlichen Ansichten der Anwendung wechseln können.
+
+Für bestimmte Benutzeroberflächenkomponenten wie Buttons, Dialoge und Checkboxen wurde die UI-Bibiliothek \textbf{vue-shadcn} eingesetzt.
+Diese stellt vorgefertige, moderne und anpassbare Komponenten zur Verfügung, wodurch eine konsistente Gestaltung der Benutzeroberfläche gewährleistet werden kann.
+Gleichzeitig reduziert die Verwendung solcher Komponenten den Implementierungsaufwand.
+
+Für das Design und die Gestaltung der Benutzeroberfläche wurde \textbf{Tailwind CSS} verwendet.
+Tailwind ist eine Utility-First-CSS-Framework, das eine schnelle und flexible Gestaltung von Benutzeroberflächen ermöglicht.
+Durch vordefinierte Klassen können Layout, Abstände, Farben und Typografie effizient definiert werden, ohne umfangreiche eigene CSS-Strukturen erstellen zu müssen.
+
+Für das Zustandsmanagement der Anwendung wurden \textbf{Pinia Stores} verwendet.
+Pinia ist die offizielle State-Management-Lösung für Vue.js und ermöglicht eine zentrale Verwaltung des Anwendungszustands.
+Dadurch können Daten effizient zwischen verschiedenen Komponenten geteilt und verwaltet werden, was insbesondere bei der entwickelten Sprachlern-Anwedung die Struktur und Wartbarkeit des Codes verbessert.
+
+Als Datenbank wurde \textbf{Google Firestore} verwendet.
+Firestore ist eine cloudbasierte NOSQL-Datenbank, die eine einfache Speicherung und Synchronisierung von Daten in Echtzeit ermöglicht.
+Für den Zugriff auf die Datenbank wurden Methoden aus dem Firestore-SDK importiert und innerhalb von Repository-Klassen verwendet.
+Diese Repository-Struktur kapselt die Datenbankzugriffe und sorgt für eine klare Trennung zwischen Datenzugriff und Anwendungslogik.
+
+Das Backend der Anwendung wurde mit \textbf{FastAPI} umgesetzt.
+FastAPI ist ein modernes Web-Framework für Python, das sich besonders für die Entwicklung performanter und leichtgewichtiger APIs eignet.
+Über diese Schnittstelle wird unter anderem die Chatbot-Funktionalität bereitgestellt, die im Frontend der Anwendung integriert ist.
+Dadurch kann due Chatbot-Logik serverseitig verarbeitet und die generierten Antworten anschließend im Benutzerinterface angezeigt werden.
+
+Zusätzlich wurden während der Implementierung unterstützend KI-basierte Werkzeuge wie ChatGPT und Copilot verwendet.
+Die KI-Tools dienten somit primär als Hilfsmittel im Entwicklungsprozess, beispielsweise bei kleineren Implementierungsfragen oder bei der Fehlersuche.
 
 \section{Aufbau der Webanwendung (Ronja Rüther)}
 Die Struktur der Webanwendung folgt einem modularen Aufbau und bietet eine übersichtliche
@@ -66,10 +98,32 @@ Direkt nach dem Login wird der Nutzer hier namentlich begrüßt und erhält eine
 \item \textbf{Quick-Access (Shortcuts):} Das Dashboard bietet einen Zugriff auf die drei zuletzt hinzugefügten Lernsets. Durch diese Shortcuts kann der Nutzer eine Lernrunde schneller starten und muss nicht den Umweg über den Tab \textit{Meine Vokabeln} nehmen.
 \end{itemize}
 
-\subsection{Vokabelverwaltung}
+\subsection{Vokabelverwaltung (Andreleene Prado)}
+Der Bereich \textit{Meine Vokabeln} bietet eine Übersicht über alle vom Benutzer angelegten Lernsets bzw. Vokabeln. 
+Die Hauptansicht besteht aus einer Liste aller erstellten Lernsets. Hier hat der Benutzer Möglichkeit, neue Lernsets anzulegen sowie bestehende Set zu bearbeiten oder zu löschen.
 
-\subsection{Interaktive Lernmodule}
-\subsubsection{Wortbasierte Lernmodi}
+Durch die Auswahl eines bestimmten Lernsets wird eine Liste der dazugehörigen Vokabeln mit ihren jeweiligen Übersetzungen angezeigt.
+Auch in dieser Ansicht kann der Benutzer neue Vokabeln (entweder einzelne Wörter oder ganze Sätze) hinzufügen sowie vorhandene Einträge bearbeiten oder löschen.
+
+Darüber hinaus kann aus der Ansicht der Vokabelliste direkt mit dem Lernen begonnen werden.
+Der Benutzer kann dabei zwischen verschiedenen Lernmodi wählen, dem Üben mit Karteikarten oder spielbasierten Übungen.
+
+\subsection{Interaktive Lernmodule (Andreleene Prado)}
+Um Vokabeln effektiv zu lernen, bietet die Anwendung verschiedene interaktive Lernmodule an.
+Der Benutzer hat dabei die Möglichkeit, entweder mit Karteikarten zu üben oder spielbasierte Lernmodi zu verwenden.
+Bei den Karteikarten können die Vokabeln in einer ruhigen Lernumgebung wiederholt werden, ohne Zeitdruck oder Punktesystem.
+Alternativ stehen spielbasierte Übungen zur Verfügung, bei denen die Vokabeln durch verschiedene Aufgabenformate trainiert werden.
+
+\subsubsection{Wortbasierte Lernmodi (Andreleene Prado)}
+Um die Wörter eines Lernsets spielerisch zu üben, bietet die App zwei verschiedene Übungstypen:
+
+\begin{itemize}
+\item \textbf{Paare:} Bei dieser Übung werden mindestens vier Wörter aus dem Lernset verwendet und in zwei Spalten aufgeteilt.
+Auf der linken Seite werden die deutschen Wörter angezeigt, während sich auf der rechten Seite die entsprechenden Übersetzungen befinden.
+Die Aufgabe des Benutzers besteht darin, die jeweils passenden Wörtert miteinander zu verbinden.
+\item \textbf{Multiple-Choice Fragen:} Dabei wird dem Benutzer ein Wort angezeigt, zu dem die korrekte Übersetzung ausgewählt werden muss.
+Neben der richtigen Antwort werden mehrere falsche Antwortmöglichkeiten angezeigt. Der Benutzer muss aus diesen Optionen die passende Übersetzung erkennen und auswählen.
+\end{itemize}
 
 \subsubsection{Satzbasierte Lernmodi (Ronja Rüther)}
 Um neben Wörtern auch Sätze gut trainieren zu können, umfasst die Anwendung drei verschiedene Übungstypen:
@@ -80,7 +134,28 @@ Um neben Wörtern auch Sätze gut trainieren zu können, umfasst die Anwendung d
 \item \textbf{Freies Schreiben:} Diese Übung ist für Wörter sowie Sätze möglich und ist am anspruchsvollsten, da der gesamte Satz selbstständig in einem Textfeld übersetzt werden muss.
 \end{itemize}
 
-\subsection{Chatbot}
+\subsubsection{Karteikarten (Andreleene Prado)}
+Die Karteikarten stellen eine weitere Möglichkeit dar, Vokabeln zu üben, ohne den Druck, Punkte sammeln zu müssen, wie es bei den spielbasierten Übungen der Fall ist.
+Der Benutzer kann zwischen der vorherigen und der nächsten Vokabel wechseln sowie die Karteikarten neu starten oder zufällig mischen.
+Außerdem kann ausgewählt werden, ob zuerst die Vokabel oder die entsprechende Übersetzung angezeigt werden soll.
+
+\subsection{Chatbot (Andreleene Prado)}
+Um eine Sprache effektiv zu beherrschen, recht es nicht aus, Vokabeln lediglich auswendig zu lernen.
+Ebenso wichtig ist es, zu verstehenm wie Wörter in unterschiedlichen Kontexten und Situationen verwendet werden.
+Der Chatbot-Bereich der Anwendung unterstützt den Benutzer dabei, die gelernten Vokabeln aktiv anzuwenden und in realitätsnahen Szenarien zu üben.
+
+Die Benutzeroberfläche bietet eine Chat-Umgebung, in der der Benutzer zunächst auswählen kann, aus welchem Lernset Vokabeln verwendet werden sollen und welcher Lernmodus genutzt werden soll.
+Der Chatbot generiert anschließend passende Aufgaben oder Gesprächssituationen, in denen die ausgewählten Vokabeln angewendet werden müssen.
+
+Der Chatbot biete zwei verschieden Modi an:
+\begin{itemize}
+\item \textbf{Satzmodus:} In diesem Modus erstellt der Chatbot einen Satz unter Verwendung von Vokabeln aus dem ausgewählten Lernset.
+Der Benutzer muss den Satz anschließend in die Zielsprache übersetzen.
+Nach der Eingabe erhält der Benutzer eine Rückmeldung sowie gegebenenfalls Korrekturen, die auf seiner Antwort basieren.
+\item \textbf{Konversationsmodus:} In diesem Modus kann der Benutzer ein freies Gespräch mit dem Chatbot führen.
+Dabei wird der Benutzer dazu aufgefordert, bestimmte Vokabeln aus dem Lernset aktiv in seine Antworten einzubauen, um deren Anwendung zu trainieren.
+Am Ende des Gesprächs erhält der Benutzer ein zusammenfassendes Feedback, das aufzeigt, welche Aspekte bereits gut beherrscht werden und in welchen Bereichen noch Verbesserungsbedarf besteht.
+\end{itemize}
 
 \subsection{Profil (Ronja Rüther)}
 Das Profil dient als persönliche Leistungsübersicht für den Nutzer. Hier werden alle relevanten Informationen zum Konto sowie die bisherigen Erfolge zusammengefasst:
