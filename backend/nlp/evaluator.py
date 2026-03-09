@@ -260,7 +260,7 @@ def compute_similarity(a: str, b: str) -> float:
 # Zunächst werden geprüft, ob der Eingabetext exakt mit der Übersetzung übereinstimmt.
 # Wenn ja, wird es als richtig bewertet.
 # Ansonsten werden die semantische Ähnlichkeit mit SBERT geprüft.
-#   similarity >= 0.85: TODO: als richtig bewertet
+#   similarity >= 0.85: fast korrekt, sinngleich
 #   similarity >= 0.65: teilweise korrekt, kleine Unterschiede
 #   similarity < 0.65: falsch
 #   
