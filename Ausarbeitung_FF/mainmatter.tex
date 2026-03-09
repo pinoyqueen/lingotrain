@@ -33,11 +33,11 @@ kann.
 \section{Verwendete Bibliotheken und Werkzeuge (Andreleene Prado)}
 Für die Entwicklung des Frontends der Web-Applikation wurde das Framework \textbf{Vue.js} verwendet.
 Diese Framework bietet eine komponentenbasierte Architektur, die eine strukturierte und wartbare Entwicklung ermöglicht.
-Zudem erleichtert das Framework durch seine reaktive Datenbindung die Implementierung dynamischer Benutzeroberflächen.
+Zudem erleichtert das Framework durch seine reaktive Datenbindung die Implementierung dynamischer Benutzeroberflächen. \parencite{Vue}
 
 Für die Navigation zwischen den einzelnen Seiten der Anwendung wurde der \textbf{Vue Router} eingesetzt.
 Dieser ermöglicht die Verwaltung verschiedener Routen innerhalb einer Single-Page-Application und sorgt dafür, 
-dass Benutzer nahtlos zwischen den unterschiedlichen Ansichten der Anwendung wechseln können.
+dass Benutzer nahtlos zwischen den unterschiedlichen Ansichten der Anwendung wechseln können. \parencite{Vue_Router}
 
 Für bestimmte Benutzeroberflächenkomponenten wie Buttons, Dialoge und Checkboxen wurde die UI-Bibiliothek \textbf{vue-shadcn} eingesetzt.
 Diese stellt vorgefertige, moderne und anpassbare Komponenten zur Verfügung, wodurch eine konsistente Gestaltung der Benutzeroberfläche gewährleistet werden kann.
@@ -45,11 +45,11 @@ Gleichzeitig reduziert die Verwendung solcher Komponenten den Implementierungsau
 
 Für das Design und die Gestaltung der Benutzeroberfläche wurde \textbf{Tailwind CSS} verwendet.
 Tailwind ist eine Utility-First-CSS-Framework, das eine schnelle und flexible Gestaltung von Benutzeroberflächen ermöglicht.
-Durch vordefinierte Klassen können Layout, Abstände, Farben und Typografie effizient definiert werden, ohne umfangreiche eigene CSS-Strukturen erstellen zu müssen.
+Durch vordefinierte Klassen können Layout, Abstände, Farben und Typografie effizient definiert werden, ohne umfangreiche eigene CSS-Strukturen erstellen zu müssen. \parencite{TailwindCSS}
 
 Für das Zustandsmanagement der Anwendung wurden \textbf{Pinia Stores} verwendet.
 Pinia ist die offizielle State-Management-Lösung für Vue.js und ermöglicht eine zentrale Verwaltung des Anwendungszustands.
-Dadurch können Daten effizient zwischen verschiedenen Komponenten geteilt und verwaltet werden, was insbesondere bei der entwickelten Sprachlern-Anwedung die Struktur und Wartbarkeit des Codes verbessert.
+Dadurch können Daten effizient zwischen verschiedenen Komponenten geteilt und verwaltet werden, was insbesondere bei der entwickelten Sprachlern-Anwedung die Struktur und Wartbarkeit des Codes verbessert. \parencite{Pinia}
 
 Als Datenbank wurde \textbf{Google Firestore} verwendet.
 Firestore ist eine cloudbasierte NOSQL-Datenbank, die eine einfache Speicherung und Synchronisierung von Daten in Echtzeit ermöglicht.
@@ -59,7 +59,7 @@ Diese Repository-Struktur kapselt die Datenbankzugriffe und sorgt für eine klar
 Das Backend der Anwendung wurde mit \textbf{FastAPI} umgesetzt.
 FastAPI ist ein modernes Web-Framework für Python, das sich besonders für die Entwicklung performanter und leichtgewichtiger APIs eignet.
 Über diese Schnittstelle wird unter anderem die Chatbot-Funktionalität bereitgestellt, die im Frontend der Anwendung integriert ist.
-Dadurch kann due Chatbot-Logik serverseitig verarbeitet und die generierten Antworten anschließend im Benutzerinterface angezeigt werden.
+Dadurch kann due Chatbot-Logik serverseitig verarbeitet und die generierten Antworten anschließend im Benutzerinterface angezeigt werden. \parencite{FastAPI}
 
 Zusätzlich wurden während der Implementierung unterstützend KI-basierte Werkzeuge wie ChatGPT und Copilot verwendet.
 Die KI-Tools dienten somit primär als Hilfsmittel im Entwicklungsprozess, beispielsweise bei kleineren Implementierungsfragen oder bei der Fehlersuche.
@@ -152,6 +152,10 @@ Der Chatbot biete zwei verschieden Modi an:
 \item \textbf{Satzmodus:} In diesem Modus erstellt der Chatbot einen Satz unter Verwendung von Vokabeln aus dem ausgewählten Lernset.
 Der Benutzer muss den Satz anschließend in die Zielsprache übersetzen.
 Nach der Eingabe erhält der Benutzer eine Rückmeldung sowie gegebenenfalls Korrekturen, die auf seiner Antwort basieren.
+Der Benutzer hat maximal zwei Versuche, um den Satz korrekt zu übersetzen. 
+Ist die Antwort bereits im ersten Versuch korrekt, wird die Vokabel als richtig beantwortet gespeichert. 
+Bei einem Fehler im ersten Versuch erhält der Benutzer zunächst einen Hinweis, der ihm hilft, seine Antwort zu verbessern. 
+Erst nach dem zweiten Versuch wird eine vollständige Bewertung durchgeführt.
 \item \textbf{Konversationsmodus:} In diesem Modus kann der Benutzer ein freies Gespräch mit dem Chatbot führen.
 Dabei wird der Benutzer dazu aufgefordert, bestimmte Vokabeln aus dem Lernset aktiv in seine Antworten einzubauen, um deren Anwendung zu trainieren.
 Am Ende des Gesprächs erhält der Benutzer ein zusammenfassendes Feedback, das aufzeigt, welche Aspekte bereits gut beherrscht werden und in welchen Bereichen noch Verbesserungsbedarf besteht.
@@ -397,7 +401,56 @@ Der Benutzer hat danach zwei Möglichkeiten:
 Beim Neustart einer Runde wird die Methode \texttt{nextRunde()} aufgerufen.
 Diese setzt alle relevanten Zustände zurück, lädt die Vokabeln erneut und startet automatisch die erste Frage der neuen Runde.
 
-\subsubsection{Wortbasierte Lernmodi}
+\subsubsection{Wortbasierte Lernmodi (Andreleene Prado)}
+
+Für wortbasierte Vokabeln stehen \textbf{Multiple-Choice-Fragen} sowie das Zuordnungsspiel \textbf{Paare} zur Verfügung. 
+
+Im einfachsten Lernmodus werden \textbf{Multiple-Choice-Fragen} verwendet. 
+Dabei wird für eine gegebene Vokabel eine korrekte Übersetzung sowie mehrere falsche Antwortmöglichkeiten (sogenannte Distraktoren) angezeigt.
+Die Distraktoren werden zufällig aus den Vokabeln der aktuellen Lernrunde ausgewählt. 
+Anschließend werden die Antwortmöglichkeiten gemischt und gemeinsam mit der korrekten Lösung dargestellt. 
+Der Benutzer muss anschließend die richtige Übersetzung auswählen.
+
+Die Auswahl der Distraktoren wird durch die Methode \texttt{getDistractors()} im \textit{vokabelKontoStore} umgesetzt. 
+Dabei wird zunächst ein Pool möglicher Distraktoren erstellt, der alle Wortvokabeln der aktuellen Runde enthält, jedoch die korrekte Lösung ausschließt. 
+Dieser Pool wird anschließend zufällig gemischt und eine bestimmte Anzahl von Distraktoren wird daraus entnommen.
+
+Der Spielmodus \textbf{Paare} stellt eine interaktive Übung dar, bei der Vokabeln ihren passenden Übersetzungen zugeordnet werden müssen. 
+Für dieses Spiel werden mindestens drei und maximal vier Vokabeln aus der aktuellen Lernrunde ausgewählt. 
+Die Auswahl erfolgt über die Methode \texttt{getPaare()} aus dem \textit{vokabelKontoStore}. 
+Dabei wird die aktuelle Vokabel stets berücksichtigt, während weitere geeignete Wortvokabeln aus der verbleibenden Liste ergänzt werden.
+
+In der Komponente \texttt{PaareSpiel.vue} werden anschließend zwei Listen erzeugt:
+
+\begin{itemize}
+\item eine linke Liste mit den Vokabeln in der Zielsprache und
+\item eine rechte Liste mit den zugehörigen Übersetzungen.
+\end{itemize}
+
+Während die linke Liste in ihrer ursprünglichen Reihenfolge angezeigt wird, wird die rechte Liste zufällig gemischt, sodass die Zuordnung nicht unmittelbar erkennbar ist. 
+Der Benutzer muss anschließend die passenden Paare durch eine Drag-and-Drop-Interaktion verbinden.
+
+Um die vom Benutzer erstellten Zuordnungen zu verwalten, werden zwei Mapping-Strukturen verwendet:
+
+\begin{itemize}
+\item \texttt{matches}: speichert die Zuordnung von linker Vokabel zu rechter Übersetzung
+\item \texttt{rightAssigned}: speichert die inverse Zuordnung, um doppelte Zuordnungen zu verhindern
+\end{itemize}
+
+Beim Ziehen einer Vokabel aus der linken Liste wird zunächst deren ID gespeichert. 
+Wird sie anschließend auf eine Übersetzung der rechten Liste abgelegt, wird die entsprechende Zuordnung in beiden Mapping-Strukturen hinterlegt. 
+Dadurch kann jederzeit nachvollzogen werden, welche Paare der Benutzer erstellt hat.
+
+Der Benutzer kann eine Zuordnung jederzeit wieder entfernen, indem er auf die entsprechende Übersetzung klickt. 
+In diesem Fall werden die zugehörigen Einträge aus beiden Mapping-Strukturen gelöscht.
+
+Nachdem alle Paare erstellt wurden, kann der Benutzer seine Antworten überprüfen lassen. 
+Die Methode \texttt{pruefen()} vergleicht dabei jede Zuordnung mit der korrekten Lösung.
+
+Für jede linke Vokabel wird geprüft, ob die zugeordnete Übersetzung die gleiche ID besitzt. 
+Das Ergebnis wird in der Struktur \texttt{resultMap} gespeichert, die angibt, ob eine Zuordnung korrekt oder falsch ist. 
+Auf dieser Grundlage wird anschließend visuelles Feedback im Benutzerinterface angezeigt, beispielsweise durch farbliche Hervorhebung der richtigen bzw. falschen Zuordnungen.
+Zusätzlich wird der Lernstatus der jeweiligen Vokabel im \textit{vokabelKontoStore} aktualisiert. 
 
 \subsubsection{Satzbasierte Lernmodi (Ronja Rüther)}
 Im Gegensatz zu den wortbasierten Lernmodi müssen bei den satzbasierten Übungen nicht nur einzelne Begriffe, sondern auch die korrekte Satzstellung geprüft werden.
@@ -418,6 +471,63 @@ der Vokabeln bewertet wird und der Nutzer nicht durch die Angabe eines Fehlers n
 Die Steuerung dieser Module erfolgt ebenso wie in den wortbasierten Modulen über das \texttt{defineExpose}-Pattern. Dadurch können die Komponenten ihre eigene Logik zum Prüfen der Antwort kapseln und das Ergebnis 
 der übergeordneten Spiel-Steuerung (\texttt{ContainerSpiel.vue}) sowie die korrekte Lösung oder Übersetzung für das visuelle Feedback zur Verfügung stellen. 
 
+\subsection{Implementierung des Chatbots (Andreleene Prado)}
+
+Beim Aufrufen des Chatbot-Bereichs wird zunächst eine Auswahl der verfügbaren Lernsets angezeigt, aus denen der Benutzer ein Lernset zum Üben auswählen kann. 
+Zur besseren Übersicht steht dabei eine Suchfunktion zur Verfügung, mit der Lernsets anhand ihres Namens gefiltert werden können. 
+Nachdem ein Lernset ausgewählt wurde, kann der Benutzer zwischen zwei Trainingsmodi wählen: dem \textbf{Satzmodus} und dem \textbf{Konversationsmodus}.
+
+\paragraph{Satzmodus}
+
+Im Satzmodus werden fälligen Vokabeln aus dem ausgewählten Lernset über den \textit{vokabelKontoStore} geladen. 
+Für jede Vokabel wird anschließend mit der Methode \texttt{loadSentence()} eine passende Aufgabe erzeugt.
+
+Zunächst wird geprüft, ob die aktuelle Vokabel bereits einen vollständigen Satz darstellt oder lediglich ein einzelnes Wort ist. 
+Handelt es sich um einen vollständigen Satz, wird dieser direkt als Übersetzungsaufgabe angezeigt. 
+Ist die Vokabel hingegen ein einzelnes Wort, wird eine Anfrage an das Backend gesendet, um mithilfe eines Sprachmodells einen passenden Beispielsatz zu generieren, der dieses Wort enthält. 
+Der generierte Satz wird anschließend dem Benutzer zur Übersetzung präsentiert.
+
+Die Bewertung erfolgt im Backend, das verschiedene Informationen an das Frontend zurückgibt, darunter:
+\begin{itemize}
+    \item ein Feedback zur Antwort,
+    \item eine technische Begründung der Bewertung,
+    \item einen möglichen Verbesserungsvorschlag,
+    \item sowie eine Bewertungskategorie (z.\,B. \textit{correct}, \textit{almost\_correct} oder \textit{wrong}).
+\end{itemize}
+
+Diese Informationen werden anschließend in der Benutzeroberfläche dargestellt, sodass der Benutzer nachvollziehen kann, warum seine Antwort korrekt oder falsch war.
+
+\paragraph{Konversationsmodus}
+
+Im Konversationsmodus wird eine freiere Form des Sprachtrainings ermöglicht. 
+Hierbei werden ausschließlich Wortvokabeln aus dem ausgewählten Lernset verwendet, während vollständige Sätze ausgeschlossen werden.
+
+Zu Beginn der Konversation wird mit der Methode \texttt{startConversation()} eine zufällige Vokabel ausgewählt und an das Backend übermittelt. 
+Zusammen mit der Zielsprache und der Übersetzung dient diese Vokabel als thematischer Fokus für die generierte Unterhaltung.
+
+Das Backend erzeugt daraufhin eine erste Nachricht des Chatbots, die als Ausgangspunkt der Konversation dient. 
+Der Benutzer kann anschließend frei antworten, während das Backend auf Basis des bisherigen Gesprächsverlaufs passende Antworten generiert. 
+Nach Abschluss einer Konversation wird automatisch eine neue Unterhaltung mit einer anderen Vokabel gestartet, sodass mehrere Wörter innerhalb einer Sitzung trainiert werden können.
+
+\paragraph{Verwaltung des Chatverlaufs}
+
+Alle Nachrichten des Gesprächs werden in einem Array gespeichert, das den gesamten Chatverlauf enthält. 
+Jede Nachricht besitzt dabei eine Rolle (Benutzer oder Chatbot), den eigentlichen Nachrichteninhalt sowie einen Typ, der angibt, ob es sich beispielsweise um eine Aufgabe, eine Antwort oder ein Feedback handelt.
+Um den Chatverlauf auch nach einem Neuladen der Seite wiederherstellen zu können, wird dieser zusätzlich im \textit{Session Storage} des Browsers gespeichert. 
+Bei jedem Update des Nachrichtenarrays wird der aktuelle Zustand automatisch synchronisiert.
+
+\paragraph{Benutzeroberfläche und Interaktion}
+
+Die Darstellung des Chats wird über mehrere reaktive Zustandsvariablen gesteuert, die beispielsweise den aktuellen Satz, die Benutzereingabe, das Feedback oder den Ladezustand enthalten. 
+Dadurch passt sich die Benutzeroberfläche automatisch an neue Nachrichten oder Zustandsänderungen an.
+Zusätzlich wird ein automatisches Scrollen implementiert, sodass der Chatbereich bei neuen Nachrichten immer zum unteren Ende der Unterhaltung springt. 
+Dies wird durch eine Beobachtung der Nachrichtenliste sowie durch eine DOM-Referenz auf den Chatcontainer umgesetzt.
+
+\paragraph{Zurücksetzen der Sitzung}
+
+Beim Verlassen der Chatbot-Seite wird die aktuelle Sitzung zurückgesetzt. 
+Dabei werden der Chatverlauf gelöscht, alle temporären Zustände der Benutzeroberfläche zurückgesetzt sowie der Eintrag im Session Storage entfernt.
+
 \subsection{Visualisierung der Lernstatistik (Ronja Rüther)}
 Um den Lernfortschritt für den Nutzer sichtbar zu machen, wurde in der \texttt{Profil.vue} ein Säulendiagramm mit den Aktivitätsdaten implementiert.
 
@@ -429,6 +539,42 @@ Umgesetzt wird das Diagramm mithilfe der Bibliothek \textit{Chart.js}. In der Vi
 \texttt{chartOptions} wird sichergestellt, dass das Diagramm responsiv auf verschiedene Bildschirmgrößen angepasst wird.
 
 Zusätzlich zur Statistik wird über die Hilfsklasse \texttt{LevelCalculator} auch die Gesamtpunktzahl des Nutzers clientseitig in ein Level umgerechnet. Dadurch soll die Datenbank von Zugriffen und redundanten Berechnungen entlastet werden. 
+
+\subsection{Implementierung des Abzeichensystems (Andreleene Prado)}
+
+Zur Motivation der Benutzer wird in der Anwendung ein Abzeichensystem implementiert. 
+Abzeichen werden vergeben, wenn bestimmte Lernziele oder Meilensteine erreicht werden. 
+Geplant ist zunächst die Umsetzung der folgenden Kategorien:
+
+\begin{itemize}
+    \item \textbf{Punkte-Abzeichen:} Werden vergeben, sobald eine bestimmte Gesamtpunktzahl erreicht wurde (100, 500, 1000 und 5000 Punkte).
+    \item \textbf{Sprachen-Abzeichen:} Wird vergeben, wenn der Benutzer Vokabeln aus mindestens drei verschiedenen Sprachen lernt.
+    \item \textbf{Flammen-Abzeichen:} Werden vergeben, wenn eine Lernserie (Streak) von 7 bzw. 30 aufeinanderfolgenden Tagen erreicht wird.
+\end{itemize}
+
+Die Logik zur Vergabe der Abzeichen wird im \textit{abzeichenStore} implementiert. 
+Hierfür wird ein Regelkonzept verwendet, bei dem jede einzelne Abzeichenregel das Interface \texttt{AbzeichenRegel} implementiert. 
+Dieses Interface definiert eine einheitliche Struktur für alle Regeln und stellt sicher, dass jede Regel prüfen kann, ob die jeweiligen Bedingungen für ein Abzeichen erfüllt sind.
+Jede Regel überprüft dabei bestimmte gespeicherte Werte des aktuell eingeloggten Benutzers, beispielsweise die Gesamtpunktzahl, die Anzahl gelernter Sprachen oder die aktuelle Lernserie. 
+Erfüllt ein Benutzer die Bedingungen einer Regel, kann das entsprechende Abzeichen vergeben werden.
+
+Alle definierten Regeln werden in einem Array gespeichert. 
+Dieses Array wird innerhalb der Methode \texttt{pruefAbzeichen()} im \textit{abzeichenStore} durchlaufen. 
+Für jede Regel wird überprüft, ob die Bedingungen erfüllt sind und ob das entsprechende Abzeichen dem Benutzer noch nicht zugewiesen wurde. 
+Ist dies der Fall, wird das Abzeichen dem Benutzerkonto hinzugefügt.
+
+Die eigentliche Prüfung der Abzeichen wird durch den \textit{kontoStore} ausgelöst. 
+Hier wird die Methode \texttt{checkAbzeichen()} aufgerufen, die wiederum die Abzeichenprüfung im \textit{abzeichenStore} startet.
+
+Diese Prüfung erfolgt automatisch an mehreren Stellen innerhalb der Anwendung:
+
+\begin{itemize}
+    \item beim Aktualisieren der Lernserie (Flamme),
+    \item beim Hinzufügen einer neuen Sprache,
+    \item sowie am Ende jeder abgeschlossenen Lernrunde.
+\end{itemize}
+
+Durch diese automatische Überprüfung wird sichergestellt, dass neue Abzeichen unmittelbar vergeben werden, sobald die entsprechenden Bedingungen erfüllt sind.
 
 \section{Aufgetretene Probleme}
 
@@ -463,4 +609,42 @@ Durch die Konfiguration \texttt{immediate: true} ist sichergestellt, dass der Wa
 automatisch geladen werden. 
 Dadurch entstehen keine leeren Datenbestände beim direkten Aufruf von Unterseiten und auch beim Sprachwechsel werden die entsprechenden Lernsets synchronisiert.
 
-\section{Ergebnisse und Fazit}
+\subsection{Aktualisierung und Berechnung der Progressbar (Andreleene Prado)}
+Ein zentrales Problem während der Entwicklung trat bei der korrekten Darstellung der Progressbar auf, insbesondere im Spielmodus der Anwendung. 
+Während die Berechnung des Lernfortschritts im Karteikartenmodus relativ einfach umgesetzt werden konnte, erwies sich dies bei den Spielmodi als deutlich komplexer.
+
+Im Karteikartenmodus wird der Fortschritt berechnet, indem der Index der aktuell angezeigten Vokabel durch die Gesamtanzahl der Vokabeln der aktuellen Lernrunde geteilt wird. 
+Das Ergebnis wird anschließend als Prozentwert berechnet und an die übergeordnete Komponente übergeben, welche die Progressbar darstellt.
+
+Im Spielmodus, insbesondere beim \textit{Paare}-Spiel, gestaltet sich die Berechnung des Fortschritts komplizierter. 
+Hier werden mehrere Vokabeln gleichzeitig in einer Spielrunde verwendet. 
+Zudem müssen die verwendeten Vokabeln nach Abschluss des Spiels aus der Liste der verbleibenden Vokabeln entfernt werden, damit sie innerhalb derselben Lernrunde nicht erneut erscheinen.
+
+Zu Beginn der Implementierung wurde die Progressbar im Spielmodus nach dem gleichen Prinzip wie im Karteikartenmodus berechnet. 
+Nachdem jedoch das Paare-Spiel vollständig integriert wurde, zeigte sich, dass die Fortschrittsanzeige nicht mehr korrekt funktionierte. 
+Der Fortschritt bewegte sich teilweise unregelmäßig oder sprang scheinbar zufällig, da mehrere Vokabeln gleichzeitig verarbeitet und aus der Liste entfernt wurden.
+
+Um dieses Problem zu lösen, wurden zusätzliche Zustandsvariablen eingeführt. 
+Eine Variable speichert die Gesamtanzahl der Vokabeln zu Beginn der Lernrunde, während eine zweite Variable die Anzahl der bereits beantworteten Vokabeln erfasst. 
+Nach jeder abgeschlossenen Aufgabe wird die Anzahl der beantworteten Vokabeln entsprechend erhöht.
+Der Fortschritt der Progressbar wird anschließend anhand diese Werte in Prozent berechnet.
+Durch diese Anpassung bleibt die Fortschrittsanzeige stabil und korrekt, unabhängig davon, welcher Lernmodus verwendet wird oder wie viele Vokabeln innerhalb einer Spielrunde verarbeitet werden.
+
+\section{Ergebnisse und Fazit (Andreleene Prado)}
+
+Zusammenfassend kann festgestellt werden, dass die Implementierung des Vokabeltrainers erfolgreich umgesetzt wurde. 
+Die entwickelte Webanwendung ermöglicht es Benutzern, eigene Vokabeln in Lernsets zu organisieren und diese jederzeit flexibel zu üben. 
+Hierfür stehen verschiedene Lernmethoden zur Verfügung, darunter klassische Karteikarten sowie mehrere spielerische Lernmodi, die das Wiederholen der Vokabeln abwechslungsreicher gestalten.
+
+Ein besonderes Merkmal der Anwendung ist die Integration eines Chatbots, der es den Benutzern ermöglicht, die gelernten Vokabeln aktiv in Sätzen oder in kurzen Konversationen anzuwenden. 
+Dadurch wird nicht nur das reine Auswendiglernen unterstützt, sondern auch die praktische Anwendung der Sprache gefördert.
+
+Zusätzlich wurden verschiedene Gamification-Elemente integriert, wie beispielsweise ein Punktesystem, Abzeichen und Lernserien. 
+Diese Elemente dienen dazu, die Motivation der Benutzer zu steigern und langfristiges Lernen zu fördern. 
+Durch das Sammeln von Punkten und das Freischalten von Abzeichen werden Lernfortschritte sichtbar gemacht und zusätzliche Anreize zum regelmäßigen Üben geschaffen.
+
+Die technische Umsetzung mit dem Framework Vue.js erwies sich als besonders vorteilhaft. 
+Durch das komponentenbasierte Architekturmodell konnten die einzelnen Funktionen der Anwendung klar strukturiert und modular entwickelt werden. 
+Die Verwendung von reaktiven Zuständen und zentralen Stores erleichterte außerdem die Verwaltung von Benutzerdaten, Lernfortschritten und Spielzuständen innerhalb der Anwendung.
+
+Die entwickelte Anwendung bietet eine solide Grundlage, die in Zukunft weiter ausgebaut werden kann, beispielsweise durch zusätzliche Lernmodi, weitere Sprachen oder eine erweiterte Personalisierung des Lernprozesses.

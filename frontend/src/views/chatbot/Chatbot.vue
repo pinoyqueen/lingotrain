@@ -156,7 +156,6 @@ watch(messages, (newVal) => {
  */
 async function startConversation() {
   if (conversationVocabulary.value.length === 0) {
-    // TODO: hier die Anzeige anpassen, dass keine Vokabeln mehr für die Konversation vorhanden sind und zurück zur Auswahl springen
     saveMessage("assistant", "Keine Wörter für die Konversation gefunden.", "feedback")
     return
   }
@@ -181,7 +180,6 @@ async function startConversation() {
 
   const data = await res.json()
   conversationState.value = data
-  // TODO: hier könnte die Übersetzung in der UI angezeigt werden, damit der Nutzer weiß, welches Wort er in der Konversation üben soll
   console.log("Konversation gestartet mit Fokus auf: " + random.vokabel)
   // Nur Assistant anzeigen, system-nachricht ignorieren
   const firstAssistantMessage = data.messages.find((m: any) => m.role === "assistant")
@@ -266,7 +264,6 @@ async function loadSentence() {
 /**
  * Lädt die nächste Vokabel im Lernset.
  * 
- * // TODO: diese automatisch nach der zweiter Versuch/richtige Antwort aufrufen; erstmal manuell per Button-Klick
  */
 async function nextVokabel() {
   feedback.value = ""
@@ -358,7 +355,6 @@ async function checkAnswer() {
         comment: data.comment
       })
       console.log(comment.value + " " + suggestion.value)
-      // TODO: Auswahl zeigen, die nächste Vokabel zu zeigen ODER automatisch nächste Vokabel anzeigen
       await nextVokabel()
   }
 
