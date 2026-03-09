@@ -72,7 +72,10 @@ um dem Nutzer Verbesserungen sowie häufige Fehlerquellen nennen zu können.
 
 \section{Simulationsumgebung und Trainingsdaten}
 
-\section{Architektur}
+\section{Architektur (Ronja Rüther)}
+Die Architektur von \enquote{Lingotrain AI} folgt einem modernen \textbf{Client-Server-Modell}, sodass die Benutzeroberfläche von der Geschäftslogik getrennt wird. 
+Während das Frontend in \textit{Vue.js} umgesetzt ist und die Benutzerinteraktionen verwaltet, übernimmt das in Python entwickelte Backend die Verarbeitung natürlicher Sprache (NLP)
+sowie die Anbindung an externe Sprachmodelle.
 
 \section{Evaluation der Ergebnisse}
 
@@ -82,65 +85,3 @@ um dem Nutzer Verbesserungen sowie häufige Fehlerquellen nennen zu können.
 \subsection{Vergleich zum Stand der Technik}
 
 \subsection{Fazit und Ausblick}
-
-
-
-
-Eine Aufzählung:
-
-\begin{itemize}
-\item Lorem ipsum
-\item dolor sit amet
-\item consetetur sadipscing elitr
-\item sed diam nonumy
-\end{itemize}
-Eine nummerierte Aufzählung:
-
-\begin{enumerate}
-\item Erster Punkt
-\item Zweiter Punkt
-\item Dritter Punkt
-\end{enumerate}
-Es folgt Tabelle \ref{beispieltabelle}.
-
-\begin{table}[htbp]
-\centering
-\begin{tabular}{lrc}
-\toprule
-Linksbündig & Rechtsbündig & Zentriert \\
-\midrule
-Lorem &  13 & amet \\ \addlinespace
-ipsum & 104 & consetetur \\ \addlinespace
-dolor &   7 & sadipscing \\ \addlinespace
-sit   &  -5 & elitr \\
-\bottomrule
-\end{tabular}
-\caption{Beschreibung der Tabelle.}
-\label{beispieltabelle}
-\end{table}
-
-Programmcode im Fließtext: \lstinline{printf("Hello, world!\n");}.
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-Es folgt Programmlisting \ref{beispiellisting}.
-
-\begin{lstlisting}[caption={Beschreibung des Listings.}, label=beispiellisting, frame=tblr, numbers=left]
-#include <stdio.h>
-
-int main(void)
-{
-    printf("Hello, world!\n");
-}
-\end{lstlisting}
-Ein Listing ohne Titel, welches nicht im Listingverzeichnis aufgefühert wird:
-
-\begin{lstlisting}
-#include <stdio.h>
-
-int main(void)
-{
-    printf("Hello, world\n");
-}
-\end{lstlisting}
-
-Text kann \emph{kursiv} oder \textbf{fett} gesetzt werden.
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
