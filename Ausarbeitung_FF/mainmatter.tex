@@ -235,7 +235,167 @@ Um die Benutzerfreundlichkeit und Datensicherheit zu gewährleisten, werden vers
 \item \textbf{Dialog-Komponenten:} Kritische Aktionen wie das Löschen einer Sprache oder eines gesamten Kontos werden über \textit{Alert-Dialoge} gesteuert. Dies verhindert, dass eine Sprache oder ein Konto mit all den zugehörigen Daten versehentlich gelöscht wird.
 \end{itemize}
 
-\subsection{Implementierung interaktiver Lernmodule}
+\subsection{Implementierung der Vokabelverwaltung (Andreleene Prado)}
+Wie bereits im Abschnitt zum Aufbau der Vokabelverwaltung beschrieben, sind Lernsets und Vokabeln in ihrer Struktur ähnlich aufgebaut.
+Die Darstellung der Lernset- sowie der Vokabelliste erfolgt über entsprechende Views, die mit den jeweiligen Stores verwaltet werden.
+Die Views greifen dabei direkt auf die im Store gespeicherten Daten zu.
+
+Durch die Verwendung des reaktiven Frameworks Vue.js werden Änderungen automatisch in Benutzerinterface aktualisiert.
+Sobald sich Daten im Store ändern, beispielweise nach einer Änderung in der Datenbank, wird die Darstellung der Liste automatisch neu gerendert.
+Dies geschieht nach dem Aufruf der Methoden \texttt{findAllLernset()} bzw. \texttt{findVokabelnByLernsetId()}.
+Dadurch ist keine manuelle Aktualisierung der Oberfläche erforderlich.
+
+Da das Laden der Daten aus der Datenbank einige Sekunden dauern kann, wird während des Ladevorgangs ein sogenannter \textit{Skeleton Loader} angezeigt.
+Dieser wird über ein Flag \texttt{loading} im Store gesteuert und signalisiert dem Benutzer, dass die Inhalte gerade geladen werden.
+
+Sowohl für die Lernsetliste als auch für die Vokabelliste stehen Funktionen zum Anlegen, Bearbeiten und Löschen zur Verfügung.
+Für das Anlegen und Bearbeiten wird derselbe Dialog verwendet, der je nach Zustand unterschiedliche Inhalte anzeigt.
+Über das Flag \texttt{showBearbeiten} wird gesteuert, ob sich der Dialog im Bearbeitungsmodus oder im Modus zum Anlegen eines neuen Eintrags befindet.
+Beim Bearbeiten werden die bestehenden Daten automatisch in das Formular geladen, während beim Anlegen eines neuen Eintrags ein leeres Formular angezeigt wird.
+
+Die Formularfelder sind mithilfe des reaktiven Vue-Mechanismus implementiert.
+Die Eingabedaten werden in einem reaktiven Objekt gespeichert, sodass Änderungen direkt mit den entsprechenden UI-Elementen synchronisiert werden.
+Beim Speichern werden die Daten aus dem Formular ausgelesen und über Funktionen des Stores an die Datenbank übermittelt.
+
+Zusätzlich werden Benutzeraktionen wie das erfolgreiche Speichern oder Löschen eines Lernsets über Benachrichtigungen (\textit{Toast}-Meldungen) bestätigt.
+Vor dem endgültigen Löschen eines Lernsets wird außerdem ein Bestätigungsdialog angezeigt, um versehentliche Löschvorgänge zu vermeiden.
+
+Damit die Navigation zur richtigen Vokabelliste beim Auswählen eines Lernsets möglich ist, wird die Lernset-ID als Parameter an die entsprechende Route übergeben.
+Der Name des Lernsets wird zusätzlich mithilfe der Funktion \texttt{slugify} in eine URL-freundliche Form umgewandelt, sodass er als lesbarer Bestandteil der URL angezeigt werden kann.
+
+\subsection{Implementierung interaktiver Lernmodule (Andreleene Prado)}
+
+Die Anwendung bietet verschiedene Lernmodi, die das Üben von Vokabeln abwechslungsreicher und motivierender gestalten sollen.
+In diesem Abschnitt wird die technische Umsetzung dieser interaktiven Lernmodule beschrieben.
+
+\subsubsection{Dynamische Komponentenstruktur der Lernmodule (Andreleene Prado)}
+Beim Starten des Lernens wird zunächst abgefragt, in welchem Modus der Benutzer die Vokabeln üben möchte.
+Der ausgewählte Modus wird anschließend zusammen mit wichtigen Informationen, wie der Lernset-ID und einem URL-freundlichen Namen des Lernsets, an die entsprechende Route übergeben.
+
+In der Komponente \texttt{ContainerLernen.vue} werden diese Parameter aus der Route ausgelesen und geprüft.
+Abhängig vom übergebenen Modus wird anschließend dynamisch die passende Komponente geladen.
+Dabei wird entweder die Komponente \texttt{KarteiKarten.vue} für das Lernen mit Karteikarten oder die Komponente \texttt{ContainerSpiel.vue} für die spielbasierten Übungen angezeigt.
+Die Auswahl der Komponente erfolgt über eine berechnete Eigenschaft (\textit{computed property}), die basierend auf dem Modus die entsprechende Kind-Komponente zurückgibt.
+
+Unabhängig davon, welcher Lernmodus ausgewählt wird, wird derselbe übergeordnete Card-Container verwendet.
+Dadurch wird ein einheitliches Layout für alle Lernmodule gewährleistet und der Aufbau der Benutzeroberfläche bleibt konsistent.
+
+Am oberen Rand des Containers wird eine Progressbar angezeigt, die den aktuellen Lernfortschritt visualisiert.
+Die Berechnung des Fortschritts erfolgt jedoch innerhalb der jeweiligen Kind-Komponente, da sich die Logik je nach Lernmodus unterscheidet.
+Der berechnete Fortschrittswert wird anschließend über eine Zwei-Wege-Bindung (\texttt{v-model}) an die übergeordnete Komponente zurückgegeben und dort in der Progressbar dargestellt.
+
+Durch diese Architektur wird eine klare Trennung zwischen der allgemeinen Containerstruktur und der spezifischen Logik der einzelnen Lernmodule erreicht.
+
+\subsubsection{Implementierung der Karteikarten (Andreleene Prado)}
+Beim Starten des Karteikartenmodus werden zunächst alle Vokabeln des ausgewählten Lernsets geladen.
+Dies erfolgt über den \textit{vokabelnStore}, der die Daten aus der Datenquelle abruft und in einer Liste bereitstellt.
+
+Für die Darstellung der Karteikarten wird eine Card-Komponente verwendet.
+Diese bildet das klassische Layout einer Lernkarte mit Vorder- und Rückseite ab.
+Durch einen Klick auf die Karte wird diese mittels einer einfachen Rotationsanimation umgedreht.
+Die Animation wird mit Hilfe von Tailwind CSS umgesetzt, indem eine Transformation entlang der Y-Achse verwendet wird.
+
+Zur Navigation zwischen den einzelnen Karten stehen mehrere Steuerungsbuttons zur Verfügung.
+Diese ermöglichen das Wechseln zur vorherigen oder nächsten Karte, das Neustarten der Lernrunde sowie das zufällige Mischen der Karten.
+Zusätzlich kann der Benutzer die Anzeigerichtung ändern, sodass entweder die Vokabel oder die Übersetzung zuerst angezeigt wird.
+
+Zur Verbesserung der Benutzerfreundlichkeit werden die Buttons mit Tooltips versehen.
+Hierfür werden Komponenten aus der Bibliothek \textit{shadcn-vue} verwendet, insbesondere der \textit{TooltipProvider}.
+Die Tooltips erklären dem Benutzer die Funktion der jeweiligen Steuerungelemente.
+
+Während der Nutzung wird außerdem der Lernfortschritt berechnet.
+Dazu wird zunächst die Gesamtanzahl der Vokabeln bestimmt.
+Bei jeder neuen angezeigten Karte wird der aktuelle Index aktualisert und daraus der Fortschritt in Prozent berechnet.
+Der berechnete Wert wird anschließend über ein \textit{emit}-Event an die übergeordnete Komponente weitergegeben, welche die Progressbar entsprechend aktualisiert.
+
+\subsubsection{Implementierung der Spiellogik (Andreleene Prado)}
+Die Komponente \texttt{ContainerSpiel.vue} enthält die zentrale Spiellogik der Anwendung.
+Sie steuert den Ablauf der Lernrunde sowie die Auswahl der verschiedenen Spieltypen für Wort- und Satzvokabeln.
+
+Der grundlegende Spielalgorithmus funktioniert nach folgendem Prinzip:
+\begin{itemize}
+    \item Zu Beginn einer Lernrunde werden alle noch offenen Vokabeln aus der Datenquelle geladen.
+    Pro Runde werden maximal zehn Vokabeln berücksichtigt.
+    \item Wird eine Vokabel korrekt beantwortet, wird sie als \textit{RICHTIG} markiert und aus der aktuellen Lernrunde entfernt.
+    \item Wird eine Vokabel als falsch beantwortet, wird sie als \textit{FALSCH} markiert und in einer späteren Runde erneut abgefragt.
+    \item Dieser Prozess wird wiederholt, bis alle Vokabeln korrekt beantwortet wurden.
+\end{itemize}
+
+Zunächst werden über den \textit{vokabelKontoStore} alle relevanten Vokabeln für eine Lernrunde geladen.
+Das zugrunde liegende Repository ruft dabei alle \textit{VokabelKonto}-Einträge ab, deren Status \textit{NICHT\_GELERNT} oder \textit{FALSCH} ist
+und die sowohl zum aktuell angemeldeten Benutzer als auch zum ausgewählten Lernset gehören.
+
+Falls keine offenen Vokabeln gefunden werden, werden alle zugehörigen Einträge automatisch wieder auf den Status \textit{NICHT\_GELERNT} gesetzt,
+sodass eine neue Lernrunde gestartet werden kann.
+
+\paragraph{Auswahl des Spieltyps}
+
+Für jede Vokabel wird dynamisch ein geeigneter Spielmodus ausgewählt.
+Die Methode \texttt{chooseSpiel()} übernimmt diese Auswahl.
+
+Die Entscheidung basiert auf mehreren Kriterien:
+\begin{itemize}
+    \item Handelt es sich bei der aktuellen Vokabel um ein einzelnes Wort, werden ausschließlich wortbasierte Spiele in den Auswahlpool aufgenommen, 
+    beispielweise \textit{Paare}, \textit{Multiple-Choice-Fragen} pder \textit{Schreiben}.
+    \item Handelt es sich hingegen um einen vollständigen Satz, werden nur satzbasierte Spiele berücksichtigt, 
+    beispielweise \textit{Schreiben}, \textit{Lückentext} oder \textit{Bausteine}.
+    \item Zusätzlich wird über die Methode \texttt{getAnzahlGelernt()} ermittelt, wie oft eine Vokabel bereits erfolgreich gelernt wurde.
+    Abhängig von diesem Wert werden einfachere Spieltypen, wie beispielsweise Multiple-Choice-Fragen, aus dem Auswahlpool entfernt, damit der Benutzer stärker
+    zum aktiven Erinnern der Vokabel aufgefordert wird.
+    \item Außerdem wird geprüft, ob genügend Vokabeln für bestimmte Spieltypen vorhanden sind.
+    Wenn beispielweise weniger als drei Wortvokabeln verfügbar sind, wird das Spiel \textit{Paare} aus dem Pool entfernt, da es mit zu wenigen Vokabeln zu einfach wäre.
+    \item Bei Multiple-Choice-Fragen wird ebenfalls geprüft, ob geügend Distraktoren (falsche Antwortmöglichkeiten) vorhanden sind.
+    \item Bei Satzvokabeln wird zusätzlich mit Hilfe der Methode \texttt{isSentenceLongEnough()} geprüft, ob der Satz ausreichend lang ist.
+    Kurze Sätze eignen sich nicht für bestimmte Spieltypen wie Lückentexte oder Bausteine.
+    In diesem Fall wird automatisch der Spielmodus \textit{Schreiben} verwendet.
+    \item Falls durch diese Filterung kein Spieltyp mehr verfügbar ist, wird als Fallback ebenfalls der Schreibmodus ausgewählt.
+    \item Anschließend werden ein Spiel zufällig aus der Auswahlpool ausgewählt.
+\end{itemize}
+
+Der ausgewählte Spielmodus wird anschließend dynamisch als Vue-Komponente geladen und im Container angezeigt.
+Hierfür werden \textit{lazy-loaded} Komponenten verwendet, sodass die jeweiligen Spielmodule erst bei Bedarf geladen werden.
+
+\paragraph{Überprüfung der Antworten}
+
+Nachdem der Benutzer eine Antwort abgegeben hat, wird diese überprüft und über die Methode \texttt{frageBeantwortet()} im \textit{vokabelKontoStore} verarbeitet.
+Dabei wird der Status der entsprechenden Vokabel in der Datenbank aktualisiert.
+
+Zusätzlich werden Punkte vergeben und gegebenenfalls eine Antwortserie \textit{Streak} erhöht.
+Bei falschen Antworten wird die Serie zurückgesetzt.
+Das Ergebnis wird anschließend im Benutzerinterface als Feedback angezeigt.
+
+Nachdem das Feedback angezeigt wurdem kann der Benutzer über den \textit{Next}-Button zur nächste Frage wechseln.
+Dabei wird automatisch die nächste Vokabel aus der Liste geladen und erneut ein geeigneter Spielmodus ausgewählt.
+
+\paragraph{Berechnung der Progressbar}
+
+Ähnlich wie in Karteikarten wird auch im Spielmodus der Lernfortschritt in Prozent berechnet und über ein \textit{emit}-Event an die übergeordnete Komponente weitergegeben,
+welche anschließend die Progressbar aktualisiert.
+
+Im Spielmodus gestaltet sich die Berechnung jedoch etwas komplexer.
+Insbesondere beim Spieltyp \textit{Paare} werden mehrere Vokabeln gleichzeitig beantwortet.
+Dabei werden die verwendeten Vokabeln aus der Hauptliste entfernt, wodurch sich die Gesamtanzahl der verbleibenden Vokabeln verändert.
+Eine Fortschrittsberechnung ausschließlich anhand der aktuell vorhandenen Vokabeln wäre daher ungenau.
+
+Aus diesem Grund werden im \textit{vokabelKontoStore} zusätzliche Zustandsvariablen gespeichert.
+Zum einen wird die Anzahl der Vokabeln zu Beginn der Lernrunde in der Variable \texttt{startAnzahl} festgehalten.
+Zum anderen wird in der Variable \texttt{beantwortet} gezählt, wie viele Vokabeln innerhalb der aktuellen Runde bereits beantwortet wurden.
+
+Der Fortschritt wird anschließend über eine \textit{computed}-Property berechnet, die automatisch auf Änderungen im Store reagiert.
+
+\paragraph{Beenden der Lernrunde}
+
+Sobald alle Vokabeln der aktuellen Runde bearbeitet wurden, wird die Lernrunde beendet.
+Dem Benutzer wird anschließend eine Übersicht mit den in dieser Runde erreichten Punkten angezeigt.
+
+Der Benutzer hat danach zwei Möglichkeiten:
+\begin{itemize}
+    \item eine neue Lernrunde zu starten oder
+    \item zur Übersicht der Vokabelliste zurückzukehren.
+\end{itemize}
+
+Beim Neustart einer Runde wird die Methode \texttt{nextRunde()} aufgerufen.
+Diese setzt alle relevanten Zustände zurück, lädt die Vokabeln erneut und startet automatisch die erste Frage der neuen Runde.
 
 \subsubsection{Wortbasierte Lernmodi}
 
