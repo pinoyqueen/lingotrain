@@ -20,7 +20,7 @@ Trotz dieser Fortschritte gibt es immer noch Herausforderungen, die diese Modell
 Dazu zählen beispielsweise die individuelle Anpassung der Satzgenerierung an das Sprachniveau des Nutzers sowie die Generierung von 
 hilfreichem und nachvollziehbarem Feedback.
 
-\subsection{Stand der Technik}
+\subsection{Stand der Technik (Andreleene Prado)}
 Mit der fortgeschrittenen Entwicklung der Künstlichen Intelligenz sowie der zunehmenden Verfügbarkeit von Open-Source-Modellen wie LLaMa gibt es heute deutlich mehr Möglichkeiten,
 Chatbots für spezifische Aufgaben zu entwicklen und anzupassen. Dadurch können auch Personen oder kleinere Entwicklerteams eigene Chatbots erstellen, die auf bestimmte
 Anwendungsbereiche zugeschnitten sind.
@@ -70,17 +70,147 @@ Diese Konversation findet statt, bis der Nutzer das Zielwort mehrfach erfolgreic
 Anzahl an Interaktionen erreicht ist. Abschließend analysiert das Modell die Konversation und erstellt detailliertes Feedback,
 um dem Nutzer Verbesserungen sowie häufige Fehlerquellen nennen zu können.
 
-\section{Simulationsumgebung und Trainingsdaten}
+\section{Simulationsumgebung und Trainingsdaten (Andreleene Prado)}
 
 \section{Architektur (Ronja Rüther)}
-Die Architektur von \enquote{Lingotrain AI} folgt einem modernen \textbf{Client-Server-Modell}, sodass die Benutzeroberfläche von der Geschäftslogik getrennt wird. 
-Während das Frontend in \textit{Vue.js} umgesetzt ist und die Benutzerinteraktionen verwaltet, übernimmt das in Python entwickelte Backend die Verarbeitung natürlicher Sprache (NLP)
-sowie die Anbindung an externe Sprachmodelle.
+In diesem Kapitel wird die Architektur der Anwendung beschrieben.
+Dabei werden zunächst die grundlegende Systemarchitektur sowie die Kommunikation zwischen Frontend und Backend dargestellt. 
+Anschließend erfolgt eine detailliertere Erläuterung der Implementierung des Satzmodus sowie Konversationsmodus.
+
+\subsection{Systemarchitektur (Ronja Rüther)}
+Die Architektur von \enquote{Lingotrain AI} basiert auf einem modernen \textbf{Client-Server-Modell}.
+Das Frontend wurde in \textit{Vue.js} implementiert und ist für die Benutzerinteraktion sowie die Darstellung der Inhalte verantwortlich.
+Aus dem Frontend werden alle Eingaben des Nutzers an das Backend weitergeleitet, welches mit \textit{FastAPI} in Python umgesetzt ist.
+Das Backend übernimmt die Verarbeitung der Nutzereingaben, steuert die Anbindung an Large Language Models (LLMs) und übernimmt verschiedene Aufgaben der natürlichen Sprachverarbeitung (NLP).
+
+Die Kommunikation zwischen dem Frontend und dem Backend erfolgt über definierte \textit{REST-API}-Endpunkte.
+Die zentralen Endpunkte der Applikation sind folgende:
+\begin{itemize}
+    \item \texttt{/generate-sentence}: Generiert einen Beispielsatz zu einer vorgegebenen Vokabel.
+    \item \texttt{/evaluate-answer}: Bewertet eine Nutzerantwort im Satzmodus auf Wortebene, d.h. die Vokabel besteht nur aus einem Wort. Es wird zudem auch Feedback und ein Korrekturhinweis geliefert.
+    \item \texttt{/evaluate-sentence}: Bewertet eine Nutzerantwort im Satzmodus auf Satzebene und liefert ebenfalls Feedback.
+    \item \texttt{/conversation/start}: Startet den Konversationsmodus, wobei der erste Satz für die Interaktion mit dem Nutzer generiert wird.
+    \item \texttt{/conversation/next}: Führt die Konversation fort und erstellt weitere Sätze für den interaktiven Dialog.
+\end{itemize}
+
+Für die Satzgenerierung und die Bewertung werden LLMs verwendet. Dabei wird ein Prompt erstellt, der die Zielvokabel, die Zielsprache und den Schwierigkeitsgrad berücksichtigt.
+Neben der LLM-basierten Bewertung kommen NLP-Tools wie \textit{SpaCy} für Tokenisierung, Lemmatisierung und POS-Tagging zum Einsatz.
+Außerdem wird \textit{Sentence-BERT} zur Berechnung der semantischen Ähnlichkeit zwischen der Nutzereingabe und dem Referenzsatz genutzt.
+
+Bevor die Eingaben an die LLMs gesendet werden, prüft das Backend die Sätze auf Plausibilität und Vollständigkeit.
+Die Ergebnisse dieser Analysen werden in Echtzeit über die API an das Frontend zurückgegeben, sodass der Nutzer das Feedback direkt erhält. 
+Durch diese Trennung von Frontend und Backend werden die Verantwortlichkeiten klar abgegrenzt.
+
+\subsection{Satzmodus auf Wortebene (Ronja Rüther)}
+Im Satzmodus auf Wortebene wird der Fokus darauf gelegt, dass der Nutzer einen generierten Satz zu einer Zielvokabel korrekt in die Zielsprache übersetzen kann. 
+Die Implementierung erfolgt vollständig im Backend und nutzt die bereits beschriebenen NLP- und LLM-Komponenten.
+Die generative KI wird daher mit den klassischen NLP-Methoden kombiniert, um eine präzise Bewertung zu gewährleisten.
+
+\subsubsection{Implementierung der Satzgenerierung (Ronja Rüther)}
+\label{implementierung_satzgenerierung}
+Bei der Satzgenerierung wird nicht einfach auf eine statische Datenbank mit festen Beispielsätzen zurückgegriffen, sondern die Sätze werden zur Laufzeit zu einer gegebenen Zielvokabel über die
+Funktion \texttt{generate\_sentence(...)} erzeugt. Dadurch wird der Lerninhalt variiert und der Nutzer kann immer wieder unterschiedliche Sätze zu der gleichen Vokabel lernen.
+
+Damit die Kommunikation mit verschiedenen Sprachmodellen modellunabhängig möglich ist, wird die Bibliothek \textbf{liteLLM} als Abstraktionsschicht eingesetzt. Diese bildet die Brücke zwischen unserem 
+FastAPI-Backend und dem Sprachmodell GPT-4o. 
+Den größten Teil der Satzgenerierung nimmt die Promptgenerierung und damit das Design des \texttt{sentence\_prompt(...)} ein. 
+Dieser Prompt steuert das Verhalten des verwendeten LLMs, sodass dem Modell strikte Regeln für verschiedene Schwierigkeitsgrade erteilt werden:
+\begin{itemize}
+    \item \textbf{Einfach:} Der Fokus liegt auf Hauptsätzen im Präsens ohne Adjektive.
+    \item \textbf{Mittel:} Es werden Nebensätze eingeführt. Das können z.B. Kausalsätze mit \enquote{weil} sein.
+    \item \textbf{Schwer:} Der Satz besteht aus komplexeren Strukturen mit variablen Zeitformen.
+\end{itemize}
+
+Ein entscheidender Aspekt des Prompt Designs ist außerdem die Verwendung von \textit{Negative Constraints}. 
+Damit der generierte Satz im Backend weiterverarbeitet werden kann, wird das Modell angewiesen, keine einleitenden Sätze, Erklärungen oder Übersetzungen auszugeben.
+Dadurch wird sichergestellt, dass die Antwort des Modells direkt als String-Variable verwendet werden kann, ohne dass eine aufwendige Bereinigung des Textes notwendig ist. 
+
+Um eine hohe Variabilität der Lerninhalte sicherzustellen und zu verhindern, dass der Nutzer bei der gleichen Vokabel immer denselben Satz erhält, wurde das Modell unter Verwendung drei Parameter konfiguriert:
+\begin{enumerate}
+    \item \textbf{n = 5:} Es werden intern fünf verschiedene Satzvarianten generiert. Aus dieser Auswahl wird dann mittels einer Zufallsfunktion ein Satz extrahiert und an das Frontend übermittelt.
+    \item \textbf{temperature = 0.9:} Durch diesen Wert wird die Kreativität des Modells gesteigert. Ein höherer Wert sorgt dafür, dass die Wortfolgen weniger vorhersehbar gewählt werden.
+    \item \textbf{top\_p = 0.9:} Das sogenannte \textit{Nucleus Sampling} ist dafür zuständig, dass die grammatikalische Stabilität trotz der hohen Kreativität des Modells erhalten bleibt. Dafür wird die Wortauswahl auf die wahrscheinlichsten 90\% der Wortkandidaten beschränkt und dadurch verhindert, dass das Modell zu abwegige Begriffe verwendet.
+\end{enumerate}
+
+Durch die Kombination dieser Parameter wird ein guter Mittelweg für die didaktische Korrektheit und die Abwechslung in den Sätzen erzielt.
+
+\subsubsection{Hybride Evaluation und Feedback-Logik (Ronja Rüther)}
+Die größte Herausforderung des Satzmodus stellt die Bewertung der Nutzereingaben dar. Da die Nutzer die Zielwörter oft konjugieren oder leicht vom Original abweichen, würde ein einfacher String-Vergleich zu einer hohen Fehlerrate führen.
+Um die Genauigkeit der Korrektur zu erhöhen und sich nicht nur auf das LLM zu verlassen, aber auch um Kosten zu sparen und schnellere Antworten liefern zu können, wurde die Bewertung in zwei Stufen aufgeteilt.
+Bei dieser hybriden Evaluation gibt es zunächst eine regelbasierte Vorprüfung und anschließend eine semantische Analyse mittels LLM.
+
+\textbf{Regelbasierte Vorprüfung mittels SpaCy:} \\
+Zunächst wird die Antwort des Nutzers lokal im Backend analysiert, bevor ein Aufruf des LLMs erfolgt. Dies hat den Zweck, Kosten zu sparen, da jeder LLM-Aufruf Kosten verursacht.
+Bei der Vorprüfung im Backend wird die NLP-Bibliothek \textit{SpaCy} verwendet.
+
+Den ersten Schritt bei dieser regelbasierten Vorprüfung bildet die \textbf{Lemmatisierung}. Die Funktion \texttt{contains\_target\_word(...)} reduziert dabei die Zielvokabel 
+und den eingegebenen Satz des Nutzers auf ihre Grundformen (Lemmata). Dadurch wird sichergestellt, dass beispielsweise die Eingabe \enquote{went} als korrekte Verwendung 
+der Vokabel \enquote{go} erkannt wird.
+
+Damit auch Mehrwort-Vokabeln, wie z.B. \enquote{ice cream}, erkannt und identifiziert werden können, prüft ein Algorithmus die Wortgruppen innerhalb eines Satzes.
+Dadurch wird verhindert, dass korrekte Antworten aufgrund von Leerzeichen in der Eingabe fälschlicherweise als falsch bewertet werden.
+
+Da ein eingegebener Satz auch mit einem Satzzeichen enden soll, wird vorab mithilfe der Funktion \texttt{check\_sentence\_end(...)} geprüft, ob das letzte Zeichen im Satz ein Punkt, Ausrufezeichen oder Fragezeichen enthält. Nachfolgende Leerzeichen werden dabei durch Verwendung der \texttt{.strip()}-Funktion ignoriert.
+
+Zuletzt wird durch das \textit{POS-Tagging} (Part-of-Speech) geprüft, ob die Eingabe des Nutzers ein Verb enthält und somit einen vollständigen Satz darstellt. 
+Dazu wurde die Funktion \texttt{is\_sentence\_plausible(...)} implementiert, die linguistische Merkmale von \textit{SpaCy} nutzt, um die Verben und Hilfsverben zu identifizieren. 
+Dabei wurde ein zweistufiger Check implementiert, der verhindert, dass bloße Wortlisten oder unvollständige Sätze an das LLM weitergeleitet werden:
+\begin{enumerate}
+    \item \textbf{POS-Tagging und Morphologie:} Das System prüft jedes Token auf sein POS-Tag (\texttt{VERB}) oder (\texttt{AUX}). Zusätzlich werden morphologische Merkmale wie Zeitform (\textit{Tense}) oder Personalform (\textit{Person}) abgefragt. Dies ist für die Sprachen Französisch und Spanisch besonders wichtig, um komplex konjugierte Verben nicht zu übersehen.
+    \item \textbf{Dependenz-Analyse:} Es wird zusätzlich geprüft, ob ein Wort als Wurzel (\texttt{dep\_ == \enquote{ROOT}}), also zentrales Element des Satzes, gilt, von dem alle anderen Wörter abhängen. Dadurch können auch Sätze korrekt erkannt werden, bei denen die automatische Wortart-Erkennung unsicher ist.
+\end{enumerate} 
+\bigskip
+\textbf{Semantische Analyse und Feedback:}  \\
+Sind die regelbasierten Vorprüfungen ohne Fehler durchlaufen, wird das LLM zur finalen semantischen Prüfung verwendet. 
+Das Modell kann dabei durch sein Sprachverständnis beurteilen, ob die Eingabe des Nutzers die Bedeutung des Referenzsatzes korrekt wiedergibt.
+Im \texttt{evaluation\_prompt(...)} wird das Modell dabei angewiesen, die Bedeutung der Nutzerantwort mit dem Referenzsatz zu vergleichen. 
+
+Auf Basis der Bewertung soll das Modell auch Feedback für den Nutzer generieren. Um die Frustration bei kleineren Fehlern zu minimieren, wird ein zweistufiger Ansatz verfolgt.
+Wenn das Modell ein fehlerhaftes Satzzeichen oder eine minimale Abweichung erkennt, vergibt das Modell ein Rating von \texttt{almost\_correct}. Der Nutzer erhält in diesem Fall einen Tipp (Hint),
+ohne dass sofort die vollständige Lösung eingeblendet wird. Auch bei ganz falschen Antworten (\texttt{rating = \enquote{wrong}}) wird so vorgegangen.
+Erst im zweiten Versuch wird eine korrekte Antwort sowie eine technische Begründung des Fehlers geliefert.
+
+Um die Weiterverarbeitung im Backend sicherzustellen, wird das Modell angewiesen, die Antwort als JSON-Objekt zurückzugeben.
+Dieses Objekt enthält dann die Felder für das \texttt{rating}, einen Korrekturvorschlag (\texttt{corrected\_sentence}), einen Hinweis (\texttt{hint}) sowie ein
+kurzes Feedback (\texttt{short\_feedback}) und die technische Begründung (\texttt{comment}). Für die Speicherung des Ergebnisses in der Datenbank wird außerdem ein 
+Wahrheitswert erwartet (\texttt{semantically\_correct}). Durch diese Strukturierung kann die logische Bewertung von der textuellen Rückmeldung an den Nutzer klar getrennt werden.
 
 \section{Evaluation der Ergebnisse}
 
 \section{Kritische Reflexion und Fazit}
 \subsection{Aufgetretene Probleme}
+\subsubsection{Zu komplexe Satzstrukturen bei hohem Schwierigkeitsgrad (Ronja Rüther)}
+Eine Herausforderung bei der Satzgenerierung bestand in der Anpassung der Sätze an den Schwierigkeitsgrad. 
+Besonders beim Schwierigkeitsgrad \enquote{schwer} erzeugte das Sprachmodell teilweise sehr lange und stark verschachtelte Sätze.
+Diese enthielten häufig mehrere Nebensätze und verfolgten einen sehr poetischen Stil mit schweren zusätzlichen Wörtern, wodurch die Übungen für den Nutzer unnötig schwierig wurden.
+
+Um dieses Problem zu beheben, wurde das Prompt-Design mehrfach überarbeitet und dem Modell präzisere Anweisungen gegeben, um die Satzlänge zu begrenzen und die Struktur der Sätze zu begrenzen.
+Zusätzlich wurde der Fokus auch mehr auf die klare und verständliche Generierung des Satzes gelegt.
+
+Durch diese Anpassung konnte erreicht werden, dass im Schwierigkeitsgrad \enquote{schwer} die Sätze anspruchsvoller werden, aber 
+dennoch verständlich und für einen Lernenden lösbar bleiben.
+
+\subsubsection{Problem bei der Erkennung konjugierter Wortformen (Ronja Rüther)}
+Bei der Evaluation der Nutzereingaben trat ein weiteres Problem bei der Erkennung bestimmter Wortformen auf.
+Besonders im Spanischen wurden korrekt verwendete Wörter teilweise als falsch bewertet. Dazu zählte beispielsweise das 
+Wort \enquote{como}, welches eine konjugierte Form des Verbs \enquote{comer} darstellt.
+
+Zu Beginn wurde bei der Überprüfung, ob die Zielvokabel im Satz vorkommt, hauptsächlich ein direkter Vergleich der eingegebenen Wörter mit der Zielvokabel durchgeführt.
+Dadurch wurden konjugierte Formen nicht zuverlässig erkannt.
+
+Zur Lösung dieses Problems wurde die Evaluation um eine weitere Analyse ergänzt, die \textit{SpaCy} nutzt, um Lemmatisierung durchzuführen und das Wort auf die Grundform zu reduzieren.
+Wie bereits im Anschnitt \ref{implementierung_satzgenerierung} beschrieben, wird dabei nun auch insbesondere das Wurzelelement des Satzes (\texttt{ROOT}) berücksichtigt.
+Dadurch lassen sich auch in der spanischen Sprache die konjugierten Formen zuverlässiger erkennen und bewerten.
+
+\subsubsection{Fehlerhafte Erkennung von Satzzeichen (Ronja Rüther)}
+Ein weiteres Problem trat bei der Bewertung der Satzzeichen auf. Zu Beginn bewertete das Sprachmodell Sätze häufig als fehlerhaft (\texttt{rating = \enquote{almost\_correct}}), 
+da das Satzzeichen fehlen würde, obwohl die Nutzereingabe mit dem korrekten Satzzeichen endete.
+
+Die Ursache bestand darin, dass die Bewertung der Satzzeichen vollständig durch das Sprachmodell erfolgte. In einigen Fällen hat dabei das Modell das vorhandene Satzzeichen allerdings ignoriert.
+
+Um dieses Problem zu lösen, wurde eine zusätzliche regelbasierte Vorprüfung im Backend implementiert.
+Die Funktion \texttt{check\_sentence\_end(...)} prüft vor dem LLM-Aufruf, ob der Satz mit einem gültigen Satzzeichen endet.
+Ist das der Fall, prüft das LLM anschließend nur noch, ob das verwendete Satzzeichen im Kontext des Satzes passend ist, aber nicht mehr, ob überhaupt ein Satzzeichen vorhanden ist. 
 
 \subsection{Vergleich zum Stand der Technik}
 
