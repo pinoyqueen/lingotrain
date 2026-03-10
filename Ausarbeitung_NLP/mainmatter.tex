@@ -354,6 +354,30 @@ Qualität des Modells getroffen werden. Bei weiteren durchgeführten Tests über
 
 \subsubsection{Evaluation der Bewertung (Ronja Rüther)}
 
+\subsection{Evaluation des Satzmodus auf Satzebene (Andreleene Prado)}
+
+\subsection{Evaluation des Konversationsmodus (Andreleene Prado)}
+Zur Evaluation des Konversationsmodus wurde eine vereinfachte Testumgebung im Terminal implementiert. 
+Diese befindet sich in der Datei \texttt{test\_conversation.py} und ermöglicht es, eine komplette Konversation mit dem Chatbot ohne Frontend zu simulieren. 
+Ziel dieser Tests war es, die Dialoglogik, die Verarbeitung der Nutzereingaben sowie die definierten Abbruchbedingungen zu überprüfen.
+
+Zu Beginn des Tests wird mithilfe der Funktion \texttt{start\_conversation()} eine neue Konversation gestartet. 
+Dabei wird ein Zielwort sowie dessen Übersetzung und die Zielsprache definiert. 
+In der Testimplementierung wurde beispielsweise das englische Verb \textit{hike} mit der deutschen Übersetzung \textit{wandern} verwendet. 
+Nach dem Start der Konversation generiert das LLM automatisch die erste Frage, welche im Terminal ausgegeben wird.
+
+Der Benutzer kann anschließend eigene Antworten eingeben, die an die Funktion \texttt{next\_turn()} übergeben werden. 
+Während der Konversation werden zwei wichtige Zustandsvariablen aktualisiert. 
+Die Variable \texttt{usage\_count} zählt, wie oft das Zielwort vom Benutzer im Dialog verwendet wurde. 
+Die Variable \texttt{turn\_count} erfasst die Anzahl der bisherigen Gesprächsrunden. 
+Diese Werte werden in der Testumgebung zusätzlich als Debug-Informationen ausgegeben, um die Funktionsweise der Konversationslogik nachvollziehen zu können.
+
+Die Konversation endet automatisch, sobald eine der definierten Abbruchbedingungen erreicht ist. 
+Entweder wurde das Zielwort mindestens zweimal verwendet und der Benutzer hat mindestens drei Antworten gegeben, oder es wurden maximal zehn Gesprächsrunden erreicht. 
+In beiden Fällen wird die Konversation beendet und ein abschließendes Feedback generiert.
+
+Durch diese Testimplementierung konnten verschiedene Szenarien überprüft werden, beispielsweise korrekte Antworten mit Verwendung des Zielwortes, unvollständige Sätze oder Antworten, die nicht zur Frage passen. 
+
 \section{Kritische Reflexion und Fazit}
 \subsection{Aufgetretene Probleme}
 \subsubsection{Zu komplexe Satzstrukturen bei hohem Schwierigkeitsgrad (Ronja Rüther)}
@@ -450,6 +474,27 @@ In diesem Fall wird die Unterhaltung unabhängig von der Häufigkeit der Wortver
 Durch diese zusätzliche Begrenzung wird sichergestellt, dass jede Konversation innerhalb einer überschaubaren Anzahl von Interaktionen abgeschlossen wird. 
 Dies verbessert die Benutzererfahrung und verhindert, dass Lernende in einer zu langen oder stagnierenden Konversation feststecken.
 
-\subsection{Vergleich zum Stand der Technik}
+\subsection{Vergleich zum Stand der Technik (Andreleene Prado)}
+Im Vergleich zu etablierten Sprachlernplattformen wie Duolingo verfolgt das in dieser Arbeit entwickelte System einen stärker experimentellen Ansatz zur Integration von Large Language Models in interaktive Lernprozesse. 
+
+Mit der Einführung von Duolingo Max wurden zudem Funktionen integriert, die ebenfalls auf Large Language Models basieren und dialogorientiertes Lernen ermöglichen. 
+Dazu gehören unter anderem textbasierte Rollenspiele sowie sprachbasierte Video-Anrufe mit einem virtuellen Gesprächspartner. 
+Diese Funktionen sollen realistischere Kommunikationssituationen simulieren und den Lernenden ermöglichen, ihre Sprachkenntnisse in einem interaktiven Kontext anzuwenden.
+
+Das in dieser Arbeit entwickelte System verfolgt ein ähnliches Ziel, jedoch in vereinfachter Form und mit einem stärkeren Fokus auf einzelne Lernaufgaben. 
+
+Ein zentraler Unterschied liegt im Fokus auf der gezielten Verwendung einzelner Vokabeln innerhalb der Übungen.
+Während Systeme wie Duolingo Max vor allem darauf ausgerichtet sind, möglichst natürliche Gespräche zu simulieren, wird in diesem Projekt bewusst gesteuert, dass bestimmte Zielwörter aktiv im Dialog oder im Übersetzungsaufgaben verwendet werden. 
+Zudem werden die verwendeten Vokabeln von den Nutzern selbst erstellt und in individuellen Lernsets organisiert, während Plattformen wie Duolingo ihre Inhalte zentral entwickeln und thematisch struturieren.
+
+Ein weiterer Unterschied besteht in der Art der automatischen Bewertung der Benutzereingaben. 
+Neben der Generierung von Dialogen durch ein Large Language Model kombiniert das entwickelte System zusätzliche NLP-Techniken, darunter syntaktische Analyse mit spaCy sowie semantische Ähnlichkeitsberechnungen mit Sentence-BERT. 
+Diese Methoden ermöglichen eine explizite Analyse der Benutzerantworten, beispielsweise hinsichtlich Satzstruktur, Relevanz zur gestellten Frage sowie der Verwendung des Zielwortes.
+Kommerzielle Plattformen wie Duolingo nutzen ebenfalls KI-gestützte Verfahren zur Bewertung von Antworten, greifen jedoch zusätzlich auf umfangreiche Trainingsdaten, interne Modelle und manuell gestaltete Lerninhalte zurück.
+
+Darüber hinaus beschränkt sich die Interaktion in diesem Projekt auf textbasierte Dialoge. 
+Im Gegensatz zu Duolingo Max, das auch sprachbasierte Video-Anrufe mit einem virtuellen Gesprächspartner anbietet, liegt der Schwerpunkt dieser Arbeit auf der Untersuchung der textbasierten Interaktion zwischen Nutzer und Chatbot sowie auf der Integration verschiedener NLP-Komponenten zur automatischen Auswertung der Antworten.
+
+Während kommerzielle Plattformen wie Duolingo auf sehr große Datenmengen, komplexe Personalisierungsalgorithmen und umfangreiche Lerninhalte zurückgreifen, konzentriert sich dieses Projekt auf die Umsetzung eines KI-gestützten individuellen Sprachtrainings.
 
 \subsection{Fazit und Ausblick}
