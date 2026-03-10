@@ -2,6 +2,14 @@ from nlp.evaluator import contains_target_word, get_nlp_for_language, is_sentenc
 from llm.llm import conversation_turn, get_llm_conversation_feedback
 from llm.prompts import conversation_system_prompt, answer_relevant_prompt
 
+# Prüft, ob die Antwort des Nutzer relevant zur letzten Frage des Assistenten ist.
+#
+# Argumente:
+#   - user_input(str): Eingabe des Nutzers
+#   - assistant_question(str): Letzte Frage des Assistenten
+#   - target_language(str): Sprache der Konversation
+#
+# Return: (bool) True, wenn die Antwort relevant ist, sonst False
 def is_relevant_answer(user_input, assistant_question, target_language):
 
     prompt = answer_relevant_prompt(
@@ -16,6 +24,14 @@ def is_relevant_answer(user_input, assistant_question, target_language):
 
     return result.strip().upper().startswith("YES")
 
+# Zählt, wie oft ein bestimmtes Zielwort in den Nutzer-Nachrichten vorkommt.
+#
+# Argumente:
+#   - messages(list): Liste aller Nachrichten in der Konversation
+#   - target_word(str): Wort, dessen Verwendung gezählt werden soll
+#   - target_language(str): Sprache der Konversation
+#
+# Return: (int) Anzahl der Vorkommen des Zielworts
 def count_word_usage(messages, target_word, target_language):
     count = 0
     nlp = get_nlp_for_language(target_language)
@@ -28,12 +44,28 @@ def count_word_usage(messages, target_word, target_language):
                 count += 1
     return count
 
+# Kürzt die Nachrichtenliste auf die letzten max_messages-1 User/Assistant-Nachrichten
+# und die initiale Systemnachricht, um LLM-Kosten zu sparen.
+#
+# Argumente:
+#   - messages (list): Alle Nachrichten der Konversation
+#   - max_messages (int): Maximale Anzahl an Nachrichten, die behalten werden
+#
+# Return: (list) gekürzte Nachrichtenliste
 def trim_messages(messages, max_messages=6):
     system_message = messages[0]  # System bleibt immer
     conversation = messages[1:]
     trimmed_conversation = conversation[-(max_messages-1):]
     return [system_message] + trimmed_conversation
 
+# Initialisiert eine neue Konversation und startet mit der ersten Frage des Assistenten.
+#
+# Argumente:
+#   - target_word (str): Wort, das im Gespräch geübt werden soll
+#   - target_language (str): Sprache der Konversation
+#   - translation (str): Übersetzung des Zielworts für den Systemprompt
+#
+# Return: (dict) Startzustand der Konversation inkl. Systemnachricht und initialer Assistentenantwort
 def start_conversation(target_word, target_language, translation):
 
     # System prompt am Anfang einfügen
@@ -63,6 +95,14 @@ def start_conversation(target_word, target_language, translation):
         "messages": messages
     }
 
+# Verarbeitet die nächste Runde der Konversation mit der Nutzerantwort.
+#
+# Argumente:
+#   - state (dict): Aktueller Zustand der Konversation
+#   - user_input (str): Eingabe des Nutzers
+#   - target_language (str): Sprache der Konversation
+#
+# Return: (tuple) Assistenantwort/Feedback, aktualisierter Zustand, bool ob Konversation beendet
 def next_turn(state, user_input, target_language):
 
     nlp = get_nlp_for_language(target_language)
@@ -133,6 +173,13 @@ def next_turn(state, user_input, target_language):
 
     return reply, state, finished
 
+# Wertet die Konversation aus und liefert Feedback von LLM.
+#
+# Argumente:
+#   - state (dict): Aktueller Zustand der Konversation
+#   - target_language (str): Sprache der Konversation
+#
+# Return: (dict) Bewertung, Feedback, Kommentare und Hinweise
 def evaluate_conversation(state, target_language):
 
     llm_feedback = get_llm_conversation_feedback(

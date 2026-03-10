@@ -113,6 +113,13 @@ def evaluate_with_llm(user_sentence, original_sentence, target_language="en"):
             "hint": "Überprüfe deine Antwort noch einmal."
         }
 
+# Diese Fuktion führt eine einzelne Konversationsrunde mit dem LLM durch.
+#
+# Argumente:
+#   - messages (list): Liste von Nachrichten, die bisher in der Konversation ausgetauscht werden.
+#                      Jede Nachricht ist ein Dict mit 'role' und 'content'
+#
+# Return: (str) Die Antwort des LLM als bereinigter Text
 def conversation_turn(messages):
 
     response = completion(

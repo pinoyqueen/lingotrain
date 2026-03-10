@@ -71,6 +71,23 @@ Anzahl an Interaktionen erreicht ist. Abschließend analysiert das Modell die Ko
 um dem Nutzer Verbesserungen sowie häufige Fehlerquellen nennen zu können.
 
 \section{Simulationsumgebung und Trainingsdaten (Andreleene Prado)}
+Die Implementierung des Systems erfolgte in der Entwicklungsumgebung Visual Studio Code unter Verwendung der Programmiersprache Python. 
+Vor der Integration des Backends mit dem Frontend der Web-UI wurden die einzelnen Funktionen zunächst über das Terminal getestet, um die korrekte Verarbeitung der Eingaben und die Funktionsweise der NLP-Komponenten zu überprüfen.
+
+Für den Satzgenerierungsmodus wurden verschiedene Textausgaben direkt im Terminal getestet. 
+Dabei wurde eine Liste von Testfällen erstellt, die englische, französische und spanische Sätze umfasst. 
+Zu jedem Testfall wurden sowohl der originale Referenzsatz als auch die vom Benutzer eingegebene Variante sowie die erwartete Auswertung dokumentiert. 
+Diese Testfälle dienten dazu, die korrekte Verarbeitung und Bewertung der Benutzereingaben zu überprüfen.
+
+Für den Konversationsmodus wurde eine einfache textbasierte Mini-Konversation im Terminal implementiert. 
+Diese basierte auf einem festgelegten Vokabel sowie den entsprechenden englischen Übersetzungen, um den Ablauf der Interaktion und die Reaktionslogik des Systems zu testen. 
+Dadurch konnte überprüft werden, ob der Chatbot auf Benutzereingaben korrekt reagiert und der Dialogfluss wie vorgesehen funktioniert.
+
+In diesem Projekt wurden keine eigenen Trainingsdatensätze erstellt und es wurden keine Modelle von Grund auf trainiert. 
+Stattdessen wurden vortrainierte NLP-Modelle verwendet, die bereits auf großen Textkorpora trainiert wurden.
+
+Zusätzlich wurde ein Large Language Model (LLM) eingesetzt, um die Generierung von Antworten zu unterstützen. 
+Dieses Modell basiert auf umfangreichen Trainingsdaten aus unterschiedlichen Textquellen und ist in der Lage, kontextabhängige sowie sprachlich kohärente Antworten zu erzeugen.
 
 \section{Architektur (Ronja Rüther)}
 In diesem Kapitel wird die Architektur der Anwendung beschrieben.
@@ -174,6 +191,107 @@ Um die Weiterverarbeitung im Backend sicherzustellen, wird das Modell angewiesen
 Dieses Objekt enthält dann die Felder für das \texttt{rating}, einen Korrekturvorschlag (\texttt{corrected\_sentence}), einen Hinweis (\texttt{hint}) sowie ein
 kurzes Feedback (\texttt{short\_feedback}) und die technische Begründung (\texttt{comment}). Für die Speicherung des Ergebnisses in der Datenbank wird außerdem ein 
 Wahrheitswert erwartet (\texttt{semantically\_correct}). Durch diese Strukturierung kann die logische Bewertung von der textuellen Rückmeldung an den Nutzer klar getrennt werden.
+
+\subsection{Satzmodus auf Satzebene (Andreleene Prado)}
+Da die Vokabelliste nicht nur einzelne Wörter, sondern auch vollständige Sätze enthält, müssen diese ebenfalls bei der Evaluation berücksichtigt werden. 
+Im Frontend werden vollständige Sätze jedoch nicht an das Backend zur Satzgenerierung gesendet, sondern direkt ausgegeben. 
+Der Grund dafür ist, dass der Satz bereits vollständig vorliegt und eine erneute Generierung durch ein Large Language Model (LLM) keinen zusätzlichen Nutzen bringen würde. 
+Dies würde lediglich zu einer unnötigen Nutzung von Rechenressourcen führen.
+
+Für die Bewertung von Sätzen wird ein eigener REST-API-Endpunkt verwendet, der sich von dem Endpunkt für einzelne Wörter unterscheidet. 
+Die Auswertung erfolgt in der Funktion \texttt{evaluate\_sentence\_similarity}. 
+Als Eingabeparameter erhält diese Funktion den vom Benutzer eingegebenen Satz sowie den Referenzsatz, der als korrekte Übersetzung in der Datenbank gespeichert ist. 
+Die Parameter \texttt{target\_word} und \texttt{target\_language} sind für den Satzmodus nicht erforderlich. 
+Sie sind jedoch weiterhin Bestandteil des \texttt{EvalRequest}-Modells, da dieses ursprünglich für die Evaluation einzelner Wörter entwickelt wurde.
+
+Zunächst werden sowohl der eingegebene Satz als auch der Referenzsatz normalisiert. 
+Dazu wird die Hilfsfunktion \texttt{normalize()} verwendet. 
+In diesem Schritt wird der Text in Kleinbuchstaben umgewandelt, führende und nachfolgende Leerzeichen werden entfernt und Satzzeichen werden gelöscht. 
+Diese Normalisierung erleichtert den Vergleich der beiden Sätze, da Unterschiede in Groß- und Kleinschreibung oder Interpunktion keinen Einfluss auf die Bewertung haben.
+
+Nach der Normalisierung wird zunächst geprüft, ob der eingegebene Satz exakt mit dem Referenzsatz übereinstimmt. 
+Ist dies der Fall, wird die Antwort als korrekt bewertet. 
+Diese Vorgehensweise setzt voraus, dass die in der Datenbank gespeicherten Sätze inhaltlich sowie grammatikalisch korrekt sind. 
+Wenn der Benutzer den Satz exakt reproduziert, wird dieser als korrekt erkannt und entsprechend als gelernt markiert.
+
+Falls keine exakte Übereinstimmung vorliegt, wird die semantische Ähnlichkeit zwischen beiden Sätzen berechnet. 
+Ziel ist es zu überprüfen, ob der vom Benutzer eingegebene Satz denselben Sinn wie der Referenzsatz ausdrückt, auch wenn die Formulierung leicht abweicht.
+
+Für diese Berechnung wird ein Sentence-BERT-Modell (SBERT) verwendet. 
+SBERT basiert auf der BERT-Architektur und ist speziell dafür optimiert, semantische Ähnlichkeiten zwischen Sätzen zu bestimmen. 
+Dabei werden beide Sätze zunächst in sogenannte Embeddings umgewandelt, also in numerische Vektorrepräsentationen im semantischen Vektorraum. 
+Anschließend wird die Cosinus-Ähnlichkeit zwischen diesen Vektoren berechnet.
+
+Der resultierende Ähnlichkeitswert liegt zwischen 0 und 1, wobei höhere Werte eine stärkere semantische Übereinstimmung anzeigen. 
+Abhängig vom berechneten Wert wird die Benutzereingabe in verschiedene Kategorien eingeteilt:
+
+\begin{itemize}
+\item \textbf{Ähnlichkeit $\geq 0.85$:} Der Satz ist sinngleich mit dem Referenzsatz und wird als nahezu korrekt bewertet.
+\item \textbf{Ähnlichkeit $\geq 0.65$:} Der Satz ist teilweise korrekt, enthält jedoch kleinere Abweichungen.
+\item \textbf{Ähnlichkeit $< 0.65$:} Der Satz wird als falsch bewertet.
+\end{itemize}
+
+Zusätzlich wird dem Benutzer Feedback gegeben, das den Ähnlichkeitswert sowie einen Verbesserungsvorschlag enthält. 
+Als Vorschlag wird dabei der korrekte Referenzsatz aus der Datenbank angezeigt, sodass der Benutzer seine Eingabe direkt mit der korrekten Formulierung vergleichen kann.
+
+\subsection{Konversationsmodus (Andreleene Prado)}
+Im Konversationsmodus werden alle Wörter eines Lernsets berücksichtigt. 
+Zu Beginn einer neuen Konversation wird im Frontend zufällig eine Vokabel aus der ausgewählten Lernsetliste ausgewählt. 
+Diese wird anschließend zusammen mit der Zielsprache und der Übersetzung über einen REST-API-Endpunkt an das Backend gesendet.
+
+Die Konversation wird durch die Funktion \texttt{start\_conversation()} gestartet. 
+Die wichtigsten Parameter sind das Zielwort (\texttt{target\_word}), die Zielsprache (\texttt{target\_language}) sowie die Übersetzung (\texttt{translation}). 
+Diese Informationen werden verwendet, um einen geeigneten Prompt für das Large Language Model (LLM) zu erstellen. 
+Die Übersetzung des Wortes ist dabei wichtig, damit das Modell den semantischen Kontext des Wortes korrekt interpretieren kann.
+
+Zusätzlich enthält der Prompt bestimmte Regeln, die sich an der Wortart des Fokuswortes orientieren. 
+Dadurch wird sichergestellt, dass der generierte Dialog den Lernenden dazu anregt, das Zielwort aktiv zu verwenden.
+
+\textbf{Wortartabhängige Regeln:}
+\begin{itemize}
+    \item \textbf{Verb:} Der Assistent stellt Fragen zu Handlungen oder Aktivitäten und fragt nach persönlichen Erfahrungen oder Gewohnheiten, z.\,B. „Wann machst du das?“ oder „Warum machst du das?“
+    \item \textbf{Nomen:} Der Assistent stellt Fragen, bei denen der Lernende das Nomen natürlich als Objekt verwenden kann, z.\,B. durch Fragen nach Besitz, Meinungen oder Erfahrungen.
+    \item \textbf{Adjektiv:} Der Assistent stellt Fragen zu Meinungen oder Beschreibungen, z.\,B. „Findest du das auch so?“ oder „Wann ist etwas so?“
+\end{itemize}
+
+Das LLM generiert anschließend die erste Frage der Konversation, welche an das Frontend zurückgegeben und dort im Chat angezeigt wird.
+
+Wenn der Benutzer antwortet, wird die Funktion \texttt{next\_turn()} aufgerufen. 
+Diese erhält den aktuellen Konversationszustand (\texttt{state}), die Benutzereingabe (\texttt{user\_input}) sowie die Zielsprache als Parameter.
+
+Zunächst wird die Benutzereingabe mithilfe eines spaCy-Sprachmodells analysiert. 
+Dabei wird überprüft, ob die Eingabe einen plausiblen vollständigen Satz enthält. 
+Falls kein Verb vorhanden ist oder die Eingabe nicht als vollständiger Satz interpretiert werden kann, wird der Benutzer aufgefordert, einen vollständigen Satz zu formulieren.
+
+Anschließend wird geprüft, ob die Antwort inhaltlich zur letzten Frage des Assistenten passt. 
+Dazu wird die letzte Assistentenfrage aus dem Chatverlauf extrahiert und zusammen mit der Benutzereingabe an das LLM übergeben. 
+Das Modell bewertet anhand eines speziellen Prompts, ob die Antwort relevant ist. 
+Diese Prüfung verhindert, dass der Benutzer lediglich einen beliebigen Satz mit dem Zielwort schreibt, ohne auf die gestellte Frage einzugehen.
+
+Wenn beide Prüfungen erfolgreich sind, wird die Benutzereingabe akzeptiert und im Konversationszustand gespeichert. 
+Anschließend wird analysiert, wie häufig das Zielwort im bisherigen Gespräch verwendet wurde. 
+Hierfür wird der Chatverlauf mit einem spaCy-Modell verarbeitet und mithilfe der Funktion \texttt{contains\_target\_word()} geprüft, ob das Zielwort in den Benutzernachrichten vorkommt.
+
+Die Anzahl der Wortverwendungen (\texttt{usage\_count}) sowie die Anzahl der bisherigen Gesprächsrunden (\texttt{turn\_count}) werden im Konversationszustand gespeichert und kontinuierlich aktualisiert.
+
+Die Konversation endet unter zwei möglichen Bedingungen:
+\begin{itemize}
+    \item Wenn das Zielwort mindestens zweimal vom Benutzer verwendet wurde und der Benutzer mindestens drei Antworten im Dialog gegeben hat. 
+    In diesem Fall wird davon ausgegangen, dass das Wort ausreichend geübt wurde.
+    \item Wenn der Benutzer zehn Gesprächsrunden erreicht hat, ohne die erste Bedingung zu erfüllen. 
+    In diesem Fall wird die Konversation beendet, um zu vermeiden, dass der Dialog unnötig lange fortgesetzt wird.
+\end{itemize}
+
+Nach Beendigung der Konversation wird der gesamte Chatverlauf vom LLM bewertet. 
+Hierzu wird die Funktion \texttt{evaluate\_conversation()} verwendet, die den Verlauf an das LLM übergibt und ein strukturiertes Feedback generieren lässt. 
+Dieses Feedback enthält eine Bewertung der Konversation, einen kurzen Kommentar zur Sprachverwendung sowie gegebenenfalls Hinweise zur Verbesserung.
+
+Um die Kosten der LLM-Anfragen zu reduzieren und gleichzeitig den relevanten Kontext zu erhalten, wird der Chatverlauf vor jeder Anfrage gekürzt. 
+Dabei bleiben die Systemnachricht sowie maximal fünf der letzten Nachrichten im Verlauf erhalten. 
+Diese Begrenzung stellt sicher, dass das Modell ausreichend Kontext erhält, ohne unnötig viele Tokens zu verarbeiten.
+
+Nach Abschluss einer Konversation wird im Frontend automatisch eine neue Konversation mit einer anderen zufällig ausgewählten Vokabel gestartet. 
+Die zuvor verwendete Vokabel wird aus der Liste entfernt, sodass sie nicht erneut in derselben Lernsession verwendet wird.
 
 \section{Evaluation der Ergebnisse}
 
