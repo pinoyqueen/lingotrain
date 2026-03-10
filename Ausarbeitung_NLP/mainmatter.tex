@@ -298,14 +298,14 @@ Die zuvor verwendete Vokabel wird aus der Liste entfernt, sodass sie nicht erneu
 \subsection{Evaluation des Satzmodus auf Wortebene (Ronja Rüther)}
 Zur Evaluation des Satzmodus auf Wortebene wurden die Satzgenerierung und die Bewertung der Nutzereingaben analysiert.
 Da die Satzgenerierung ein generatives Verfahren ist, existiert für einen generierten deutschen Satz keine eindeutig korrekte Übersetzung.
-Der Nutzer kann daher für den gleichen Satz verschiedene Übersetzungen eingeben, die als semantisch korrekt anerkannt werden. Aus diesem Grund 
+Der Nutzer kann daher für den gleichen Satz verschiedene Übersetzungen eingeben, die als semantisch korrekt bewertet werden können. Aus diesem Grund 
 wurde die Evaluation der Ergebnisse in die Analyse der generierten Sätze sowie die Evaluation der Bewertung aufgeteilt.
 
 \subsubsection{Evaluation der Satzgenerierung (Ronja Rüther)}
 Zur Evaluation der Satzgenerierung wurde ein Testskript in der Datei \textit{test\_llm.py} implementiert, das die Funktion \texttt{generate\_sentence(...)}
 mit verschiedenen Zielvokabeln, Zielsprachen und Schwierigkeitsgraden aufruft. 
 Das Ziel dieser Tests war es, zu überprüfen, ob sinnvolle und passende Sätze vom Modell erzeugt werden.
-Dabei bestand ein besonderer Fokus auch darin, zu überprüfen, ob der Schwierigkeitsgrad des Satzes korrekt beachtet wurde und keine zu komplexen Sätze erzeugt wurden.
+Dabei lag ein besonderer Fokus darauf zu überprüfen, ob der gewählte Schwierigkeitsgrad bei der Satzgenerierung berücksichtigt wird und keine zu komplexen Sätze erzeugt werden.
 
 Da es sich bei der Satzgenerierung, wie bereits erwähnt, um ein generatives Verfahren handelt, existiert für eine gegebene Zielvokabel keine eindeutig korrekte Lösung.
 Mehrere unterschiedliche Sätze können semantisch korrekt sein und die Zielvokabel in einem passenden Kontext verwenden.
@@ -339,7 +339,7 @@ laufen & correr & Spanisch & Ich laufe jeden Morgen im Park. & Ich laufe schnell
 Die Ergebnisse zeigen, dass bei einfachen Schwierigkeitsgraden überwiegend kurze Hauptsätze generiert werden.
 Beim Schwierigkeitsgrad \enquote{mittel} entstehen hingegen Sätze mit einfachen Nebensätzen und zusätzlichem Adjektiv.
 Ist der Schwierigkeitsgrad auf \enquote{schwer} gesetzt, so werden auch komplexere Satzstrukturen mit mehreren Satzteilen verwendet.
-Außerdem wird die Zeitform variiert. Die Sätze sind auch nicht zu schwer, sondern für einen Lernenden mit fortgeschrittener Erfahrung lösbar.
+Außerdem wird die Zeitform variiert. Die Sätze bleiben in der Regel verständlich und sind für Lernende mit entsprechender Erfahrung lösbar.
 
 Die Funktion wurde zudem auch mehrfach mit der gleichen Vokabel aufgerufen, um die Variation der Sätze zu überprüfen.
 Dabei zeigte sich, dass das Sprachmodell in den meisten Fällen verschiedene Formulierungen generiert und dadurch verhindert, dass bei 
@@ -352,7 +352,59 @@ Schwierigkeitsgrad angepasst wird. Der Satz wird auch im korrekten Kontext für 
 Da die Tests nur eine begrenzte Anzahl von Vokabeln und Beispielsätzen enthalten, kann keine statistisch signifikante Aussage über die allgemeine 
 Qualität des Modells getroffen werden. Bei weiteren durchgeführten Tests über das Chatbot-UI wurden jedoch auch akzeptable Sätze generiert.
 
-\subsubsection{Evaluation der Bewertung (Ronja Rüther)}
+\subsubsection{Evaluation der Bewertung der Nutzereingabe (Ronja Rüther)}
+Neben der Satzgenerierung wurde auch die Bewertung der Nutzereingaben analysiert.
+Hierfür wurde ein manuell erstellter Testdatensatz verwendet, der in der Datei \texttt{test\_evaluator.py} implementiert ist und typische Fehler von Lernenden beim Übersetzen in eine Fremdsprache abbildet.
+Die Testfälle sind für die drei Zielsprachen Englisch, Französisch und Spanisch umgesetzt.
+
+Die Testfälle decken verschiedene Typen von Fehlern ab. Dazu gehören korrekte Übersetzungen, falsche Wortwahl, semantisch falsche Übersetzungen, falsche Zeitformen, grammatikalische Fehler sowie fehlende oder falsche Satzzeichen und Akzente.
+Durch diese Tests soll überprüft werden, ob das entwickelte Modell zuverlässig zwischen korrekten und falschen Antworten unterscheiden kann.
+
+Zur Durchführung der einzelnen Tests wird die Funktion \texttt{evaluate\_answer\_combined(...)} aufgerufen. 
+Anhand der Rückgabe konnte dann analysiert werden, ob das System zuverlässig erkennt, ob eine Nutzereingabe semantisch korrekt ist oder nicht und ob Fehler enthalten sind.
+Ebenfalls wurde dabei überprüft, ob das System sinnvolles Feedback generiert, welches dem Nutzer weiterhilft.
+
+Insgesamt umfasst der Testdatensatz über 40 Testfälle, die unterschiedliche Satzstrukturen und Fehlertypen abdecken. In Tabelle \ref{tabelle_evaluator_beispiele} sind einige dieser Testfälle dargestellt.
+
+\begin{table}[htbp]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|X|X|X|}
+\hline
+\textbf{Zielwort} & \textbf{Sprache} & \textbf{Referenzsatz (Deutsch)} & \textbf{Nutzereingabe} & \textbf{Bewertung} \\
+\hline
+pear & Englisch & Ich esse eine Birne. & I eat a pear. & korrekt erkannt \\
+\hline
+pear & Englisch & Ich esse eine Birne. & I am a pear. & semantischer Fehler erkannt \\
+\hline
+pear & Englisch & Ich habe gestern eine Birne gegessen. & I eat a pear yesterday. & falsche Zeitform erkannt \\
+\hline
+pear & Englisch & Esse ich eine Birne? & Do I eat a pear & fehlendes Fragezeichen erkannt \\
+\hline
+poire & Französisch & Ich esse eine Birne. & Je suis une poire. & falsches Verb erkannt \\
+\hline
+poire & Französisch & Ich esse eine Birne, weil sie gesund ist. & Je mange une poire parce que elle est saine. & Ausdrucksfehler erkannt \\
+\hline
+pera & Spanisch & Ich esse eine Birne. & Yo una pera. & fehlendes Verb erkannt \\
+\hline
+España & Spanisch & Morgen werde ich nach Spanien reisen und vom Meer träumen. & Manana iré a España y soñaré con el mar. & fehlender Akzent erkannt \\
+\hline
+correr & Spanisch & Obwohl ich müde bin, gehe ich joggen. & Aunque estoy cansado voy a correr. & fehlendes Komma erkannt \\
+\hline
+\end{tabularx}
+\caption{Beispiele aus den Evaluations-Testfällen}
+\label{tabelle_evaluator_beispiele}
+\end{table}
+
+Die Ergebnisse zeigen, dass das System korrekte Übersetzungen in den meisten Fällen zuverlässig erkennt und typische Fehler identifizieren kann.
+Besonders bei klaren semantischen Abweichungen, wie der Verwendung eines falschen Verbs oder einer falschen Vokabel, konnte eine hohe Erkennungsrate beobachtet werden.
+
+Durch die hybride Architektur kann eine regelbasierte Vorprüfung einfache Fehler erkennen, bevor ein Large Language Model
+eingesetzt wird. Dazu gehören beispielsweise das Fehlen der Zielvokabel, eines Verbs oder eines Satzzeichens. Diese Fehler können dadurch dem Nutzer direkt als Feedback mitgeteilt werden, ohne auf eine Antwort des LLMs zu warten.
+Bei bestimmten Verben im Spanischen, wie z.B. der Eingabe \enquote{como} zur Zielvokabel \enquote{comer}, greift die regelbasierte Vorprüfung jedoch nicht allein. In diesem Fall konnte das LLM in den durchgeführten Tests
+die Eingabe jedoch korrekt bewerten.
+
+Weitere Tests über das Chatbot-UI bestätigen zudem die grundsätzliche Funktionsfähigkeit und Zuverlässigkeit des Systems.
+Da die Anzahl der Testfälle jedoch begrenzt ist, lassen sich keine statistisch signifikanten Aussagen über die allgemeine Genauigkeit treffen. Dennoch zeigen die Ergebnisse, dass das entwickelte System typische Fehler von Lernenden erkennen und darauf mit geeignetem Feedback reagieren kann.
 
 \subsection{Evaluation des Satzmodus auf Satzebene (Andreleene Prado)}
 
@@ -497,4 +549,18 @@ Im Gegensatz zu Duolingo Max, das auch sprachbasierte Video-Anrufe mit einem vir
 
 Während kommerzielle Plattformen wie Duolingo auf sehr große Datenmengen, komplexe Personalisierungsalgorithmen und umfangreiche Lerninhalte zurückgreifen, konzentriert sich dieses Projekt auf die Umsetzung eines KI-gestützten individuellen Sprachtrainings.
 
-\subsection{Fazit und Ausblick}
+\subsection{Fazit und Ausblick (Ronja Rüther)}
+Die Ergebnisse zeigen, dass das entwickelte System typische Fehler bei der Übersetzung zuverlässig erkennen und passendes Feedback geben kann.
+Die hybride Architektur aus einer regelbasierten Vorprüfung und dem anschließenden LLM zur semantischen Analyse hat sich als effektiv erwiesen. 
+So kann der Nutzer einerseits schnelle und präzise Rückmeldungen zu seiner Eingabe erhalten und andererseits können die Kosten gespart werden, da das LLM bei unplausiblen Eingaben zur Bewertung nicht eingesetzt werden muss.
+
+Die Generierung von Sätzen zu einer vorgegebenen Vokabel passt sich wie gewünscht an die verschiedenen Schwierigkeitsgrade an und es werden bei wiederholter Ausführung unterschiedliche Sätze zur gleichen Vokabel generiert.
+Auch die gezielte Integration von Vokabeln in den Konversationsmodus konnte erfolgreich umgesetzt werden.
+
+Aufgrund der begrenzten Anzahl von Testfällen ist die Evaluation statistisch nicht signifikant. Die durchgeführten Tests verliefen jedoch größtenteils erfolgreich.
+Kleine Ausreißer kamen während der Entwicklungs- und Testphase vor, wurden jedoch so gut wie möglich behoben.
+Da das System allerdings nicht alle möglichen Testfälle abdeckt, können theoretisch dennoch Fehler auftreten.
+
+In der Zukunft könnte das System auf deutlich mehr Testfälle getestet werden, um das Auftreten möglicher Fehler weiter zu minimieren.
+Außerdem ist eine Erweiterung des Sprachlern-Chatbots auf weitere Sprachen denkbar. Ebenso könnte die Applikation um eine Sprachausgabe und 
+die Aufnahme von Aussprache erweitert werden, sodass der Nutzer neben dem Schreiben auch das Hören und Sprechen der Sprache trainieren kann.
