@@ -330,6 +330,67 @@ Um dieses Problem zu lösen, wurde eine zusätzliche regelbasierte Vorprüfung i
 Die Funktion \texttt{check\_sentence\_end(...)} prüft vor dem LLM-Aufruf, ob der Satz mit einem gültigen Satzzeichen endet.
 Ist das der Fall, prüft das LLM anschließend nur noch, ob das verwendete Satzzeichen im Kontext des Satzes passend ist, aber nicht mehr, ob überhaupt ein Satzzeichen vorhanden ist. 
 
+\subsubsection{Problem bei der Behandlung von Sätzen im Satzmodus (Andreleene Prado)}
+Im Satzmodus werden normalerweise zufällige Vokabeln aus dem Lernset ausgewählt und an das LLM gesendet, damit daraus ein Satz generiert wird, den der Benutzer anschließend übersetzen soll. 
+Dabei trat jedoch ein besonderes Problem bei Vokabeln auf, die bereits vollständige Sätze enthalten.
+
+Da diese Sätze bereits vollständig formuliert sind, war zunächst vorgesehen, sie bei der Generierung zu überspringen. 
+Dieser Ansatz führte jedoch zu einem unerwarteten Problem im Lernablauf. 
+Wenn Sätze übersprungen wurden, blieben sie weiterhin als offene Einträge in der Datenbank bestehen. 
+Dadurch konnte eine Lernrunde nicht korrekt abgeschlossen werden, da immer noch unbearbeitete Sätze vorhanden waren, die dem Benutzer jedoch nie angezeigt wurden.
+
+Aus diesem Grund wurde die Implementierung angepasst. 
+Anstatt die Sätze zu überspringen, werden diese nun direkt im Frontend angezeigt und der Benutzer wird aufgefordert, die entsprechende Übersetzung einzugeben. 
+Die Bewertung erfolgt anschließend im Backend durch einen Vergleich mit dem in der Datenbank gespeicherten Referenzsatz.
+
+Eine weitere Herausforderung bestand darin, dass Benutzer einen Satz häufig in einer leicht abweichenden Formulierung eingeben, obwohl die Bedeutung korrekt ist. 
+Das Ziel des Chatbots ist jedoch nicht, eine exakt identische Formulierung zu erzwingen, sondern zu überprüfen, ob der Benutzer den Inhalt des Satzes korrekt verstanden hat.
+
+Aus diesem Grund wurde zusätzlich eine semantische Ähnlichkeitsbewertung implementiert. 
+Hierbei wird mithilfe eines Sentence-BERT-Modells (SBERT) die semantische Ähnlichkeit zwischen dem eingegebenen Satz und dem Referenzsatz berechnet (siehe Abschnitt 3.3). 
+Dadurch können auch sinngleiche, aber unterschiedlich formulierte Antworten als teilweise oder nahezu korrekt erkannt werden. 
+Dies ermöglicht ein realistischeres Feedback für den Benutzer und unterstützt den Lernprozess.
+
+Eine weitere Herausforderung bestand in der Festlegung geeigneter Grenzwerte für die Bewertung der Ähnlichkeit. 
+Es musste definiert werden, ab welchem Ähnlichkeitswert zwei Sätze als sinngleich gelten, wann sie nur teilweise korrekt sind und wann eine Antwort als falsch bewertet wird. 
+Diese Schwellenwerte wurden im Rahmen mehrerer Tests empirisch bestimmt, um ein ausgewogenes Verhältnis zwischen Genauigkeit und Flexibilität zu erreichen.
+
+\subsubsection{Problem bei der Generierung der Dialoge (Andreleene Prado)}
+Im Konversationsmodus wird das zu übende Wort zusammen mit der entsprechenden Übersetzung an das LLM übergeben. 
+Zu Beginn des Projekts war der Prompt relativ einfach formuliert. 
+Das Modell wurde lediglich angewiesen, eine Frage zu generieren, die den Benutzer dazu auffordert, einen Satz mit dem vorgegebenen Wort zu bilden.
+
+Während der Testphase zeigte sich jedoch, dass die generierten Fragen häufig schwer mit dem Zielwort zu beantworten waren. 
+In einigen Fällen passte die Frage nicht zum Kontext oder zur Wortart des Fokuswortes, sodass der Benutzer das Wort nur unnatürlich oder gar nicht in seine Antwort integrieren konnte. 
+Beispielsweise konnte eine sehr allgemeine Frage entstehen, bei der die Verwendung des Zielwortes grammatikalisch oder semantisch unpassend war.
+
+Um dieses Problem zu lösen, wurde der Prompt schrittweise angepasst und erweitert. 
+Dabei wurden zusätzliche Regeln eingeführt, die sich an der Wortart des Fokuswortes orientieren. 
+Das Modell erhält nun explizite Anweisungen (siehe Abschnitt 3.4.), wie Fragen formuliert werden sollen, damit der Lernende das Zielwort möglichst natürlich in seiner Antwort verwenden kann.
+
+Diese Anpassung des Prompt Designs führte zu deutlich konsistenteren und lernorientierteren Dialogen. 
+Die generierten Fragen waren besser auf das jeweilige Wort abgestimmt und erleichterten es dem Benutzer, vollständige und sinnvolle Sätze mit dem Zielwort zu formulieren.
+
+Das Beispiel zeigt, dass eine präzise Gestaltung von Prompts eine wichtige Rolle beim Einsatz von Large Language Models spielt.
+
+\subsubsection{Festlegung der Abbruchbedingungen im Konversationsmodus (Andreleene Prado)}
+Eine weitere Herausforderung im Konversationsmodus bestand in der Festlegung geeigneter Abbruchbedingungen für die Konversation. 
+Zu Beginn der Implementierung war lediglich eine einzige Bedingung vorgesehen.
+Die Konversation sollte beendet werden, sobald das Zielwort mindestens dreimal vom Benutzer verwendet wurde und der Benutzer dem Chatbot mindestens dreimal geantwortet hatte.
+
+Während der Testphase zeigte sich jedoch, dass diese Bedingung für Lernende teilweise schwer zu erfüllen ist. 
+Insbesondere bei schwierigeren oder weniger geläufigen Wörtern fiel es einigen Nutzern schwer, das Zielwort mehrfach in passenden Sätzen zu verwenden. 
+In solchen Fällen konnte die Konversation sehr lange andauern oder theoretisch sogar unbegrenzt fortgesetzt werden, wenn der Benutzer das Wort nicht ausreichend oft einsetzte.
+
+Eine solche Situation kann für Lernende frustrierend oder demotivierend wirken, da der Dialog nicht abgeschlossen wird und kein abschließendes Feedback erfolgt. 
+Aus diesem Grund wurde eine zusätzliche Abbruchbedingung eingeführt.
+
+Neben der ursprünglichen Bedingung wird die Konversation nun auch beendet, wenn der Benutzer insgesamt zehn Antworten gegeben hat. 
+In diesem Fall wird die Unterhaltung unabhängig von der Häufigkeit der Wortverwendung beendet und ein Feedback zur Konversation generiert.
+
+Durch diese zusätzliche Begrenzung wird sichergestellt, dass jede Konversation innerhalb einer überschaubaren Anzahl von Interaktionen abgeschlossen wird. 
+Dies verbessert die Benutzererfahrung und verhindert, dass Lernende in einer zu langen oder stagnierenden Konversation feststecken.
+
 \subsection{Vergleich zum Stand der Technik}
 
 \subsection{Fazit und Ausblick}
