@@ -1,11 +1,3 @@
-# Vue 3 + TypeScript + Vite
-
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
-
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
-
----
-
 # Frontend Setup
 
 Zum **`frontend`-Ordner** navigieren und die benötigten Dependencies installieren.
@@ -15,8 +7,9 @@ Zum **`frontend`-Ordner** navigieren und die benötigten Dependencies installier
 ```
 npm install vue
 npm install vue-router
+npm install vee-validate
 npm install lucide-vue-next
-npm install -D tailwindcss postcss autoprefixer
+npm install -D vite tailwindcss postcss autoprefixer
 ```
 
 ## shadcn-vue initialisieren
