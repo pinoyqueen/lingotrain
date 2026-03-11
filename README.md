@@ -29,9 +29,12 @@ Es wurde ein Demo-Konto mit den folgenden Zugangsdaten erstellt:
 **E-Mail:** maxmustermann@gmx.de  
 **Passwort:** Testtest  
 
-Dieses Demo-Konto enthält bereits jeweils 3 Lernsets zu allen Zielsprachen. Es gibt pro Sprache ein Lernset mit Wörtern, ein Lernset mit Sätzen und ein gemischtes Lernset mit Wörtern und Sätzen.
+Dieses Demo-Konto enthält bereits jeweils 3 Lernsets pro Sprache:
+- Lernset mit Wörtern
+- Lernset mit Sätzen
+- Gemischtes Lernset (Wörter und Sätze)
 
-Eigene Konten können per Registrierung auch angelegt werden.
+Eigene Konten können über die **Registrierung** ebenfalls angelegt werden.
 
 --- 
 
