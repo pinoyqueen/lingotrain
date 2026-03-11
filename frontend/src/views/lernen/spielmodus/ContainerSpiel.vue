@@ -220,7 +220,6 @@ async function chooseSpiel() {
     if (vok.isWort && gelernt >= MAX_GELERNT) {
       spiel_pool = spiel_pool.filter(s => s.key !== 'mcq')
     }
-    // TODO: einfacher Spieltyp für Sätze entfernen
 
     // Fallback wenn spiel_pool leer ist
     if(spiel_pool.length === 0 && vok.isWort) {
