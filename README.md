@@ -24,6 +24,15 @@ npm install -D vite tailwindcss postcss autoprefixer
 Das Frontend läuft anschließend unter:
 `http://localhost:5173`
 
+## Anmeldung in der Webanwendung:
+Es wurde ein Demo-Konto mit den folgenden Zugangsdaten erstellt:  
+**E-Mail:** maxmustermann@gmx.de  
+**Passwort:** Testtest  
+
+Dieses Demo-Konto enthält bereits jeweils 3 Lernsets zu allen Zielsprachen. Es gibt pro Sprache ein Lernset mit Wörtern, ein Lernset mit Sätzen und ein gemischtes Lernset mit Wörtern und Sätzen.
+
+Eigene Konten können per Registrierung auch angelegt werden.
+
 --- 
 
 # Backend Setup
