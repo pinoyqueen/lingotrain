@@ -449,6 +449,7 @@ function saveMessage(new_role: ChatMessage["role"], new_content: string, new_typ
  * um die gescrollt werden muss.
  */
 const scrollToBottom = async () => {
+  
   // warten, bis das DOM nach einer State-Änderung gerendert wurde
   await nextTick()
 

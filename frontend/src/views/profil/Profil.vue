@@ -25,18 +25,28 @@ import { Flame, Trophy } from "lucide-vue-next";
 import { useProfilbilderStore } from "@/stores/profilbilderStore";
 import type { Abzeichen } from "@/models/Abzeichen";
 
-// Chart.js-Komponenten registrieren
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
-
 const kontoStore = useKontoStore()
 const profilbilderStore = useProfilbilderStore()
 const calculator = new LevelCalculator()
 
+// Chart.js-Komponenten registrieren
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
+
+// Beim Laden der Seite Profilbilder und Abzeichen aus der DB holen
 onMounted(async () => {
   await profilbilderStore.loadVerfuegbareProfilbilder();
   abzeichen.value = await kontoStore.getAbzeichen()
 })
 
+/**
+ * Liefert den Link des aktuell ausgewählten Profilbildes des Nutzers.
+ * 
+ * Da beim Konto nur die ID des ausgewählten Profilbildes gespeichert ist,
+ * muss aus der Liste der verfügbaren Profilbilder das passende Profilbild gesucht werden
+ * und die URL zum Bild zurückgegeben werden.
+ * 
+ * Ist kein Profilbild gesetzt, wird null zurückgegeben
+ */
 const aktuellesProfilbild = computed(() => {
   const id = kontoStore.aktuellesKonto?.profilbild_id
   if(!id) return null
@@ -46,9 +56,16 @@ const aktuellesProfilbild = computed(() => {
   return gefunden?.bildlink || null;
 })
 
+/** Name des Nutzers */
 const profilName = computed(() => kontoStore.aktuellesKonto?.vorname + " " + kontoStore.aktuellesKonto?.nachname)
+
+/** Level des Nutzers */
 const level = computed(() => calculator.level(kontoStore.aktuellesKonto?.punkte!))
+
+/** Anzahl der am Stück gelernten Tage (Lernserie) */
 const flamme = computed(() =>  kontoStore.aktuellesKonto?.anzTage)
+
+/** erhaltene Abzeichen */
 const abzeichen = ref<Abzeichen[]>([])
 
 /**
@@ -59,6 +76,7 @@ const abzeichen = ref<Abzeichen[]>([])
  * letzten 7 Tage beschränkt, da mehr nicht im Säulendiagramm angezeigt werden soll.
  */
 const letzte7Tage = computed(() => {
+
   // Vokabelanzahl pro Tag aus dem KontoStore holen
   const daten = kontoStore.aktuellesKonto?.vokabelnProTag ?? {};
 

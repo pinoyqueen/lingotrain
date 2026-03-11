@@ -15,7 +15,6 @@ const BONUS_5_STREAK = 5;
 /** Punkte, wenn 10 richtige Antworten nacheinander kamen */
 const BONUS_10_STREAK = 10;
 
-
 /**
  * Store zur Verwaltung der Punkte innerhalb einer Lernrunde.
  * 

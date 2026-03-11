@@ -67,6 +67,7 @@ async function onRegister() {
 
 <template>
   <div class="min-h-screen flex flex-col justify-center items-center px-6 py-12 w-full max-w-xl">
+    
     <!-- Logo -->
     <img src="@/assets/logo.png" alt="Logo" class="w-35 h-35 mb-6" />
 

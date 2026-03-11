@@ -57,10 +57,13 @@ defineExpose({
   <div class="max-w-4xl mx-auto flex flex-col items-center justify-center space-y-6 sm:space-y-10 pt-4 sm:pt-10 px-4">
     
     <div class="text-center space-y-4 animate-in fade-in zoom-in duration-500 w-full">
+
+      <!-- Anweisung -->
       <span class="text-xs font-bold uppercase tracking-[0.2em] text-surface-foreground/50 block">
         {{ vokabel.isWort ? 'Übersetze die Vokabel' : 'Übersetze den Satz' }}
       </span>
       
+      <!-- Der zu übersetzende Satz / Wort -->
       <h2 
         class="font-black text-foreground tracking-tight leading-tight mx-auto"
         :class="vokabel.isWort ? 'text-3xl sm:text-5xl max-w-2xl' : 'text-2xl sm:text-4xl max-w-3xl'"

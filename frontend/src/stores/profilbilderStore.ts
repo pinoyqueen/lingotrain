@@ -9,6 +9,8 @@ import { defineStore } from "pinia";
  */
 export const useProfilbilderStore = defineStore('profilbild', {
     state: () => ({
+        
+        /** alle möglichen Profilbilder, aus denen der Nutzer auswählen kann */
         verfuegbareProfilbilder: [] as any[]
     }),
 

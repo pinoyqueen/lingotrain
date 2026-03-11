@@ -10,6 +10,8 @@ import { useKontoStore } from './stores/kontoStore'
 import { useLernsetStore } from './stores/lernsetStore'
 
 const route = useRoute()
+
+/** wenn noch nicht angemeldet, wird das Layout für Login verwendet, ansonsten für die Hauptseite */
 const Layout = computed(() => route.meta.layout === 'auth' ? AuthLayout : MainLayout)
 
 const kontoStore = useKontoStore()

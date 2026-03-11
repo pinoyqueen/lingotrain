@@ -25,9 +25,16 @@ export const useKontoStore = defineStore('konto', {
         const { aktuellesKonto } = storeToRefs(authStore);
 
         return {
+            // Referenz auf das aktuell eingeloggte Konto aus dem AuthStore
             aktuellesKonto,
+
+            // Liste der vom Nutzer ausgewählten Sprachen
             ausgewaehlteSprachen: [] as any[],
+
+            // aktuell ausgewählte Sprache des Nutzers
             aktuelleSprache: null as any | null,
+
+            // Sind die Punkte schon gespeichert? (verhindert mehrfaches Speichern von Punkten)
             punkteSchonGespeichert: false,
         };
     },
@@ -467,8 +474,5 @@ export const useKontoStore = defineStore('konto', {
                 console.log("Neues Abzeichen: " + a.name)
             }
         }
-
-
-
     }
 });

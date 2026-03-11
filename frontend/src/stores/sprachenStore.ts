@@ -9,6 +9,8 @@ import { defineStore } from "pinia";
  */
 export const useSprachenStore = defineStore('sprachen', {
     state: () => ({
+
+        /** alle möglichen Sprachen, aus denen der Nutzer auswählen kann */
         verfuegbareSprachen: [] as any[]
     }),
 

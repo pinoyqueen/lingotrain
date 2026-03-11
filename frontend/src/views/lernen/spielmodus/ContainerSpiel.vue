@@ -216,11 +216,13 @@ async function chooseSpiel() {
     if(vkStore.alleVokabeln.length < 3)
       spiel_pool = spiel_pool.filter(s => s.key !== 'mcq')
 
-    // MCQSpiel entfernen, falls schon oft gelernt
+    // MCQSpiel oder Lücke-Schreiben entfernen, falls schon oft gelernt
     if (vok.isWort && gelernt >= MAX_GELERNT) {
       spiel_pool = spiel_pool.filter(s => s.key !== 'mcq')
+
+    } else if (!vok.isWort && gelernt >= MAX_GELERNT) {
+      spiel_pool = spiel_pool.filter(s => s.key !== 'lueckeschreiben')
     }
-    // TODO: einfacher Spieltyp für Sätze entfernen
 
     // Fallback wenn spiel_pool leer ist
     if(spiel_pool.length === 0 && vok.isWort) {
@@ -302,6 +304,7 @@ async function onAnswered(result: boolean) {
     aktuelleFrage.value!.isWort
   );
 
+  // Streak anzeigen, wenn ein Event ausgelöst wurde (also bei 5 oder 10 aufeinanderfolgend richtigen)
   if(streakEvent > 0) {
     triggerStreak(streakEvent);
   }

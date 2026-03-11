@@ -167,14 +167,19 @@ defineExpose({
 <template>
   <div class="w-full flex flex-col gap-6">
     <div class="text-center space-y-4">
+
+      <!-- Anweisung -->
       <span class="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
         Satz bilden
       </span>
+
+      <!-- der zu bildende Satz -->
       <h2 class="text-2xl sm:text-4xl font-black tracking-tight">
         {{ props.vokabel.uebersetzung }}
       </h2>
     </div>
 
+    <!-- Bereich für den zusammengesetzten Satz (enthält dann nach Anklicken die einzelnen Wort-Buttons) -->
     <div class="w-full min-h-[100px] bg-secondary/10 border-2 border-dashed border-secondary/30 rounded-2xl p-6 flex flex-wrap gap-2 transition-all duration-300">
       <Button
         v-for="(word, index) in ausgewaehlt"
@@ -192,6 +197,7 @@ defineExpose({
       </span>
     </div>
 
+    <!-- Bereich für die Bausteine mit allen Baustein-Buttons -->
     <div class="bausteine-wrapper">
       <div class="flex flex-wrap gap-2 justify-center">
         <Button

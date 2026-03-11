@@ -40,7 +40,7 @@ export async function createKonto(konto: Konto): Promise<string> {
     anzTage: 0,
     punkte: konto.punkte ?? 0,
     benachrichtigung: konto.benachrichtigung ?? false,
-    profilbild_id: konto.profilbild_id ?? "",  // TODO: Standardbild setzen
+    profilbild_id: konto.profilbild_id ?? "",  
     sprachenIds: konto.sprachenIds ?? [],
     aktuelleSpracheId: konto.aktuelleSpracheId ?? konto.sprachenIds?.[0] ?? "",
     abzeichenIds: konto.abzeichenIds ?? [],
