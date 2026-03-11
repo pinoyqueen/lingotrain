@@ -228,6 +228,7 @@ def evaluate_answer_combined(user_answer, original_sentence, target_word, target
         result["hint"] = ""
     else:
         result["correct"] = False
+        
         # Hinweis nur geben, wenn almost_correct oder wrong
         result["hint"] = llm_eval.get("hint", "")
 

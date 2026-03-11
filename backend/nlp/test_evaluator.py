@@ -1,5 +1,20 @@
 from nlp.evaluator import evaluate_answer_combined as evaluate_answer
 
+# Führt eine Reihe von Testfällen für die Satzbewertung durch.
+#
+# Jeder Testfall enthält:
+#   - den deutschen Originalsatz (Referenzsatz)
+#   - das Zielwort in der Zielsprache
+#   - die Antwort des Nutzers
+#   - die Zielsprache
+#   - eine kurze Beschreibung des Testfalls
+#
+# Getestet werden verschiedene Fehlertypen. Dazu zählen korrekte Übersetzungen,
+# falsche Wörter, falsche Verben / semantische Fehler, falsche Zeitformen,
+# Nebensatzfehler, Zeichensetzungsfehler und Rechtschreibfehler.
+#
+# Die Funktion ruft für jeden Testfall den Evaluator auf und gibt das
+# Ergebnis in der Konsole aus.
 def test():
     test_cases = [
         {
@@ -355,6 +370,7 @@ def test():
         }
     ]
 
+    # Führt alle Testfälle nacheinander aus
     for case in test_cases:
         print(f"Test: {case['description']} ({case['lang']})")
         result = evaluate_answer(
@@ -367,5 +383,6 @@ def test():
         print("Result:", result)
         print("---")
 
+# Startet die Tests nur, wenn das Skript direkt ausgeführt wird
 if __name__ == "__main__":
     test()
