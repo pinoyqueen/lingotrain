@@ -31,51 +31,65 @@ import AlertDialogFooter from '@/components/ui/alert-dialog/AlertDialogFooter.vu
 import AlertDialogCancel from '@/components/ui/alert-dialog/AlertDialogCancel.vue'
 import AlertDialogAction from '@/components/ui/alert-dialog/AlertDialogAction.vue'
 
-// Store/ViewModel holen
+// --- Vokabeln Store ---
 const vokabelnStore = useVokabelnStore()
+
+// --- Route ---
 const route = useRoute()
 const router = useRouter()
-// Lernset-Id
+
+// Lernset-Id aus der URL
 const lernsetId = String(route.params.id)
 const slug = String(route.params.slug)
 
-// entspricht onViewCreated() im Fragment
+/** 
+ * Wird ausgeführt sobald die Komponente geladen wurde.
+ * Lädt alle Vokabeln des aktuellen Lernsets
+ */
 onMounted(() => {
     vokabelnStore.loadByLernsetId(lernsetId)
 });
 
-// UI States
-// gibt an, ob Dialog zum Einfügen angezeigt werden muss
+// --- UI States ---
+/** Modal sichtbar? */
 const showDialog = ref(false)
-// gibt an, ob die Bearbeiten Icons auf der Lernsets angezeigt werden muss
+/** Bearbeiten-Icons sichtbar? */
 const showBearbeiten = ref(false)
-// gibt an, ob die anzuzeigende Dialog zum Einfügen oder zum Bearbeiten ist
+/** Dialog: neues Set oder Bearbeiten? */
 const neueItem = ref(true)
+/** Zeigt das Lernmodus-Menu */
 const showMenu = ref(false)
-
-// Aktuell bearbeitete Vokabel (null = neue Vokabel)
+/** Aktuell bearbeitete Vokabeln (null = neue Vokabel) */
 const selectedItem = ref<Vokabeln | null>(null)
 
-// Daten der Formular
+/** Daten der Formular */
 const form = reactive({
   vokabel: '',
   uebersetzung: '',
   isWort: false,
 })
 
-// Computed für Dialog-Titel
+// --- Computed --- 
+/** Titel des Dialogs */
 const dialogTitle = computed(() => selectedItem.value ? 'Vokabel bearbeiten' : 'Neue Vokabel')
+/** Beschriftug der Bearbeiten-Buttons */
 const btnTitle = computed(() => showBearbeiten.value ? 'Fertig' : 'Bearbeiten')
-// gibt an, ob die Liste leer ist
+/** true, wenn keine Vokabeln vorhanden sind */
 const isLeer = computed(() => vokabelnStore.liste.length === 0);
 
-// Methoden
+/**
+ * Öffnet Dialog zum Anlegen eines neuen Lernsets.
+ */
 function openNewDialog() {
   resetForm()
   selectedItem.value = null
   showDialog.value = true
 }
 
+/**
+ * Navigiert zum Lernmodus.
+ * @param modus Spielmodus oder Kartenmodus
+ */
 function goTo(modus: string) {
   showMenu.value = false
   console.log('Ausgewählt:', modus)
@@ -91,12 +105,20 @@ function goTo(modus: string) {
   })
 }
 
+/**
+ * Setzt alle Formularfelder zurück.
+ */
 function resetForm() {
   form.vokabel = ''
   form.uebersetzung = ''
   form.isWort = false
 }
 
+/**
+ * Öffnet Dialog zum Bearbeiten eines bestehende Vokabel.
+ * 
+ * @param item Vokabel, die bearbeitet werden soll
+ */
 function editVokabel(item: Vokabeln) : void {
   // bestehende Daten (inkl. id)
   selectedItem.value = { ...item }
@@ -111,16 +133,23 @@ function editVokabel(item: Vokabeln) : void {
   showBearbeiten.value = false;
 }
 
-async function deleteVokabel(item: Vokabeln) : Promise<void> {
-  const ok = window.confirm(`Willst du die Vokabel "${item.vokabel}" wirklich löschen?`)
-  if (ok) {
-    await vokabelnStore.deleteVokabel(item)
-    toast.success(item.vokabel + ' gelöscht')
-  }
+/**
+ * Löscht eine Vokabel nach Bestätigung.
+ * 
+ * @param item Vokabel, die gelöscht werden soll
+ */
+function deleteVokabel(item: Vokabeln) : void {
+  vokabelnStore.deleteVokabel(item)
+  toast.success(item.vokabel + ' gelöscht')
   showBearbeiten.value = false;
 }
 
-// Methode zum Speichern neues Lernsets
+/**
+ * Speichert eine neue oder bearbeitete Vokabel.
+ * 
+ * Neue Vokabel wird angelegt.
+ * Bestehende Vokabel wird aktualisiert.
+ */
 async function saveVokabel() {
   if (!selectedItem.value) {
     // Neue Vokabel anlegen
@@ -150,6 +179,8 @@ async function saveVokabel() {
 </script>
 
 <template>
+
+  <!-- Skeleton beim Laden -->
   <template v-if="vokabelnStore.loading">
     <div class="m-8 mt-20 space-y-4">
       <!-- Simuliert 5 Vokabeln -->
@@ -164,6 +195,8 @@ async function saveVokabel() {
   </template>
 
   <template v-else>
+
+    <!-- Buttons zur Verwaltung von Vokabeln -->
     <ButtonGroup class="fixed top-0 right-0 mt-3 mr-3">
       <Button
         v-show="!isLeer"
@@ -183,10 +216,12 @@ async function saveVokabel() {
       </Button>
     </ButtonGroup>
 
+    <!-- nichts anzeigen wenn keine Lernsets vorhanden ist -->
     <template v-if="isLeer">
       <p class="text-gray-500 text-center mt-8">Keine Einträge vorhanden.</p>
     </template>
 
+    <!-- Anzeige von Vokabeln -->
     <template v-else>
       <div class="mt-20 p-4 max-h-[calc(100vh-120px)] overflow-y-auto">
         <Item
@@ -199,9 +234,11 @@ async function saveVokabel() {
           <ItemContent>
             <ItemTitle>{{ item.vokabel }}</ItemTitle>
             <ItemDescription>{{ item.uebersetzung }}</ItemDescription>
+            <!-- Action Buttons außerhalb vom router-link -->
             <ItemActions class="flex gap-2 ml-2" v-show="showBearbeiten">
+              <!-- Button zum Bearbeiten -->
               <button class="text-black" @click="editVokabel(item)"> <PencilIcon/> </button>
-
+              <!-- Button zum Löschen -->
               <AlertDialog>
                 <AlertDialogTrigger>
                   <TrashIcon  class="text-[var(--warning)]" />
@@ -218,7 +255,6 @@ async function saveVokabel() {
                 </AlertDialogContent>
               </AlertDialog>
 
-              <!-- <button class="text-[var(--red)]" @click="deleteVokabel(item)"> <TrashIcon/> </button> -->
             </ItemActions>
           </ItemContent>
         </Item>
