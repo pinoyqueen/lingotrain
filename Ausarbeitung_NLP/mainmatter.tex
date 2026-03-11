@@ -407,6 +407,34 @@ Weitere Tests über das Chatbot-UI bestätigen zudem die grundsätzliche Funktio
 Da die Anzahl der Testfälle jedoch begrenzt ist, lassen sich keine statistisch signifikanten Aussagen über die allgemeine Genauigkeit treffen. Dennoch zeigen die Ergebnisse, dass das entwickelte System typische Fehler von Lernenden erkennen und darauf mit geeignetem Feedback reagieren kann.
 
 \subsection{Evaluation des Satzmodus auf Satzebene (Andreleene Prado)}
+Zur Evaluation des Satzmodus wurde die semantische Ähnlichkeitsbewertung zwischen Referenzsatz und Benutzerantwort getestet. 
+Hierfür wurden verschiedene Testszenarien in der Datei \texttt{test\_sentence\_evaluator.py} definiert, die typische Situationen beim Sprachlernen abbilden, beispielsweise exakte Übereinstimmungen, Paraphrasen, grammatische Fehler sowie semantisch falsche Antworten. 
+Die Bewertung basiert auf einer Ähnlichkeitsberechnung mit Sentence-BERT, die anschließend in die Kategorien \textit{correct}, \textit{almost\_correct} oder \textit{wrong} eingeteilt wird.
+
+Die Testergebnisse zeigen zunächst, dass exakte Übereinstimmungen zuverlässig erkannt werden. 
+Wenn der Benutzer exakt denselben Satz wie der Referenzsatz eingibt, wird die Antwort als korrekt bewertet. 
+Ein Beispiel hierfür ist der Satz \textit{\enquote{The banana is yellow.}} mit identischer Benutzerantwort, der vom System als \textit{correct} klassifiziert wurde.
+
+Darüber hinaus kann das System auch semantisch ähnliche Formulierungen erkennen. 
+Mehrere Tests zeigen, dass Paraphrasen oder leicht veränderte Satzstrukturen als sinngleich bewertet werden. 
+Beispiele hierfür sind Antworten wie \textit{\enquote{I am going home.}} im Vergleich zum Referenzsatz \textit{\enquote{I go home.}}.
+In diesen Fällen lagen die berechneten Ähnlichkeitswerte zwischen etwa 0.86 und 0.92, wodurch die Antworten als \textit{almost\_correct} eingestuft wurden.
+
+Auch bei grammatischen Fehlern konnte das System in vielen Fällen dennoch die intendierte Bedeutung erkennen. 
+Beispielsweise wurde der Satz \textit{\enquote{I go to home.}} im Vergleich zu \textit{\enquote{I go home.}} sowie \textit{\enquote{He eat apple.}} im Vergleich zu \textit{\enquote{He is eating an apple.}} als nahezu korrekt bewertet. 
+Die Ähnlichkeitswerte lagen hier ebenfalls über 0.9, wodurch das System erkennen konnte, dass trotz grammatischer Fehler die grundlegende Bedeutung des Satzes erhalten bleibt. 
+Aus diesem Grund werden nur exakte Übereinstimmungen als vollständig korrekt (\textit{correct}) bewertet, während semantisch ähnliche, aber grammatikalisch fehlerhafte Antworten als \textit{almost\_correct} klassifiziert werden.
+
+Im Gegensatz dazu werden semantisch deutlich unterschiedliche Antworten korrekt als falsch erkannt. 
+Beispielsweise wurde die Antwort \textit{\enquote{The car is very fast.}} im Vergleich zum Referenzsatz \textit{\enquote{I go home.}} mit einem sehr niedrigen Ähnlichkeitswert von etwa 0.05 bewertet und entsprechend als \textit{wrong} klassifiziert. 
+
+Ein interessanter Grenzfall zeigt sich bei Sätzen mit ähnlicher Struktur, aber unterschiedlicher Bedeutung. 
+So wurde beispielsweise \textit{\enquote{He drinks tea every morning.}} im Vergleich zu \textit{\enquote{He drinks coffee every morning.}} als \textit{almost\_correct} bewertet. 
+Obwohl sich das Objekt im Satz unterscheidet, bleibt die grundlegende Satzstruktur erhalten, wodurch ein relativ hoher Ähnlichkeitswert berechnet wird.
+
+Zusammenfassend zeigen die Testergebnisse, dass die verwendete Ähnlichkeitsberechnung gut geeignet ist, um unterschiedliche Grade der Übereinstimmung zwischen Referenzsatz und Benutzerantwort zu erkennen. 
+Insbesondere können Paraphrasen und kleinere grammatische Fehler toleriert werden, während inhaltlich falsche oder semantisch stark abweichende Antworten zuverlässig erkannt werden. 
+Damit eignet sich dieser Ansatz gut für den Einsatz in einem Sprachlern-Chatbot, da Lernende nicht ausschließlich identische Sätze reproduzieren müssen, sondern auch alternative Formulierungen akzeptiert werden können.
 
 \subsection{Evaluation des Konversationsmodus (Andreleene Prado)}
 Zur Evaluation des Konversationsmodus wurde eine vereinfachte Testumgebung im Terminal implementiert. 
