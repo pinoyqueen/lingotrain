@@ -40,17 +40,36 @@ watch(() => props.vokabel?.id,
 )
 
 /**
+ * Normalisiert einen Satz.
+ * 
+ * Hier werden aus einem übergebenen String, also einem Satz,
+ * alle Satzzeichen entfernt sowie die Leerzeichen am Anfang und
+ * Ende.  
+ * 
+ * @param {string} sentence der zu normalisierende Satz
+ * @return {string} der normalisierte Satz
+ */
+function normalize(sentence: string): string {
+  return sentence
+    .replace(/[¿¡]/g, '')         // spanische Satzanfänge
+    .replace(/[.,!?;:…]/g, '')    // Satzzeichen
+    .replace(/["„“‚‘«»‹›]/g, '')  // Anführungszeichen
+    .replace(/\s+/g, ' ')         // doppelte Leerzeichen
+    .trim()
+}
+
+/**
  * Erzeugen einer Lücke im Satz.
  * 
- * Dabei werden aus dem Satz (der Vokabel) alle Satzzeichen entfernt, damit der Nutzer
- * diese bei seiner Lücke nicht mit eingeben muss. Außerdem wird der Satz in seine
- * einzelnen Wörter aufgesplittet und ein zufälliges Wort aus dem Satz durch einen
- * Platzhalter für die Lücke erzeugt.
+ * Dabei werden aus dem Satz (der Vokabel) alle Satzzeichen für die Wortauswahl entfernt, 
+ * damit der Nutzer diese bei seiner Lücke nicht mit eingeben muss. 
+ * Außerdem wird der Satz in seine einzelnen Wörter aufgesplittet und ein zufälliges Wort 
+ * aus dem Satz durch einen Platzhalter für die Lücke erzeugt.
  * 
  * Der Satz mit Lücke und das korrekte Wort für die Lücke werden in den eigenen Variablen
  *  {@link #korrektesWort} und {@link #satzMitLuecke} gespeichert.
  * 
- * @param {Vokabeln} vokabel 
+ * @param {Vokabeln} vokabel das Vokabel-Objekt, dessen Satz bearbeitet wird
  */
 function generiereLuecke(vokabel: Vokabeln) {
   if (!vokabel?.vokabel) return;
@@ -58,12 +77,18 @@ function generiereLuecke(vokabel: Vokabeln) {
   const original = vokabel.vokabel;
 
   // Satzzeichen entfernen
-  const cleaned = original.replace(/[,\.!?;:…]/g, '');
+  const cleaned = normalize(original);
   const woerter = cleaned.split(/\s+/);
 
   // Zufälliges Wort auswählen
   const randomIndex = Math.floor(Math.random() * woerter.length);
-  korrektesWort.value = woerter[randomIndex]!;
+  const chosenNormalized = woerter[randomIndex]!;
+
+  // Originalwort aus dem Satz finden
+  const regex = new RegExp(`(?<!\\p{L})${chosenNormalized}(?!\\p{L})`, 'iu');
+  const match = regex.exec(original); 
+  if (!match) return;
+  korrektesWort.value = match[0];
 
   // Bei mehreren Vorkommen wird ein zufälliges durch den Platzhalter ersetzt, damit nicht
   // vorhersehbar ist, welches der Vorkommen eines Wortes jedes Mal ersetzt wird
@@ -81,14 +106,14 @@ function generiereLuecke(vokabel: Vokabeln) {
  * @param {string} placeholder der Platzhalter
  */
 function replaceRandomVorkommen(sentence: string, word: string, placeholder: string) {
-  const regex = new RegExp(`\\b${word}\\b`, 'g');
+  const regex = new RegExp(`(?<!\\p{L})${word}(?!\\p{L})`, 'gu');
   const matches = [...sentence.matchAll(regex)];
 
-  if (matches.length === 0) return sentence;
+  if (!matches.length) return sentence;
 
-  const randomMatch = matches[Math.floor(Math.random() * matches.length)];
-  const start = randomMatch?.index!;
-  const end = start + word.length;
+  const randomMatch = matches[Math.floor(Math.random() * matches.length)]!;
+  const start = randomMatch.index!;
+  const end = start + randomMatch[0].length;
 
   return sentence.slice(0, start) + placeholder + sentence.slice(end);
 }
@@ -104,8 +129,10 @@ function replaceRandomVorkommen(sentence: string, word: string, placeholder: str
 function pruefen(): { richtig: boolean } {
   if (checked.value) return { richtig: richtig.value };
 
-  const input = userInput.value.trim();
-  richtig.value = (input === korrektesWort.value);
+  const cleanInput = userInput.value.trim();
+  const cleanTarget = korrektesWort.value.trim();
+
+  richtig.value = (cleanInput === cleanTarget);
 
   checked.value = true;
   return { richtig: richtig.value };

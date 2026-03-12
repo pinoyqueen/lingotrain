@@ -95,7 +95,7 @@ Direkt nach dem Login wird der Nutzer hier namentlich begrüßt und erhält eine
 \begin{itemize}
 \item \textbf{Gamification-Elemente:} Durch die Anzeige von Punkten, dem Level und der \enquote{Lernserie} (Streak) soll der Nutzer zum regelmäßigen Lernen animiert werden.
 \item \textbf{Sprachauswahl:} Über ein Auswahlmenü kann der Nutzer zwischen den Sprachen, die er seinem Konto hinzugefügt hat, die aktuelle Lernsprache auswählen.
-\item \textbf{Quick-Access (Shortcuts):} Das Dashboard bietet einen Zugriff auf die drei zuletzt hinzugefügten Lernsets. Durch diese Shortcuts kann der Nutzer eine Lernrunde schneller starten und muss nicht den Umweg über den Tab \textit{Meine Vokabeln} nehmen.
+\item \textbf{Quick-Access (Shortcuts):} Das Dashboard bietet einen Zugriff auf maximal drei angelegte Lernsets. Durch diese Shortcuts kann der Nutzer eine Lernrunde schneller starten und muss nicht den Umweg über den Tab \textit{Meine Vokabeln} nehmen.
 \end{itemize}
 
 \subsection{Vokabelverwaltung (Andreleene Prado)}
@@ -454,6 +454,7 @@ Zusätzlich wird der Lernstatus der jeweiligen Vokabel im \textit{vokabelKontoSt
 
 \subsubsection{Satzbasierte Lernmodi (Ronja Rüther)}
 Im Gegensatz zu den wortbasierten Lernmodi müssen bei den satzbasierten Übungen nicht nur einzelne Begriffe, sondern auch die korrekte Satzstellung geprüft werden.
+Vor der Auswahl eines spielbasierten Modus wird geprüft, ob der Satz ausreichend lang ist. Kürzere Sätze mit weniger als vier Wörtern werden direkt im Modus \textbf{Freies Schreiben} geübt, um eine sinnvolle Herausforderung an den Nutzer sicherzustellen.
 
 Im einfachsten Modus \textbf{Lückentext} wird ein zufälliges Wort im Satz ausgewählt und durch einen Platzhalter (\texttt{\_\_\_\_\_}) ersetzt.
 Mithilfe von \textit{Regular Expressions} (Regex) wird sichergestellt, dass das gewählte Wort im Originalstring identifiziert wird. Um nicht immer z.B. das erste Vorkommen eines Wortes im Satz 

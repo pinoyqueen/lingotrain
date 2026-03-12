@@ -42,7 +42,12 @@ watch(() =>
  * @return {string} der normalisierte Satz
  */
 function normalize(sentence: string): string {
-  return sentence.replace(/[,.!?;:…]/g, '').trim()
+  return sentence
+    .replace(/[¿¡]/g, '')         // spanische Satzanfänge
+    .replace(/[.,!?;:…]/g, '')    // Satzzeichen
+    .replace(/["„“‚‘«»‹›]/g, '')  // Anführungszeichen
+    .replace(/\s+/g, ' ')         // doppelte Leerzeichen
+    .trim()
 }
 
 /**
@@ -63,7 +68,13 @@ function generateBausteine() {
   const korrektBausteine = korrekt.map((w, i) => ({ id: i, word: w }))
 
   // Duplikate und Originalwörter aus dem Wortpool entfernen
-  const uniquePool = Array.from(new Set(wortPool.value))
+  const uniquePool = Array.from(
+    new Set(
+      wortPool.value
+        .map(w => normalize(w))
+        .filter(w => w.length > 0)
+    )
+  )
   const kandidaten = uniquePool.filter(w => !korrekt.includes(w))
 
   // Wortpool mischen und maximal 4 auswählen, die als Bausteine eingefügt werden
