@@ -40,7 +40,7 @@ Eigene Konten können über die **Registrierung** ebenfalls angelegt werden.
 
 # Backend Setup
 
-Zum `**backend`-Ordner** navigieren und die benötigten Python-Abhängigkeiten installieren.
+Zum **`backend`-Ordner** navigieren und die benötigten Python-Abhängigkeiten installieren.
 
 ## Core Dependencies
 ```
